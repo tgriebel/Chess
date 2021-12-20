@@ -23,7 +23,6 @@ protected:
 
 	bool IsValidAction( const int actionNum ) const;
 	void Move( const int targetX, const int targetY );
-
 public:
 	moveType_t GetMoveType( const int actionNum ) const;
 	bool IsLocatedAt( const int actionX, const int actionY ) const;
@@ -66,14 +65,20 @@ public:
 		this->team = team;
 		this->instance = instance;
 
+		const int direction = GetDirection();
+
 		numActions = 0;
-		actions[ numActions++ ] = moveAction_t( 0, 1, PAWN_T );
-		actions[ numActions++ ] = moveAction_t( 0, 2, PAWN_T2X );
-		actions[ numActions++ ] = moveAction_t( 1, -1, PAWN_KILL_L );
-		actions[ numActions++ ] = moveAction_t( 1, 1, PAWN_KILL_R );
+		actions[ numActions++ ] = moveAction_t( 0, direction * 1, PAWN_T );
+		actions[ numActions++ ] = moveAction_t( 0, direction * 2, PAWN_T2X );
+		actions[ numActions++ ] = moveAction_t( -1, direction * 1, PAWN_KILL_L );
+		actions[ numActions++ ] = moveAction_t( 1, direction * 1, PAWN_KILL_R );
 	}
 
 	bool InActionPath( const int actionNum, const int targetX, const int targetY ) const override;
+private:
+	inline int GetDirection() {
+		return ( team == teamCode_t::WHITE ) ? -1 : 1;
+	}
 };
 
 class Rook : public Piece {
@@ -84,8 +89,8 @@ public:
 		this->instance = instance;
 
 		numActions = 0;
-		actions[ numActions++ ] = moveAction_t( 0, -1, ROOK_T );
-		actions[ numActions++ ] = moveAction_t( 0, 1, ROOK_B );
+		actions[ numActions++ ] = moveAction_t( 0, 1, ROOK_T );
+		actions[ numActions++ ] = moveAction_t( 0, -1, ROOK_B );
 		actions[ numActions++ ] = moveAction_t( 1, 0, ROOK_R );
 		actions[ numActions++ ] = moveAction_t( -1, 0, ROOK_L );
 	}

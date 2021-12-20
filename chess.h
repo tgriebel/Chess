@@ -18,7 +18,8 @@ enum class pieceType_t : int {
 enum class teamCode_t : int {
 	UNASSIGNED = -1,
 	WHITE = 0,
-	BLACK = 1
+	BLACK = 1,
+	COUNT
 };
 
 enum moveType_t : int {

@@ -12,26 +12,29 @@ bool ChessBoard::IsLegalMove( const Piece* piece, const int targetX, const int t
 	return false;
 }
 
-void ChessBoard::CapturePiece( const int x, const int y ) {
+void ChessBoard::CapturePiece( const teamCode_t attacker, const int x, const int y ) {
 	const pieceHandle_t pieceHdl = GetHandle( x, y );
 	Piece* piece = GetPiece( pieceHdl );
 	if ( piece == nullptr ) {
 		return;
 	}
+	piece->x = -1;
+	piece->y = -1;
 	piece->captured = true;
 	grid[ y ][ x ] = NoPiece;
 
 	const int index = static_cast<int>( piece->team );
-	int& capturedCount = piecesCaptured[ index ];
-	int& playCount = piecesOnBoard[ index ];
+	const int attackerIndex = static_cast<int>( attacker );
+	int& capturedCount = teams[ attackerIndex ].capturedCount;
+	int& playCount = teams[ index ].livingCount;
 
-	captured[ index ][ capturedCount ] = pieceHdl;
+	teams[ attackerIndex ].captured[ capturedCount ] = pieceHdl;
 	++capturedCount;
 
 	for ( int i = 0; i < TeamPieceCount; ++i ) {
-		if ( team[ index ][ i ] == pieceHdl ) {
-			team[ index ][ i ] = team[ index ][ playCount - 1 ];
-			--playCount;
+		if ( teams[ index ].pieces[ i ] == pieceHdl ) {
+			teams[ index ].pieces[ i ] = teams[ index ].pieces[ playCount - 1 ];
+			--teams[ index ].livingCount;
 		}
 	}
 }
@@ -46,7 +49,7 @@ bool ChessBoard::MovePiece( const pieceHandle_t pieceHdl, const int targetX, con
 		return false;
 	}
 	if ( IsOccupied( targetX, targetY ) ) {
-		CapturePiece( targetX, targetY );
+		CapturePiece( piece->team, targetX, targetY );
 	}
 	grid[ piece->y ][ piece->x ] = NoPiece;
 	grid[ targetY ][ targetX ] = pieceHdl;
@@ -56,6 +59,9 @@ bool ChessBoard::MovePiece( const pieceHandle_t pieceHdl, const int targetX, con
 }
 
 pieceHandle_t ChessBoard::FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) {
+	if ( ( team == teamCode_t::UNASSIGNED ) || ( type == pieceType_t::NONE ) ) {
+		return NoPiece;
+	}
 	for ( int i = 0; i < PieceCount; ++i ) {
 		const bool teamsMatch = ( pieces[ i ]->team == team );
 		const bool piecesMatch = ( pieces[ i ]->type == type );

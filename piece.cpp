@@ -32,18 +32,18 @@ int Piece::GetStepCount( const int actionNum, const int targetX, const int targe
 	int nextY = y;
 	int prevDist = INT_MAX;
 	int dist = INT_MAX;
-	for ( int step = 0; step < maxSteps; ++step ) {
+	for ( int step = 1; step <= maxSteps; ++step ) {
 		CalculateStep( actionNum, nextX, nextY );
-		if ( board->IsOccupied( nextX, nextY ) ) {
-			return 0;
-		}
 		prevDist = dist;
-		dist = ( targetX - nextX ) + ( targetY - nextY );
+		dist = abs( targetX - nextX ) + abs( targetY - nextY );
 		if ( dist >= prevDist ) {
 			return 0;
 		}
 		if ( dist == 0 ) {
-			return true;
+			return step;
+		}
+		if ( board->IsOccupied( nextX, nextY ) ) {
+			return 0;
 		}
 	}
 	return 0;
@@ -53,18 +53,16 @@ bool Pawn::InActionPath( const int actionNum, const int targetX, const int targe
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
 	}
+	const bool isOccupied = board->IsOccupied( targetX, targetY );
+	const int steps = GetStepCount( actionNum, targetX, targetY, 1 );
 	const moveType_t type = actions[ actionNum ].type;
 	if ( type == PAWN_T2X ) {
-		const int stepCount = GetStepCount( actionNum, targetX, targetY, 2 );
-		return ( HasMoved() == false ) && ( stepCount == 2 );
+		return ( isOccupied == false ) && ( steps == 1 ) && ( HasMoved() == false );
 	}
 	if ( ( type == PAWN_KILL_L ) || ( type == PAWN_KILL_R ) ) {
-		if ( board->IsOccupied( targetX, targetY ) ) {
-			return true;
-		}
+		return isOccupied && ( steps == 1 );
 	}
-	const int stepCount = GetStepCount( actionNum, targetX, targetY, 1 );
-	return ( stepCount == 1 );
+	return ( isOccupied == false ) && ( steps == 1 );
 }
 
 bool Rook::InActionPath( const int actionNum, const int targetX, const int targetY ) const {

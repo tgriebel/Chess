@@ -31,22 +31,27 @@ public:
 				pieces[ nextHandle++ ] = new Knight( teamCode, 1 );
 				pieces[ nextHandle++ ] = new Rook( teamCode, 1 );
 
+				teams[ i ].livingCount = TeamPieceCount;
+				teams[ i ].capturedCount = 0;
 				for ( int j = 0; j < TeamPieceCount; ++j ) {
 					const pieceHandle_t handle = ( i * TeamPieceCount + j );
 					pieces[ handle ]->BindBoard( this, j );
-					team[ i ][ j ] = handle;
+					teams[ i ].pieces[ j ] = handle;
+					teams[ i ].captured[ j ] = NoPiece;
 				}
 			}
 		}
 
 		// Create board
 		{
+			const int whiteIndex = static_cast<int>( teamCode_t::WHITE );
+			const int blackIndex = static_cast<int>( teamCode_t::BLACK );
 			for ( int i = 0; i < BoardSize; ++i ) {
-				grid[ 0 ][ i ] = team[ 0 ][ i + BoardSize ];
-				grid[ 1 ][ i ] = team[ 0 ][ i ];
+				grid[ 0 ][ i ] = teams[ blackIndex ].pieces[ i + BoardSize ];
+				grid[ 1 ][ i ] = teams[ blackIndex ].pieces[ i ];
 
-				grid[ BoardSize - 2 ][ i ] = team[ 1 ][ i ];
-				grid[ BoardSize - 1 ][ i ] = team[ 1 ][ i + BoardSize ];
+				grid[ BoardSize - 2 ][ i ] = teams[ whiteIndex ].pieces[ i ];
+				grid[ BoardSize - 1 ][ i ] = teams[ whiteIndex ].pieces[ i + BoardSize ];
 			}
 
 			for ( int i = 2; i < ( BoardSize - 2 ); ++i ) {
@@ -83,12 +88,12 @@ public:
 		}
 	}
 
-	void Execute( const command_t& cmd ) {
+	bool Execute( const command_t& cmd ) {
 		const pieceHandle_t piece = FindPiece( cmd.team, cmd.pieceType, cmd.instance );
 		if ( piece == NoPiece ) {
-			return;
+			return false;
 		}
-		MovePiece( piece, cmd.x, cmd.y );
+		return MovePiece( piece, cmd.x, cmd.y );
 	}
 
 	bool IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
@@ -100,6 +105,12 @@ public:
 	inline bool IsOnBoard( const int x, const int y ) const {
 		return ( x >= 0 ) && ( x < BoardSize ) && ( y >= 0 ) && ( y < BoardSize );
 	}
+
+	inline const pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) const {
+		return const_cast<ChessBoard*>( this )->FindPiece( team, type, instance );
+	}
+
+	pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance );
 
 	inline const Piece* GetPiece( const pieceHandle_t handle ) const {
 		return const_cast< ChessBoard* >( this )->GetPiece( handle );
@@ -124,30 +135,25 @@ public:
 		return pieces[ handle ];
 	}
 
-	inline int GetTeamPieceCount( const teamCode_t team ) const {
-		const int index = static_cast<int>( team );
+	inline void GetTeamCaptures( const teamCode_t teamCode, const Piece* capturedPieces[ TeamPieceCount ], int& captureCount ) const {
+		const int index = static_cast<int>( teamCode );
 		if ( ( index >= 0 ) && ( index < TeamCount ) ) {
-			return piecesOnBoard[ index ];
+			captureCount = teams[ index ].capturedCount;
+			for ( int i = 0; i < teams[ index ].capturedCount; ++i ) {
+				capturedPieces[ i ] = GetPiece( teams[ index ].captured[ i ] );
+			}
 		}
-		return 0;
 	}
 
 private:
 	bool IsValidHandle( const pieceHandle_t handle ) const;
 	pieceHandle_t GetHandle( const int x, const int y ) const;
-	void CapturePiece( const int x, const int y );
+	void CapturePiece( const teamCode_t attacker, const int x, const int y );
 	bool MovePiece( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
-	pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance );
 	void GetPieceLocation( const pieceHandle_t handle, int& x, int& y ) const;
-	inline const pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) const {
-		return FindPiece( team, type, instance );
-	}
 private:
 	Piece*			pieces[ PieceCount ];
-	pieceHandle_t	team[ TeamCount ][ TeamPieceCount ];
-	int				piecesOnBoard[ TeamCount ];
-	int				piecesCaptured[ TeamCount ];
-	pieceHandle_t	captured[ TeamCount ][ TeamPieceCount ];
-	pieceHandle_t	grid[ BoardSize ][ BoardSize ];
+	team_t			teams[ TeamCount ];
+	pieceHandle_t	grid[ BoardSize ][ BoardSize ]; // (0,0) is top left
 	pieceHandle_t	nextHandle;
 };
