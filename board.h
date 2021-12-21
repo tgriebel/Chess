@@ -89,10 +89,10 @@ public:
 		if ( piece == NoPiece ) {
 			return false;
 		}
-		return MovePiece( piece, cmd.x, cmd.y );
+		return PerformMoveAction( piece, cmd.x, cmd.y );
 	}
 
-	bool IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
+	moveType_t IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
 
 	teamCode_t GetTeam( const int x, const int y ) const {
 		const Piece* targetPiece = GetPiece( x, y );
@@ -152,7 +152,8 @@ private:
 	bool CanPromotePawn( const Pawn* pawn ) const;
 	void PromotePawn( const pieceHandle_t pieceHdl );
 	bool ForcedCheckMate( const teamCode_t team ) const;
-	bool MovePiece( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
+	bool PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
+	void MovePiece( Piece* piece, const int targetX, const int targetY );
 	void GetPieceLocation( const pieceHandle_t handle, int& x, int& y ) const;
 	void CountTeamPieces();
 private:

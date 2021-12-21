@@ -1,15 +1,15 @@
 #include "board.h"
 #include "piece.h"
 
-bool ChessBoard::IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const {
+moveType_t ChessBoard::IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const {
 	// Check piece actions
 	const int actionCount = piece->GetActionCount();
 	for ( int action = 0; action < actionCount; ++action ) {
 		if ( piece->InActionPath( action, targetX, targetY ) ) {
-			return true;
+			return static_cast< moveType_t >( action );
 		}
 	}
-	return false;
+	return moveType_t::NONE;
 }
 
 void ChessBoard::CapturePiece( const teamCode_t attacker, const int x, const int y ) {
@@ -21,7 +21,6 @@ void ChessBoard::CapturePiece( const teamCode_t attacker, const int x, const int
 	piece->x = -1;
 	piece->y = -1;
 	piece->captured = true;
-	grid[ y ][ x ] = NoPiece;
 
 	const int index = static_cast<int>( piece->team );
 	const int attackerIndex = static_cast<int>( attacker );
@@ -108,30 +107,58 @@ void ChessBoard::PromotePawn( const pieceHandle_t pieceHdl ) {
 
 	delete pieces[ pieceHdl ];
 	pieces[ pieceHdl ] = new Queen( team );
-	pieces[ pieceHdl ]->handle = pieceHdl;
+	pieces[ pieceHdl ]->BindBoard( this, pieceHdl );
 }
 
-bool ChessBoard::MovePiece( const pieceHandle_t pieceHdl, const int targetX, const int targetY ) {
+void ChessBoard::MovePiece( Piece* piece, const int targetX, const int targetY ) {
+	grid[ piece->y ][ piece->x ] = NoPiece;
+	grid[ targetY ][ targetX ] = piece->handle;
+	piece->Move( targetX, targetY );
+}
+
+bool ChessBoard::PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY ) {
 	Piece* piece = GetPiece( pieceHdl );
 	if ( piece == nullptr ) {
 		return false;
 	}
-	const bool legalMove = IsLegalMove( piece, targetX, targetY );
-	if ( legalMove == false ) {
+	const moveType_t legalMove = IsLegalMove( piece, targetX, targetY );
+	if ( legalMove == moveType_t::NONE ) {
 		return false;
 	}
+
+	if ( piece->type == pieceType_t::KING ) {
+		Piece* rook = nullptr;
+		if ( legalMove == moveType_t::KING_CASTLE_L ) {
+			rook = GetPiece( 0, piece->y );
+		} else if ( legalMove == moveType_t::KING_CASTLE_R ) {
+			rook = GetPiece( BoardSize, piece->y );
+		}
+		if ( ( rook == nullptr ) || ( rook->type != pieceType_t::ROOK ) ) {
+			return false;
+		}
+		if ( piece->HasMoved() || rook->HasMoved() ) {
+			return false;
+		}
+		const moveType_t rookMove = IsLegalMove( rook, piece->x, piece->y );
+		if ( rookMove == moveType_t::NONE ) {
+			return false;
+		}
+		const int flankOffset = ( targetX > piece->x ) ? 1 : -1;
+		const int rookTargetX = piece->x + flankOffset;
+		MovePiece( rook, rookTargetX, piece->y );
+	}
+
 	if ( GetTeam( targetX, targetY ) != piece->team ) {
 		CapturePiece( piece->team, targetX, targetY );
 	}
-	grid[ piece->y ][ piece->x ] = NoPiece;
-	grid[ targetY ][ targetX ] = pieceHdl;
-	piece->Move( targetX, targetY );
+	MovePiece( piece, targetX, targetY );
 
 	if ( piece->type == pieceType_t::PAWN ) {
 		if ( CanPromotePawn( reinterpret_cast<Pawn*>( piece ) ) ) {
 			PromotePawn( pieceHdl );
 		}
 	}
+
 	CountTeamPieces();
 	return true;
 }
