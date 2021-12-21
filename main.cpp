@@ -121,7 +121,7 @@ void RunTestCommands( ChessBoard& board, std::vector< std::string >& commands ) 
 	for ( auto it = commands.begin(); it != commands.end(); ++it ) {
 		command_t cmd{};
 		resultCode_t result = TranslateCommandString( board, turnTeam, *it, cmd );
-		if ( result != RESULT_INPUT_SUCCESS ) {
+		if ( result != RESULT_SUCCESS ) {
 			std::cout << *it << "-> Inavlid String" << std::endl;
 			continue;
 		}
@@ -141,6 +141,7 @@ void RunCmdLineGameLoop( gameConfig_t& cfg ) {
 reset_game:
 	int turnNum = 0;
 	teamCode_t turnTeam = teamCode_t::WHITE;
+	teamCode_t winner = teamCode_t::NONE;
 	ChessBoard board( cfg );
 
 	while ( true ) {
@@ -152,6 +153,10 @@ clear_screen:
 			ClearScreen();
 			//std::wcout << L"♔";
 			PrintBoard( board, true );
+		}
+
+		if ( winner != teamCode_t::NONE ) {
+			goto exit_program;
 		}
 
 read_input:
@@ -185,11 +190,16 @@ read_input:
 			}
 			command_t cmd{};
 			resultCode_t result = TranslateCommandString( board, turnTeam, commandString, cmd );
-			if ( result != RESULT_INPUT_SUCCESS ) {
+			if ( result != RESULT_SUCCESS ) {
 				std::cout << GetErrorMsg( result ) << std::endl;
 				goto read_input;
 			}
-			if ( board.Execute( cmd ) == false ) {
+
+			result = board.Execute( cmd );
+
+			if ( result == RESULT_GAME_COMPLETE ) {
+				winner = board.GetWinner();
+			} else if ( result != RESULT_SUCCESS ) {
 				std::cout << GetErrorMsg( RESULT_INPUT_INVALID_MOVE ) << std::endl;
 				goto read_input;
 			}
@@ -197,7 +207,14 @@ read_input:
 		turnTeam = nextTeam;
 	}
 exit_program:
-	std::cout << "Game finished" << std::endl;
+	if ( winner != teamCode_t::NONE ) {
+		if ( winner == teamCode_t::WHITE ) {
+			std::cout << "Red wins!" << std::endl;
+		} else {
+			std::cout << "Purple wins!" << std::endl;
+		}
+	}
+	std::cout << "Game Complete" << std::endl;
 }
 
 int main()
@@ -216,7 +233,7 @@ int main()
 		RunTestCommands( board, commands );
 	}
 #else
-	LoadConfig( "tests/castle.txt", cfg );
+	LoadConfig( "tests/check.txt", cfg );
 	RunCmdLineGameLoop( cfg );
 #endif
 }

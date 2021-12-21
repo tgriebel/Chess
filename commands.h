@@ -102,5 +102,5 @@ static resultCode_t TranslateCommandString( const ChessBoard& board, const teamC
 	if ( ( outCmd.y < 0 ) && ( outCmd.y >= BoardSize ) ) {
 		return RESULT_INPUT_INVALID_RANK;
 	}
-	return RESULT_INPUT_SUCCESS;
+	return RESULT_SUCCESS;
 }

@@ -103,11 +103,11 @@ bool King::InActionPath( const int actionNum, const int targetX, const int targe
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
 	}
-	//if ( board->IsOpenToAttackAt( handle, targetX, targetY ) == false ) {
-	//	return false;
-	//}
 	const int stepCount = GetStepCount( actionNum, targetX, targetY, 1 );
 	if ( stepCount != 1 ) {
+		return false;
+	}
+	if ( board->IsOpenToAttackAt( handle, targetX, targetY ) ) {
 		return false;
 	}
 

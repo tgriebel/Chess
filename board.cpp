@@ -34,9 +34,18 @@ void ChessBoard::CapturePiece( const teamCode_t attacker, const int x, const int
 			--playCount;
 		}
 	}
+
+	if ( piece->type == pieceType_t::KING ) {
+		winner = piece->team;
+	}
+	return;
 }
 
 bool ChessBoard::IsOpenToAttackAt( const pieceHandle_t pieceHdl, const int x, const int y ) const {
+	if ( enableOpenAttackCheck == false ) {
+		return false;
+	}
+	enableOpenAttackCheck = false;
 	const Piece* targetPiece = GetPiece( pieceHdl );
 	const teamCode_t opposingTeam = ( targetPiece->team == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 	const int index = static_cast<int>( opposingTeam );
@@ -49,6 +58,7 @@ bool ChessBoard::IsOpenToAttackAt( const pieceHandle_t pieceHdl, const int x, co
 			}
 		}
 	}
+	enableOpenAttackCheck = true;
 	return false;
 }
 

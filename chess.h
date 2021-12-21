@@ -14,17 +14,23 @@ enum resultCode_t {
 	RESULT_INPUT_INVALID_FILE,
 	RESULT_INPUT_INVALID_RANK,
 	RESULT_INPUT_INVALID_MOVE,
-	ERROR_COUNT						= ( RESULT_INPUT_INVALID_MOVE - RESULT_INPUT_INVALID_COMMAND ) + 1,
-	RESULT_INPUT_SUCCESS			= 0,
+	RESULT_GAME_INVALID_PIECE,
+	RESULT_GAME_INVALID_MOVE,
+	RESULT_GAME_COMPLETE,
+	ERROR_COUNT						= ( RESULT_GAME_COMPLETE - RESULT_INPUT_INVALID_COMMAND ) + 1,
+	RESULT_SUCCESS					= 0,
 };
 
 static const char* ErrorMsgs[ ERROR_COUNT ] =
 {
-	"Invalid command",		// RESULT_INPUT_INVALID_COMMAND
-	"Invalid piece",		// RESULT_INPUT_INVALID_PIECE
-	"File out of range",	// RESULT_INPUT_INVALID_FILE
-	"Rank out of range",	// RESULT_INPUT_INVALID_RANK
-	"Invalid move",			// RESULT_INPUT_INVALID_MOVE
+	"Invalid command",			// RESULT_INPUT_INVALID_COMMAND
+	"Invalid piece",			// RESULT_INPUT_INVALID_PIECE
+	"File out of range",		// RESULT_INPUT_INVALID_FILE
+	"Rank out of range",		// RESULT_INPUT_INVALID_RANK
+	"Invalid move command",		// RESULT_INPUT_INVALID_MOVE
+	"Invalid piece selected",	// RESULT_GAME_INVALID_PIECE
+	"Invalid move action",		// RESULT_GAME_INVALID_MOVE
+	"Game Complete",			// RESULT_GAME_COMPLETE
 };
 
 inline const char* GetErrorMsg( const resultCode_t code ) {

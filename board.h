@@ -10,6 +10,9 @@ public:
 
 	ChessBoard( const gameConfig_t& cfg ) {
 		pieceNum = 0;
+		enableOpenAttackCheck = true;
+		winner = teamCode_t::NONE;
+		inCheck = teamCode_t::NONE;
 		memset( pieces, 0, sizeof( Piece* ) * PieceCount );
 		config = cfg;
 		SetBoard( config );
@@ -30,24 +33,24 @@ public:
 				const pieceType_t piece = cfg.board[ i ][ j ].piece;
 				const teamCode_t teamCode = cfg.board[ i ][ j ].team;
 				switch ( piece ) {
-					case pieceType_t::PAWN:
-						SetPiece( new Pawn( teamCode ), j, i );
-						break;
-					case pieceType_t::ROOK:
-						SetPiece( new Rook( teamCode ), j, i );
-						break;
-					case pieceType_t::KNIGHT:
-						SetPiece( new Knight( teamCode ), j, i );
-						break;
-					case pieceType_t::BISHOP:
-						SetPiece( new Bishop( teamCode ), j, i );
-						break;
-					case pieceType_t::QUEEN:
-						SetPiece( new Queen( teamCode ), j, i );
-						break;
-					case pieceType_t::KING:
-						SetPiece( new King( teamCode ), j, i );
-						break;
+				case pieceType_t::PAWN:
+					SetPiece( new Pawn( teamCode ), j, i );
+					break;
+				case pieceType_t::ROOK:
+					SetPiece( new Rook( teamCode ), j, i );
+					break;
+				case pieceType_t::KNIGHT:
+					SetPiece( new Knight( teamCode ), j, i );
+					break;
+				case pieceType_t::BISHOP:
+					SetPiece( new Bishop( teamCode ), j, i );
+					break;
+				case pieceType_t::QUEEN:
+					SetPiece( new Queen( teamCode ), j, i );
+					break;
+				case pieceType_t::KING:
+					SetPiece( new King( teamCode ), j, i );
+					break;
 				}
 			}
 		}
@@ -67,12 +70,18 @@ public:
 		++pieceNum;
 	}
 
-	bool Execute( const command_t& cmd ) {
+	resultCode_t Execute( const command_t& cmd ) {
 		const pieceHandle_t piece = FindPiece( cmd.team, cmd.pieceType, cmd.instance );
 		if ( piece == NoPiece ) {
-			return false;
+			return RESULT_GAME_INVALID_PIECE;
 		}
-		return PerformMoveAction( piece, cmd.x, cmd.y );
+		if ( GetWinner() != teamCode_t::NONE ) {
+			return RESULT_GAME_COMPLETE;
+		}
+		if ( PerformMoveAction( piece, cmd.x, cmd.y ) == false ) {
+			return RESULT_GAME_INVALID_MOVE;
+		}
+		return ( GetWinner() != teamCode_t::NONE ) ? RESULT_GAME_COMPLETE : RESULT_SUCCESS;
 	}
 
 	moveType_t IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
@@ -94,7 +103,7 @@ public:
 	pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance );
 
 	inline const Piece* GetPiece( const pieceHandle_t handle ) const {
-		return const_cast< ChessBoard* >( this )->GetPiece( handle );
+		return const_cast<ChessBoard*>( this )->GetPiece( handle );
 	}
 
 	inline Piece* GetPiece( const pieceHandle_t handle ) {
@@ -126,6 +135,10 @@ public:
 		}
 	}
 
+	inline teamCode_t GetWinner() const {
+		return winner;
+	}
+
 	void MovePiece( Piece* piece, const int targetX, const int targetY );
 	bool IsOpenToAttackAt( const pieceHandle_t pieceHdl, const int x, const int y ) const;
 
@@ -139,6 +152,9 @@ private:
 	bool PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
 	void CountTeamPieces();
 private:
+	teamCode_t		inCheck;
+	teamCode_t		winner;
+	mutable bool	enableOpenAttackCheck; // Disables recursion
 	int				pieceNum;
 	Piece*			pieces[ PieceCount ];
 	team_t			teams[ TeamCount ];
