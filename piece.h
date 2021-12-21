@@ -13,16 +13,16 @@ protected:
 		type = pieceType_t::NONE;
 		x = 0;
 		y = 0;
-		instance = 0;
 		numActions = 0;
 		moveCount = 0;
-		captured = false;
+		instance = 0;
 		handle = NoPiece;
 		board = nullptr;
 	}
 
 	bool IsValidAction( const int actionNum ) const;
 	void Move( const int targetX, const int targetY );
+	void Set( const int targetX, const int targetY );
 public:
 	moveType_t GetMoveType( const int actionNum ) const;
 	bool IsLocatedAt( const int actionX, const int actionY ) const;
@@ -36,8 +36,16 @@ public:
 	int GetActionCount() const {
 		return numActions;
 	}
+	void RemoveFromPlay() {
+		board = nullptr;
+		x = -1;
+		y = -1;
+	}
+	bool OnBoard() const {
+		return ( board != nullptr );
+	}
 private:
-	void BindBoard( const ChessBoard* board, const pieceHandle_t handle ) {
+	void BindBoard( ChessBoard* board, const pieceHandle_t handle ) {
 		this->board = board;
 		this->handle = handle;
 	}
@@ -50,20 +58,19 @@ public:
 protected:
 	int					moveCount;
 	int					numActions;
-	bool				captured;
 	moveAction_t		actions[ MaxActions ];
 	pieceHandle_t		handle;
-	const ChessBoard*	board;
+
+	ChessBoard*			board;
 
 	friend class ChessBoard;
 };
 
 class Pawn : public Piece {
 public:
-	Pawn( const teamCode_t team ) {
+	Pawn( const teamCode_t team ) : Piece() {
 		this->type = pieceType_t::PAWN;
 		this->team = team;
-		this->instance = instance;
 
 		const int direction = GetDirection();
 
@@ -84,10 +91,9 @@ private:
 
 class Rook : public Piece {
 public:
-	Rook( const teamCode_t team ) {
+	Rook( const teamCode_t team ) : Piece() {
 		this->type = pieceType_t::ROOK;
 		this->team = team;
-		this->instance = instance;
 
 		numActions = 0;
 		actions[ numActions++ ] = moveAction_t( 0, 1, ROOK_T );
@@ -101,10 +107,9 @@ public:
 
 class Knight : public Piece {
 public:
-	Knight( const teamCode_t team ) {
+	Knight( const teamCode_t team ) : Piece() {
 		this->type = pieceType_t::KNIGHT;
 		this->team = team;
-		this->instance = instance;
 
 		numActions = 0;
 		actions[ numActions++ ] = moveAction_t( -2, -1, KNIGHT_T1L2 );
@@ -122,10 +127,9 @@ public:
 
 class Bishop : public Piece {
 public:
-	Bishop( const teamCode_t team ) {
+	Bishop( const teamCode_t team ) : Piece() {
 		this->type = pieceType_t::BISHOP;
 		this->team = team;
-		this->instance = instance;
 
 		numActions = 0;
 		actions[ numActions++ ] = moveAction_t( -1, -1, BISHOP_TL );
@@ -139,10 +143,9 @@ public:
 
 class King : public Piece {
 public:
-	King( const teamCode_t team ) {
+	King( const teamCode_t team ) : Piece() {
 		this->type = pieceType_t::KING;
 		this->team = team;
-		this->instance = instance;
 
 		numActions = 0;
 		actions[ numActions++ ] = moveAction_t( -1, -1, KING_TL );
@@ -162,10 +165,9 @@ public:
 
 class Queen : public Piece {
 public:
-	Queen( const teamCode_t team ) {
+	Queen( const teamCode_t team ) : Piece() {
 		this->type = pieceType_t::QUEEN;
 		this->team = team;
-		this->instance = instance;
 
 		numActions = 0;
 		actions[ numActions++ ] = moveAction_t( -1, -1, QUEEN_TL );

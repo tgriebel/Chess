@@ -8,80 +8,63 @@ public:
 	static const int TeamPieceCount = 16;
 	static const int PieceCount = 32;
 
-	ChessBoard() {
-		nextHandle = 0;
-		// Create pieces/teams
-		{
-			for ( int i = 0; i < TeamCount; ++i ) {
-				const teamCode_t teamCode = static_cast<teamCode_t>( i );
-				for ( int j = 0; j < 8; ++j ) {
-					pieces[ nextHandle++ ] = new Pawn( teamCode );
-				}
-				pieces[ nextHandle++ ] = new Rook( teamCode );
-				pieces[ nextHandle++ ] = new Knight( teamCode );
-				pieces[ nextHandle++ ] = new Bishop( teamCode );
-				pieces[ nextHandle++ ] = new Queen( teamCode );
-				pieces[ nextHandle++ ] = new King( teamCode );
-				pieces[ nextHandle++ ] = new Bishop( teamCode );
-				pieces[ nextHandle++ ] = new Knight( teamCode );
-				pieces[ nextHandle++ ] = new Rook( teamCode );
-
-				teams[ i ].livingCount = TeamPieceCount;
-				teams[ i ].capturedCount = 0;
-				for ( int j = 0; j < TeamPieceCount; ++j ) {
-					const pieceHandle_t handle = ( i * TeamPieceCount + j );
-					pieces[ handle ]->BindBoard( this, j );
-					teams[ i ].pieces[ j ] = handle;
-					teams[ i ].captured[ j ] = NoPiece;
-				}
-			}
-		}
-
-		// Create board
-		{
-			const int whiteIndex = static_cast<int>( teamCode_t::WHITE );
-			const int blackIndex = static_cast<int>( teamCode_t::BLACK );
-			for ( int i = 0; i < BoardSize; ++i ) {
-				grid[ 0 ][ i ] = teams[ blackIndex ].pieces[ i + BoardSize ];
-				grid[ 1 ][ i ] = teams[ blackIndex ].pieces[ i ];
-
-				grid[ BoardSize - 2 ][ i ] = teams[ whiteIndex ].pieces[ i ];
-				grid[ BoardSize - 1 ][ i ] = teams[ whiteIndex ].pieces[ i + BoardSize ];
-			}
-
-			for ( int i = 2; i < ( BoardSize - 2 ); ++i ) {
-				for ( int j = 0; j < BoardSize; ++j ) {
-					grid[ i ][ j ] = NoPiece;
-				}
-			}
-		}
-
-		// Assign starting locations
-		{
-			for ( int i = 0; i < BoardSize; ++i ) {
-				for ( int j = 0; j < BoardSize; ++j ) {
-					Piece* piece = GetPiece( grid[ i ][ j ] );
-					if ( piece == nullptr ) {
-						continue;
-					}
-					piece->x = j;
-					piece->y = i;
-				}
-			}
-		}
+	ChessBoard( const gameConfig_t& cfg ) {
+		pieceNum = 0;
+		memset( pieces, 0, sizeof( Piece* ) * PieceCount );
+		config = cfg;
+		SetBoard( config );
 		CountTeamPieces();
 	}
 
 	~ChessBoard() {
-		nextHandle = 0;
-		for ( int i = 0; i < BoardSize; ++i ) {
-			for ( int j = 0; j < BoardSize; ++j ) {
-				grid[ i ][ j ] = NoPiece;
-			}
-		}
+		pieceNum = 0;
 		for ( int i = 0; i < PieceCount; ++i ) {
 			delete pieces[ i ];
 		}
+	}
+
+	void SetBoard( const gameConfig_t& cfg ) {
+		for ( int i = 0; i < BoardSize; ++i ) {
+			for ( int j = 0; j < BoardSize; ++j ) {
+				grid[ i ][ j ] = NoPiece;
+				const pieceType_t piece = cfg.board[ i ][ j ].piece;
+				const teamCode_t teamCode = cfg.board[ i ][ j ].team;
+				switch ( piece ) {
+					case pieceType_t::PAWN:
+						SetPiece( new Pawn( teamCode ), j, i );
+						break;
+					case pieceType_t::ROOK:
+						SetPiece( new Rook( teamCode ), j, i );
+						break;
+					case pieceType_t::KNIGHT:
+						SetPiece( new Knight( teamCode ), j, i );
+						break;
+					case pieceType_t::BISHOP:
+						SetPiece( new Bishop( teamCode ), j, i );
+						break;
+					case pieceType_t::QUEEN:
+						SetPiece( new Queen( teamCode ), j, i );
+						break;
+					case pieceType_t::KING:
+						SetPiece( new King( teamCode ), j, i );
+						break;
+				}
+			}
+		}
+	}
+
+	void SetPiece( Piece* piece, const int x, const int y ) {
+		pieces[ pieceNum ] = piece;
+		pieces[ pieceNum ]->BindBoard( this, pieceNum );
+		pieces[ pieceNum ]->Set( x, y );
+
+		const int teamIndex = static_cast<int>( piece->team );
+		const int pieceIndex = teams[ teamIndex ].livingCount;
+		teams[ teamIndex ].pieces[ pieceIndex ] = pieceNum;
+		++teams[ teamIndex ].livingCount;
+
+		grid[ y ][ x ] = pieceNum;
+		++pieceNum;
 	}
 
 	bool Execute( const command_t& cmd ) {
@@ -143,6 +126,7 @@ public:
 		}
 	}
 
+	void MovePiece( Piece* piece, const int targetX, const int targetY );
 	bool IsOpenToAttackAt( const pieceHandle_t pieceHdl, const int x, const int y ) const;
 
 private:
@@ -153,12 +137,12 @@ private:
 	void PromotePawn( const pieceHandle_t pieceHdl );
 	bool ForcedCheckMate( const teamCode_t team ) const;
 	bool PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
-	void MovePiece( Piece* piece, const int targetX, const int targetY );
-	void GetPieceLocation( const pieceHandle_t handle, int& x, int& y ) const;
 	void CountTeamPieces();
 private:
+	int				pieceNum;
 	Piece*			pieces[ PieceCount ];
 	team_t			teams[ TeamCount ];
 	pieceHandle_t	grid[ BoardSize ][ BoardSize ]; // (0,0) is top left
-	pieceHandle_t	nextHandle;
+
+	gameConfig_t	config;
 };

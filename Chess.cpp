@@ -4,6 +4,7 @@
 #include "chess.h"
 #include "piece.h"
 #include "board.h"
+#include "tests.h"
 
 #include <windows.h>
 
@@ -239,25 +240,43 @@ void PrintBoard( const ChessBoard& board, const bool printCaptures ) {
 	};
 }
 
-int main()
-{
-	SetWindowTitle( L"Chess by Thomas Griebel" );
-
-	ChessBoard board;
+void RunTestCommands( ChessBoard& board, std::vector< std::string >& commands ) {
 	int turnNum = 0;
 	teamCode_t turnTeam = teamCode_t::WHITE;
+	for ( auto it = commands.begin(); it != commands.end(); ++it ) {
+		command_t cmd{};
+		resultCode_t result = TranslateCommandString( board, turnTeam, *it, cmd );
+		if ( result != RESULT_INPUT_SUCCESS ) {
+			std::cout << *it << "-> Inavlid String" << std::endl;
+			continue;
+		}
+		if ( board.Execute( cmd ) == false ) {
+			std::cout << *it << "-> Invalid Move" << std::endl;
+			continue;
+		}
+		std::cout << *it << "-> Completed" << std::endl;
+		turnTeam = ( turnTeam == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
+	}
+	ClearScreen();
+	PrintBoard( board, true );
+}
+
+void RunCmdLineGameLoop( ChessBoard& board ) {
+	int turnNum = 0;
+	teamCode_t turnTeam = teamCode_t::WHITE;
+
 	while ( true ) {
 		teamCode_t nextTeam;
 
 		// Print Board
-		clear_screen:
-		{		
+	clear_screen:
+		{
 			ClearScreen();
 			//std::wcout << L"♔";
 			PrintBoard( board, true );
 		}
 
-		read_input:
+	read_input:
 		// Input
 		std::string commandString;
 		{
@@ -274,7 +293,7 @@ int main()
 			commandString = c_str;
 			std::transform( commandString.begin(), commandString.end(), commandString.begin(), []( unsigned char c ) { return std::tolower( c ); } );
 		}
-		
+
 		// Execute Move
 		{
 			if ( commandString == "exit" ) {
@@ -294,8 +313,23 @@ int main()
 				goto read_input;
 			}
 		}
-	//	turnTeam = nextTeam;
+		turnTeam = nextTeam;
 	}
 exit_program:
 	std::cout << "Game finished" << std::endl;
+}
+
+int main()
+{
+	SetWindowTitle( L"Chess by Thomas Griebel" );
+
+	gameConfig_t cfg;
+	//PawnMovement_Init( cfg );
+	std::vector< std::string > commands;
+	GameTest0( cfg, commands );
+
+	ChessBoard board( cfg );
+	RunTestCommands( board, commands );
+
+	RunCmdLineGameLoop( board );
 }

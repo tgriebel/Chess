@@ -18,9 +18,7 @@ void ChessBoard::CapturePiece( const teamCode_t attacker, const int x, const int
 	if ( piece == nullptr ) {
 		return;
 	}
-	piece->x = -1;
-	piece->y = -1;
-	piece->captured = true;
+	piece->RemoveFromPlay();
 
 	const int index = static_cast<int>( piece->team );
 	const int attackerIndex = static_cast<int>( attacker );
@@ -30,10 +28,10 @@ void ChessBoard::CapturePiece( const teamCode_t attacker, const int x, const int
 	teams[ attackerIndex ].captured[ capturedCount ] = pieceHdl;
 	++capturedCount;
 
-	for ( int i = 0; i < TeamPieceCount; ++i ) {
+	for ( int i = 0; i < playCount; ++i ) {
 		if ( teams[ index ].pieces[ i ] == pieceHdl ) {
 			teams[ index ].pieces[ i ] = teams[ index ].pieces[ playCount - 1 ];
-			--teams[ index ].livingCount;
+			--playCount;
 		}
 	}
 }
@@ -74,7 +72,7 @@ void ChessBoard::CountTeamPieces() {
 		for ( int j = 0; j < static_cast<int>( pieceType_t::COUNT ); ++j ) {
 			teams[ i ].typeCounts[ j ] = 0;
 		}
-		for ( int j = 0; j < TeamPieceCount; ++j ) {
+		for ( int j = 0; j < teams[ i ].livingCount; ++j ) {
 			Piece* piece = GetPiece( teams[ i ].pieces[ j ] );
 			const pieceType_t type = piece->type;
 			const int index = static_cast<int>( type );
@@ -103,11 +101,13 @@ void ChessBoard::PromotePawn( const pieceHandle_t pieceHdl ) {
 		return;
 	}
 	const teamCode_t team = piece->team;
-	const int index = static_cast<int>( piece->team );
+	const int x = piece->x;
+	const int y = piece->y;
 
 	delete pieces[ pieceHdl ];
 	pieces[ pieceHdl ] = new Queen( team );
 	pieces[ pieceHdl ]->BindBoard( this, pieceHdl );
+	MovePiece( pieces[ pieceHdl ], x, y );
 }
 
 void ChessBoard::MovePiece( Piece* piece, const int targetX, const int targetY ) {
@@ -167,7 +167,7 @@ pieceHandle_t ChessBoard::FindPiece( const teamCode_t team, const pieceType_t ty
 	if ( ( team == teamCode_t::NONE ) || ( type == pieceType_t::NONE ) ) {
 		return NoPiece;
 	}
-	for ( int i = 0; i < PieceCount; ++i ) {
+	for ( int i = 0; i < pieceNum; ++i ) {
 		const bool teamsMatch = ( pieces[ i ]->team == team );
 		const bool piecesMatch = ( pieces[ i ]->type == type );
 		const bool instanceMatch = ( pieces[ i ]->instance == instance );
@@ -178,23 +178,11 @@ pieceHandle_t ChessBoard::FindPiece( const teamCode_t team, const pieceType_t ty
 	return NoPiece;
 }
 
-void ChessBoard::GetPieceLocation( const pieceHandle_t handle, int& x, int& y ) const {
-	for ( int i = 0; i < BoardSize; ++i ) {
-		for ( int j = 0; j < BoardSize; ++j ) {
-			if ( grid[ i ][ j ] != handle ) {
-				x = j;
-				y = i;
-				return;
-			}
-		}
-	}
-}
-
 bool ChessBoard::IsValidHandle( const pieceHandle_t handle ) const {
 	if ( handle == NoPiece ) {
 		return false;
 	}
-	if ( ( handle < 0 ) && ( handle >= PieceCount ) ) {
+	if ( ( handle < 0 ) && ( handle >= pieceNum ) ) {
 		return false;
 	}
 	return true;

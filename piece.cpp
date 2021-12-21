@@ -11,6 +11,11 @@ void Piece::Move( const int targetX, const int targetY ) {
 	++moveCount;
 }
 
+void Piece::Set( const int targetX, const int targetY ) {
+	this->x = targetX;
+	this->y = targetY;
+}
+
 moveType_t Piece::GetMoveType( const int actionNum ) const {
 	if ( IsValidAction( actionNum ) == false ) {
 		return moveType_t::NONE;
@@ -98,11 +103,39 @@ bool King::InActionPath( const int actionNum, const int targetX, const int targe
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
 	}
-	if ( board->IsOpenToAttackAt( handle, targetX, targetY ) == false ) {
+	//if ( board->IsOpenToAttackAt( handle, targetX, targetY ) == false ) {
+	//	return false;
+	//}
+	const int stepCount = GetStepCount( actionNum, targetX, targetY, 1 );
+	if ( stepCount != 1 ) {
 		return false;
 	}
-	const int stepCount = GetStepCount( actionNum, targetX, targetY, 1 );
-	return ( stepCount == 1 );
+
+	Piece* rook = nullptr;
+	const moveType_t type = actions[ actionNum ].type;
+	if ( type == moveType_t::KING_CASTLE_L ) {
+		rook = board->GetPiece( 0, y );
+	} else if ( type == moveType_t::KING_CASTLE_R ) {
+		rook = board->GetPiece( BoardSize, y );
+	} else {
+		return true;
+	}
+	if ( ( rook == nullptr ) || ( rook->type != pieceType_t::ROOK ) ) {
+		return false;
+	}
+	if ( HasMoved() || rook->HasMoved() ) {
+		return false;
+	}
+	const moveType_t rookMove = board->IsLegalMove( rook, x, y );
+	if ( rookMove == moveType_t::NONE ) {
+		return false;
+	}
+
+	const int flankOffset = ( targetX > x ) ? 1 : -1;
+	const int rookTargetX = x + flankOffset;
+	board->MovePiece( rook, rookTargetX, y );
+
+	return true;
 }
 
 bool Queen::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
