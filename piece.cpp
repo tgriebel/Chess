@@ -132,6 +132,9 @@ bool King::InActionPath( const int actionNum, const int targetX, const int targe
 	if ( rookMove == moveType_t::NONE ) {
 		return false;
 	}
+	if ( board->GetPiece( rookTargetX, y ) != nullptr ) {
+		return false;
+	}
 	board->MovePiece( rook, rookTargetX, y );
 
 	return true;
