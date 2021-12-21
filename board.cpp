@@ -125,29 +125,6 @@ bool ChessBoard::PerformMoveAction( const pieceHandle_t pieceHdl, const int targ
 	if ( legalMove == moveType_t::NONE ) {
 		return false;
 	}
-
-	if ( piece->type == pieceType_t::KING ) {
-		Piece* rook = nullptr;
-		if ( legalMove == moveType_t::KING_CASTLE_L ) {
-			rook = GetPiece( 0, piece->y );
-		} else if ( legalMove == moveType_t::KING_CASTLE_R ) {
-			rook = GetPiece( BoardSize, piece->y );
-		}
-		if ( ( rook == nullptr ) || ( rook->type != pieceType_t::ROOK ) ) {
-			return false;
-		}
-		if ( piece->HasMoved() || rook->HasMoved() ) {
-			return false;
-		}
-		const moveType_t rookMove = IsLegalMove( rook, piece->x, piece->y );
-		if ( rookMove == moveType_t::NONE ) {
-			return false;
-		}
-		const int flankOffset = ( targetX > piece->x ) ? 1 : -1;
-		const int rookTargetX = piece->x + flankOffset;
-		MovePiece( rook, rookTargetX, piece->y );
-	}
-
 	if ( GetTeam( targetX, targetY ) != piece->team ) {
 		CapturePiece( piece->team, targetX, targetY );
 	}

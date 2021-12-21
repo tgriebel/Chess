@@ -49,6 +49,12 @@ static void KingMovement_Init( gameConfig_t& config ) {
 	config.board[ 5 ][ 5 ] = BK;
 }
 
+static void WhiteCastle_Init( gameConfig_t& config ) {
+	config.board[ 7 ][ 1 ] = CL;
+	config.board[ 7 ][ 2 ] = CL;
+	config.board[ 7 ][ 3 ] = CL;
+}
+
 static void GameTest0( gameConfig_t& config, std::vector< std::string >& commands ) {
 	commands.reserve( 100 );
 	commands.push_back( "p0a4" );

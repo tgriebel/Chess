@@ -116,7 +116,7 @@ bool King::InActionPath( const int actionNum, const int targetX, const int targe
 	if ( type == moveType_t::KING_CASTLE_L ) {
 		rook = board->GetPiece( 0, y );
 	} else if ( type == moveType_t::KING_CASTLE_R ) {
-		rook = board->GetPiece( BoardSize, y );
+		rook = board->GetPiece( BoardSize - 1, y );
 	} else {
 		return true;
 	}
@@ -126,13 +126,12 @@ bool King::InActionPath( const int actionNum, const int targetX, const int targe
 	if ( HasMoved() || rook->HasMoved() ) {
 		return false;
 	}
-	const moveType_t rookMove = board->IsLegalMove( rook, x, y );
+	const int flankOffset = ( targetX > x ) ? -1 : 1;
+	const int rookTargetX = targetX + flankOffset;
+	const moveType_t rookMove = board->IsLegalMove( rook, rookTargetX, y );
 	if ( rookMove == moveType_t::NONE ) {
 		return false;
 	}
-
-	const int flankOffset = ( targetX > x ) ? 1 : -1;
-	const int rookTargetX = x + flankOffset;
 	board->MovePiece( rook, rookTargetX, y );
 
 	return true;

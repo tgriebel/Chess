@@ -1,5 +1,6 @@
 #pragma once
 #include <assert.h>
+#include <string>
 
 static const int BoardSize = 8;
 typedef int pieceHandle_t;
@@ -56,9 +57,9 @@ enum moveType_t : int {
 	PAWN_T2X,
 	PAWN_KILL_L,
 	PAWN_KILL_R,
-	PAWN_ACTIONS,
+	PAWN_ACTIONS = ( PAWN_KILL_R - PAWN_T ) + 1,
 
-	KNIGHT_T1L2 = 0,
+	KNIGHT_T1L2,
 	KNIGHT_T2L1,
 	KNIGHT_T1R2,
 	KNIGHT_T2R1,
@@ -66,21 +67,21 @@ enum moveType_t : int {
 	KNIGHT_B2R1,
 	KNIGHT_B2L1,
 	KNIGHT_B1L2,
-	KNIGHT_ACTIONS,
+	KNIGHT_ACTIONS = ( KNIGHT_B1L2 - KNIGHT_T1L2 ) + 1,
 
-	ROOK_L = 0,
+	ROOK_L,
 	ROOK_R,
 	ROOK_T,
 	ROOK_B,
-	ROOK_ACTIONS,
+	ROOK_ACTIONS = ( ROOK_B - ROOK_L ) + 1,
 
-	BISHOP_TL = 0,
+	BISHOP_TL,
 	BISHOP_TR,
 	BISHOP_BR,
 	BISHOP_BL,
-	BISHOP_ACTIONS,
+	BISHOP_ACTIONS = ( BISHOP_BL - BISHOP_TL ) + 1,
 
-	KING_TL = 0,
+	KING_TL,
 	KING_T,
 	KING_TR,
 	KING_R,
@@ -90,9 +91,9 @@ enum moveType_t : int {
 	KING_L,
 	KING_CASTLE_L,
 	KING_CASTLE_R,
-	KING_ACTIONS,
+	KING_ACTIONS = ( KING_CASTLE_R - KING_TL ) + 1,
 
-	QUEEN_TL = 0,
+	QUEEN_TL,
 	QUEEN_T,
 	QUEEN_TR,
 	QUEEN_R,
@@ -100,7 +101,7 @@ enum moveType_t : int {
 	QUEEN_B,
 	QUEEN_BL,
 	QUEEN_L,
-	QUEEN_ACTIONS,
+	QUEEN_ACTIONS = ( QUEEN_L - QUEEN_TL ) + 1,
 
 	MOVE_COUNT = ( PAWN_ACTIONS + KNIGHT_ACTIONS + ROOK_ACTIONS + BISHOP_ACTIONS + KING_ACTIONS + QUEEN_ACTIONS ),
 };
@@ -211,3 +212,5 @@ struct gameConfig_t {
 
 	squareCfg_t board[ BoardSize ][ BoardSize ];
 };
+
+void LoadConfig( const std::string& fileName, gameConfig_t& config );
