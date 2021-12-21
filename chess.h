@@ -1,4 +1,5 @@
 #pragma once
+#include <assert.h>
 
 static const int BoardSize = 8;
 typedef int pieceHandle_t;
@@ -8,27 +9,31 @@ static const pieceHandle_t OffBoard = -2;
 enum class pieceType_t : int {
 	NONE = -1,
 	PAWN = 0,
-	ROOK = 1,
-	KNIGHT = 2,
-	BISHOP = 3,
-	KING = 4,
-	QUEEN = 5,
+	ROOK,
+	KNIGHT,
+	BISHOP,
+	KING,
+	QUEEN,
+	COUNT,
 };
 
 enum class teamCode_t : int {
-	UNASSIGNED = -1,
+	NONE = -1,
 	WHITE = 0,
 	BLACK = 1,
 	COUNT
 };
 
 enum moveType_t : int {
-	PAWN_T,
+	NONE = -1,
+
+	PAWN_T = 0,
 	PAWN_T2X,
 	PAWN_KILL_L,
 	PAWN_KILL_R,
+	PAWN_ACTIONS,
 
-	KNIGHT_T1L2,
+	KNIGHT_T1L2 = 0,
 	KNIGHT_T2L1,
 	KNIGHT_T1R2,
 	KNIGHT_T2R1,
@@ -36,18 +41,21 @@ enum moveType_t : int {
 	KNIGHT_B2R1,
 	KNIGHT_B2L1,
 	KNIGHT_B1L2,
+	KNIGHT_ACTIONS,
 
-	ROOK_L,
+	ROOK_L = 0,
 	ROOK_R,
 	ROOK_T,
 	ROOK_B,
+	ROOK_ACTIONS,
 
-	BISHOP_TL,
+	BISHOP_TL = 0,
 	BISHOP_TR,
 	BISHOP_BR,
 	BISHOP_BL,
+	BISHOP_ACTIONS,
 
-	KING_TL,
+	KING_TL = 0,
 	KING_T,
 	KING_TR,
 	KING_R,
@@ -55,8 +63,11 @@ enum moveType_t : int {
 	KING_B,
 	KING_BL,
 	KING_L,
+	KING_CASTLE_L,
+	KING_CASTLE_R,
+	KING_ACTIONS,
 
-	QUEEN_TL,
+	QUEEN_TL = 0,
 	QUEEN_T,
 	QUEEN_TR,
 	QUEEN_R,
@@ -64,9 +75,9 @@ enum moveType_t : int {
 	QUEEN_B,
 	QUEEN_BL,
 	QUEEN_L,
+	QUEEN_ACTIONS,
 
-	MOVE_COUNT,
-	NONE,
+	MOVE_COUNT = ( PAWN_ACTIONS + KNIGHT_ACTIONS + ROOK_ACTIONS + BISHOP_ACTIONS + KING_ACTIONS + QUEEN_ACTIONS ),
 };
 
 struct moveAction_t {
@@ -95,4 +106,6 @@ struct team_t {
 	pieceHandle_t	captured[ 16 ];
 	int				livingCount;
 	int				capturedCount;
+	int				typeCounts[ (int)pieceType_t::COUNT ];
+	int				captureTypeCounts[ (int)pieceType_t::COUNT ];
 };

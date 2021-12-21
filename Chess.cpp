@@ -129,19 +129,18 @@ resultCode_t TranslateCommandString( const ChessBoard& board, const teamCode_t t
 	if ( commandString.size() != 4 ) {
 		return RESULT_INPUT_INVALID_COMMAND;
 	}
-	command_t cmd{};
-	cmd.team = team;
-	cmd.pieceType = GetPieceType( commandString[ 0 ] );
-	cmd.instance = commandString[ 1 ] - '0';
-	if ( board.FindPiece( cmd.team, cmd.pieceType, cmd.instance ) == NoPiece ) {
+	outCmd.team = team;
+	outCmd.pieceType = GetPieceType( commandString[ 0 ] );
+	outCmd.instance = commandString[ 1 ] - '0';
+	if ( board.FindPiece( outCmd.team, outCmd.pieceType, outCmd.instance ) == NoPiece ) {
 		return RESULT_INPUT_INVALID_PIECE;
 	}
-	cmd.x = GetFileNum( commandString[ 2 ] );
-	if ( ( cmd.x < 0 ) && ( cmd.x >= BoardSize ) ) {
+	outCmd.x = GetFileNum( commandString[ 2 ] );
+	if ( ( outCmd.x < 0 ) && ( outCmd.x >= BoardSize ) ) {
 		return RESULT_INPUT_INVALID_FILE;
 	}
-	cmd.y = GetRankNum( commandString[ 3 ] );
-	if ( ( cmd.y < 0 ) && ( cmd.y >= BoardSize ) ) {
+	outCmd.y = GetRankNum( commandString[ 3 ] );
+	if ( ( outCmd.y < 0 ) && ( outCmd.y >= BoardSize ) ) {
 		return RESULT_INPUT_INVALID_RANK;
 	}
 	return RESULT_INPUT_SUCCESS;
@@ -189,15 +188,15 @@ std::string PrintTeamCapturres( const ChessBoard& board, const teamCode_t team )
 	const Piece* captures[ ChessBoard::TeamPieceCount ];
 	board.GetTeamCaptures( team, captures, captureCount );
 	std::string captureFormat;
-	captureFormat = "    ";
+	captureFormat = "    Captures: ";
 	for ( int i = 0; i < captureCount; ++i ) {
 		if ( captures == nullptr ) {
 			break;
 		}
 		captureFormat += GetPieceCode( captures[ i ]->type );
+		captureFormat += captures[ i ]->instance + '0';
 		captureFormat += ( team == teamCode_t::BLACK ) ? "" : "\'";
-		captureFormat += captures[ i ]->instance;
-		captureFormat += " | ";
+		captureFormat += ", ";
 	}
 	return captureFormat;
 }
@@ -295,7 +294,7 @@ int main()
 				goto read_input;
 			}
 		}
-		turnTeam = nextTeam;
+	//	turnTeam = nextTeam;
 	}
 exit_program:
 	std::cout << "Game finished" << std::endl;

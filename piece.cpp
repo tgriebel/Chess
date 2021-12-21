@@ -28,6 +28,9 @@ void Piece::CalculateStep( const int actionNum, int& actionX, int& actionY ) con
 }
 
 int Piece::GetStepCount( const int actionNum, const int targetX, const int targetY, const int maxSteps ) const {
+	if ( board->GetTeam( targetX, targetY ) == team ) {
+		return BoardSize;
+	}
 	int nextX = x;
 	int nextY = y;
 	int prevDist = INT_MAX;
@@ -37,30 +40,32 @@ int Piece::GetStepCount( const int actionNum, const int targetX, const int targe
 		prevDist = dist;
 		dist = abs( targetX - nextX ) + abs( targetY - nextY );
 		if ( dist >= prevDist ) {
-			return 0;
+			return BoardSize;
 		}
 		if ( dist == 0 ) {
 			return step;
 		}
-		if ( board->IsOccupied( nextX, nextY ) ) {
-			return 0;
+		if ( board->GetPiece( nextX, nextY ) != nullptr ) {
+			return BoardSize;
 		}
 	}
-	return 0;
+	return BoardSize;
 }
 
 bool Pawn::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
 	}
-	const bool isOccupied = board->IsOccupied( targetX, targetY );
+	const teamCode_t occupiedTeam = board->GetTeam( targetX, targetY );
+	const bool isOccupied = ( occupiedTeam != teamCode_t::NONE );
 	const int steps = GetStepCount( actionNum, targetX, targetY, 1 );
 	const moveType_t type = actions[ actionNum ].type;
 	if ( type == PAWN_T2X ) {
 		return ( isOccupied == false ) && ( steps == 1 ) && ( HasMoved() == false );
 	}
 	if ( ( type == PAWN_KILL_L ) || ( type == PAWN_KILL_R ) ) {
-		return isOccupied && ( steps == 1 );
+		const bool isEnemy = isOccupied && ( occupiedTeam != team );
+		return isEnemy && ( steps == 1 );
 	}
 	return ( isOccupied == false ) && ( steps == 1 );
 }
@@ -70,14 +75,14 @@ bool Rook::InActionPath( const int actionNum, const int targetX, const int targe
 		return false;
 	}
 	const int stepCount = GetStepCount( actionNum, targetX, targetY, BoardSize );
-	return ( stepCount <= BoardSize );
+	return ( stepCount < BoardSize );
 }
 
-bool Knight::InActionPath( const int actionNum, const int actionX, const int actionY ) const {
+bool Knight::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
 	}
-	const int stepCount = GetStepCount( actionNum, actionX, actionY, 1 );
+	const int stepCount = GetStepCount( actionNum, targetX, targetY, 1 );
 	return ( stepCount == 1 );
 }
 
@@ -86,14 +91,17 @@ bool Bishop::InActionPath( const int actionNum, const int targetX, const int tar
 		return false;
 	}
 	const int stepCount = GetStepCount( actionNum, targetX, targetY, BoardSize );
-	return ( stepCount <= BoardSize );
+	return ( stepCount < BoardSize );
 }
 
-bool King::InActionPath( const int actionNum, const int actionX, const int actionY ) const {
+bool King::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
 	}
-	const int stepCount = GetStepCount( actionNum, actionX, actionY, 1 );
+	if ( board->IsOpenToAttackAt( handle, targetX, targetY ) == false ) {
+		return false;
+	}
+	const int stepCount = GetStepCount( actionNum, targetX, targetY, 1 );
 	return ( stepCount == 1 );
 }
 
@@ -102,5 +110,5 @@ bool Queen::InActionPath( const int actionNum, const int targetX, const int targ
 		return false;
 	}
 	const int stepCount = GetStepCount( actionNum, targetX, targetY, BoardSize );
-	return ( stepCount <= BoardSize );
+	return ( stepCount < BoardSize );
 }

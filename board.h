@@ -14,22 +14,17 @@ public:
 		{
 			for ( int i = 0; i < TeamCount; ++i ) {
 				const teamCode_t teamCode = static_cast<teamCode_t>( i );
-				pieces[ nextHandle++ ] = new Pawn( teamCode, 0 );
-				pieces[ nextHandle++ ] = new Pawn( teamCode, 1 );
-				pieces[ nextHandle++ ] = new Pawn( teamCode, 2 );
-				pieces[ nextHandle++ ] = new Pawn( teamCode, 3 );
-				pieces[ nextHandle++ ] = new Pawn( teamCode, 4 );
-				pieces[ nextHandle++ ] = new Pawn( teamCode, 5 );
-				pieces[ nextHandle++ ] = new Pawn( teamCode, 6 );
-				pieces[ nextHandle++ ] = new Pawn( teamCode, 7 );
-				pieces[ nextHandle++ ] = new Rook( teamCode, 0 );
-				pieces[ nextHandle++ ] = new Knight( teamCode, 0 );
-				pieces[ nextHandle++ ] = new Bishop( teamCode, 0 );
-				pieces[ nextHandle++ ] = new Queen( teamCode, 0 );
-				pieces[ nextHandle++ ] = new King( teamCode, 0 );
-				pieces[ nextHandle++ ] = new Bishop( teamCode, 1 );
-				pieces[ nextHandle++ ] = new Knight( teamCode, 1 );
-				pieces[ nextHandle++ ] = new Rook( teamCode, 1 );
+				for ( int j = 0; j < 8; ++j ) {
+					pieces[ nextHandle++ ] = new Pawn( teamCode );
+				}
+				pieces[ nextHandle++ ] = new Rook( teamCode );
+				pieces[ nextHandle++ ] = new Knight( teamCode );
+				pieces[ nextHandle++ ] = new Bishop( teamCode );
+				pieces[ nextHandle++ ] = new Queen( teamCode );
+				pieces[ nextHandle++ ] = new King( teamCode );
+				pieces[ nextHandle++ ] = new Bishop( teamCode );
+				pieces[ nextHandle++ ] = new Knight( teamCode );
+				pieces[ nextHandle++ ] = new Rook( teamCode );
 
 				teams[ i ].livingCount = TeamPieceCount;
 				teams[ i ].capturedCount = 0;
@@ -74,6 +69,7 @@ public:
 				}
 			}
 		}
+		CountTeamPieces();
 	}
 
 	~ChessBoard() {
@@ -98,8 +94,10 @@ public:
 
 	bool IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
 
-	inline bool IsOccupied( const int x, const int y ) const {
-		return ( GetHandle( x, y ) != NoPiece );
+	teamCode_t GetTeam( const int x, const int y ) const {
+		const Piece* targetPiece = GetPiece( x, y );
+		const bool isOccupied = ( targetPiece != nullptr );
+		return ( targetPiece != nullptr ) ? targetPiece->team : teamCode_t::NONE;
 	}
 
 	inline bool IsOnBoard( const int x, const int y ) const {
@@ -145,12 +143,18 @@ public:
 		}
 	}
 
+	bool IsOpenToAttackAt( const pieceHandle_t pieceHdl, const int x, const int y ) const;
+
 private:
 	bool IsValidHandle( const pieceHandle_t handle ) const;
 	pieceHandle_t GetHandle( const int x, const int y ) const;
 	void CapturePiece( const teamCode_t attacker, const int x, const int y );
+	bool CanPromotePawn( const Pawn* pawn ) const;
+	void PromotePawn( const pieceHandle_t pieceHdl );
+	bool ForcedCheckMate( const teamCode_t team ) const;
 	bool MovePiece( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
 	void GetPieceLocation( const pieceHandle_t handle, int& x, int& y ) const;
+	void CountTeamPieces();
 private:
 	Piece*			pieces[ PieceCount ];
 	team_t			teams[ TeamCount ];

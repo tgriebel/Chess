@@ -1,2 +1,5 @@
 ﻿  Chess.cpp
+  board.cpp
+  piece.cpp
+  Generating Code...
   Chess.vcxproj -> C:\Users\thoma\source\repos\Chess\Debug\Chess.exe
