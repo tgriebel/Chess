@@ -2,6 +2,8 @@
 #include "chess.h"
 #include "piece.h"
 
+typedef void ( *callback_t )( callbackEvent_t& );
+
 class ChessBoard {
 public:
 	static const int TeamCount = 2;
@@ -30,30 +32,26 @@ public:
 		for ( int i = 0; i < BoardSize; ++i ) {
 			for ( int j = 0; j < BoardSize; ++j ) {
 				grid[ i ][ j ] = NoPiece;
-				const pieceType_t piece = cfg.board[ i ][ j ].piece;
+				const pieceType_t pieceType = cfg.board[ i ][ j ].piece;
 				const teamCode_t teamCode = cfg.board[ i ][ j ].team;
-				switch ( piece ) {
-				case pieceType_t::PAWN:
-					SetPiece( new Pawn( teamCode ), j, i );
-					break;
-				case pieceType_t::ROOK:
-					SetPiece( new Rook( teamCode ), j, i );
-					break;
-				case pieceType_t::KNIGHT:
-					SetPiece( new Knight( teamCode ), j, i );
-					break;
-				case pieceType_t::BISHOP:
-					SetPiece( new Bishop( teamCode ), j, i );
-					break;
-				case pieceType_t::QUEEN:
-					SetPiece( new Queen( teamCode ), j, i );
-					break;
-				case pieceType_t::KING:
-					SetPiece( new King( teamCode ), j, i );
-					break;
+				Piece* piece = CreatePiece( pieceType, teamCode );
+				if ( piece != nullptr ) {
+					SetPiece( piece, j, i );
 				}
 			}
 		}
+	}
+
+	Piece* CreatePiece( const pieceType_t pieceType, const teamCode_t teamCode ) {
+		switch ( pieceType ) {
+		case pieceType_t::PAWN:		return new Pawn( teamCode );
+		case pieceType_t::ROOK:		return new Rook( teamCode );
+		case pieceType_t::KNIGHT:	return new Knight( teamCode );
+		case pieceType_t::BISHOP:	return new Bishop( teamCode );
+		case pieceType_t::QUEEN:	return new Queen( teamCode );
+		case pieceType_t::KING:		return new King( teamCode );
+		}
+		return nullptr;
 	}
 
 	void SetPiece( Piece* piece, const int x, const int y ) {
@@ -135,6 +133,10 @@ public:
 		}
 	}
 
+	void SetEventCallback( callback_t callback ) {
+		this->callback = callback;
+	}
+
 	inline teamCode_t GetWinner() const {
 		return winner;
 	}
@@ -159,6 +161,7 @@ private:
 	Piece*			pieces[ PieceCount ];
 	team_t			teams[ TeamCount ];
 	pieceHandle_t	grid[ BoardSize ][ BoardSize ]; // (0,0) is top left
+	callback_t		callback;
 
 	gameConfig_t	config;
 };

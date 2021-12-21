@@ -137,12 +137,22 @@ void RunTestCommands( ChessBoard& board, std::vector< std::string >& commands ) 
 	PrintBoard( board, true );
 }
 
+void ProcessEvent( callbackEvent_t& event ) {
+	std::cout << "Enter Pawn Promotion\n";
+	std::cout << "(Q)ueen, K(N)ight, (B)ishop, (R)ook: ";
+
+	std::string choice;
+	std::cin >> choice;
+	event.promotionType = GetPieceType( choice[ 0 ] );
+}
+
 void RunCmdLineGameLoop( gameConfig_t& cfg ) {
 reset_game:
 	int turnNum = 0;
 	teamCode_t turnTeam = teamCode_t::WHITE;
 	teamCode_t winner = teamCode_t::NONE;
 	ChessBoard board( cfg );
+	board.SetEventCallback( &ProcessEvent );
 
 	while ( true ) {
 		teamCode_t nextTeam;

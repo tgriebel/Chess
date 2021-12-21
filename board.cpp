@@ -9,6 +9,7 @@ moveType_t ChessBoard::IsLegalMove( const Piece* piece, const int targetX, const
 			return static_cast< moveType_t >( action );
 		}
 	}
+	// TODO: IsOpenToAttackAt needs to go here since any piece can put the king at risk
 	return moveType_t::NONE;
 }
 
@@ -110,12 +111,32 @@ void ChessBoard::PromotePawn( const pieceHandle_t pieceHdl ) {
 	if ( ( piece == nullptr ) || ( piece->type != pieceType_t::PAWN ) ) {
 		return;
 	}
+
+	callbackEvent_t event;
+	event.type = PAWN_PROMOTION;
+	event.promotionType = pieceType_t::NONE;
+	
+	if ( callback != nullptr ) {
+		( *callback )( event );
+	}
+
+	bool invalidChoice = true;
+	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::QUEEN );
+	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::KNIGHT );
+	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::BISHOP );
+	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::ROOK );
+
+	if ( invalidChoice ) {
+		event.promotionType = pieceType_t::QUEEN;
+	}
+
 	const teamCode_t team = piece->team;
 	const int x = piece->x;
 	const int y = piece->y;
 
 	delete pieces[ pieceHdl ];
-	pieces[ pieceHdl ] = new Queen( team );
+
+	pieces[ pieceHdl ] = CreatePiece( event.promotionType, team );
 	pieces[ pieceHdl ]->BindBoard( this, pieceHdl );
 	MovePiece( pieces[ pieceHdl ], x, y );
 }
@@ -145,6 +166,8 @@ bool ChessBoard::PerformMoveAction( const pieceHandle_t pieceHdl, const int targ
 			PromotePawn( pieceHdl );
 		}
 	}
+
+//	if( ForcedCheckMate( ) )
 
 	CountTeamPieces();
 	return true;

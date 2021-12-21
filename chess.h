@@ -112,6 +112,15 @@ enum moveType_t : int {
 	MOVE_COUNT = ( PAWN_ACTIONS + KNIGHT_ACTIONS + ROOK_ACTIONS + BISHOP_ACTIONS + KING_ACTIONS + QUEEN_ACTIONS ),
 };
 
+enum callbackEventType_t {
+	PAWN_PROMOTION
+};
+
+struct callbackEvent_t {
+	callbackEventType_t	type;
+	pieceType_t			promotionType;
+};
+
 struct moveAction_t {
 	moveAction_t() {
 		x = 0;
