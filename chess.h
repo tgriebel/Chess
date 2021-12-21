@@ -6,6 +6,31 @@ typedef int pieceHandle_t;
 static const pieceHandle_t NoPiece = -1;
 static const pieceHandle_t OffBoard = -2;
 
+enum resultCode_t {
+	ERROR_RANGE_START				= -101,
+	RESULT_INPUT_INVALID_COMMAND	= ERROR_RANGE_START,
+	RESULT_INPUT_INVALID_PIECE,
+	RESULT_INPUT_INVALID_FILE,
+	RESULT_INPUT_INVALID_RANK,
+	RESULT_INPUT_INVALID_MOVE,
+	ERROR_COUNT						= ( RESULT_INPUT_INVALID_MOVE - RESULT_INPUT_INVALID_COMMAND ) + 1,
+	RESULT_INPUT_SUCCESS			= 0,
+};
+
+static const char* ErrorMsgs[ ERROR_COUNT ] =
+{
+	"Invalid command",		// RESULT_INPUT_INVALID_COMMAND
+	"Invalid piece",		// RESULT_INPUT_INVALID_PIECE
+	"File out of range",	// RESULT_INPUT_INVALID_FILE
+	"Rank out of range",	// RESULT_INPUT_INVALID_RANK
+	"Invalid move",			// RESULT_INPUT_INVALID_MOVE
+};
+
+inline const char* GetErrorMsg( const resultCode_t code ) {
+	const int index = code - ERROR_RANGE_START;
+	return ErrorMsgs[ index ];
+}
+
 enum class pieceType_t : int {
 	NONE = -1,
 	PAWN = 0,

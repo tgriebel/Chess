@@ -51,5 +51,7 @@ static void KingMovement_Init( gameConfig_t& config ) {
 
 static void GameTest0( gameConfig_t& config, std::vector< std::string >& commands ) {
 	commands.reserve( 100 );
-	commands.push_back( "p0a3" );
+	commands.push_back( "p0a4" );
+	commands.push_back( "p0a5" );
+	commands.push_back( "p0a5" );
 }

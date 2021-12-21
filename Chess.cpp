@@ -5,32 +5,13 @@
 #include "piece.h"
 #include "board.h"
 #include "tests.h"
+#include "commands.h"
 
 #include <windows.h>
 
-enum resultCode_t {
-	ERROR_RANGE_START				= -101,
-	RESULT_INPUT_INVALID_COMMAND	= ERROR_RANGE_START,
-	RESULT_INPUT_INVALID_PIECE,
-	RESULT_INPUT_INVALID_FILE,
-	RESULT_INPUT_INVALID_RANK,
-	RESULT_INPUT_INVALID_MOVE,
-	ERROR_COUNT						= ( RESULT_INPUT_INVALID_MOVE - RESULT_INPUT_INVALID_COMMAND ) + 1,
-	RESULT_INPUT_SUCCESS			= 0,
-};
-
-const char* ErrorMsgs[ ERROR_COUNT ] =
-{
-	"Invalid command",		// RESULT_INPUT_INVALID_COMMAND
-	"Invalid piece",		// RESULT_INPUT_INVALID_PIECE
-	"File out of range",	// RESULT_INPUT_INVALID_FILE
-	"Rank out of range",	// RESULT_INPUT_INVALID_RANK
-	"Invalid move",			// RESULT_INPUT_INVALID_MOVE
-};
-
-inline const char* GetErrorMsg( const resultCode_t code ) {
-	const int index = code - ERROR_RANGE_START;
-	return ErrorMsgs[ index ];
+void SetTextColor( const int color ) {
+	HANDLE hConsole = GetStdHandle( STD_OUTPUT_HANDLE );
+	SetConsoleTextAttribute( hConsole, color );
 }
 
 void SetWindowTitle( const wchar_t* title ) {
@@ -39,112 +20,6 @@ void SetWindowTitle( const wchar_t* title ) {
 
 void ClearScreen() {
 	system( "CLS" );
-}
-
-void SetTextColor( const int color ) {
-	HANDLE hConsole = GetStdHandle( STD_OUTPUT_HANDLE );
-	SetConsoleTextAttribute( hConsole, color );
-}
-
-static char GetPieceCode( const pieceType_t type ) {
-	switch ( type ) {
-		case pieceType_t::PAWN:		return 'p';
-		case pieceType_t::ROOK:		return 'r';
-		case pieceType_t::KNIGHT:	return 'n';
-		case pieceType_t::BISHOP:	return 'b';
-		case pieceType_t::KING:		return 'k';
-		case pieceType_t::QUEEN:	return 'q';
-	}
-	return '?';
-}
-
-static pieceType_t GetPieceType( const char code ) {
-	switch ( tolower( code ) ) {
-		case 'p':	return pieceType_t::PAWN;
-		case 'r':	return pieceType_t::ROOK;
-		case 'n':	return pieceType_t::KNIGHT;
-		case 'b':	return pieceType_t::BISHOP;
-		case 'k':	return pieceType_t::KING;
-		case 'q':	return pieceType_t::QUEEN;
-	}
-	return pieceType_t::NONE;
-}
-
-static int GetFileNum( const char file ) {
-	switch ( tolower( file ) ) {
-		case 'a':	return 0;
-		case 'b':	return 1;
-		case 'c':	return 2;
-		case 'd':	return 3;
-		case 'e':	return 4;
-		case 'f':	return 5;
-		case 'g':	return 6;
-		case 'h':	return 7;
-	}
-	return -1;
-}
-
-static char GetFile( const int fileNum ) {
-	switch ( fileNum ) {
-		case 0:		return 'a';
-		case 1:		return 'b';
-		case 2:		return 'c';
-		case 3:		return 'd';
-		case 4:		return 'e';
-		case 5:		return 'f';
-		case 6:		return 'g';
-		case 7:		return 'h';
-	}
-	return '?';
-}
-
-static int GetRankNum( const char rank ) {
-	switch ( tolower( rank ) ) {
-		case '1':	return 7;
-		case '2':	return 6;
-		case '3':	return 5;
-		case '4':	return 4;
-		case '5':	return 3;
-		case '6':	return 2;
-		case '7':	return 1;
-		case '8':	return 0;
-	}
-	return -1;
-}
-
-static char GetRank( const int rankNum ) {
-	switch ( rankNum ) {
-		case 0:		return '8';
-		case 1:		return '7';
-		case 2:		return '6';
-		case 3:		return '5';
-		case 4:		return '4';
-		case 5:		return '3';
-		case 6:		return '2';
-		case 7:		return '1';
-	}
-	return '?';
-}
-
-resultCode_t TranslateCommandString( const ChessBoard& board, const teamCode_t team, const std::string& commandString, command_t& outCmd ) {
-	if ( commandString.size() != 4 ) {
-		return RESULT_INPUT_INVALID_COMMAND;
-	}
-	outCmd.team = team;
-	outCmd.pieceType = GetPieceType( commandString[ 0 ] );
-	outCmd.instance = commandString[ 1 ] - '0';
-	if ( board.FindPiece( outCmd.team, outCmd.pieceType, outCmd.instance ) == NoPiece ) {
-		return RESULT_INPUT_INVALID_PIECE;
-	}
-	outCmd.x = GetFileNum( commandString[ 2 ] );
-	if ( ( outCmd.x < 0 ) && ( outCmd.x >= BoardSize ) ) {
-		return RESULT_INPUT_INVALID_FILE;
-	}
-	outCmd.y = GetRankNum( commandString[ 3 ] );
-	if ( ( outCmd.y < 0 ) && ( outCmd.y >= BoardSize ) ) {
-		return RESULT_INPUT_INVALID_RANK;
-	}
-	return RESULT_INPUT_SUCCESS;
 }
 
 std::string PrintSquare( const ChessBoard& board, const int x, const int y ) {
@@ -256,8 +131,9 @@ void RunTestCommands( ChessBoard& board, std::vector< std::string >& commands ) 
 		}
 		std::cout << *it << "-> Completed" << std::endl;
 		turnTeam = ( turnTeam == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
+		PrintBoard( board, true );
 	}
-	ClearScreen();
+//	ClearScreen();
 	PrintBoard( board, true );
 }
 
@@ -331,5 +207,5 @@ int main()
 	ChessBoard board( cfg );
 	RunTestCommands( board, commands );
 
-	RunCmdLineGameLoop( board );
+//	RunCmdLineGameLoop( board );
 }
