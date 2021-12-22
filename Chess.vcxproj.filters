@@ -18,13 +18,13 @@
     <ClCompile Include="piece.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="board.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="chess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="chessGame.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,13 +35,13 @@
     <ClInclude Include="chess.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="board.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="tests.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="commands.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chessGame.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

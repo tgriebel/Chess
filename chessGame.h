@@ -4,13 +4,13 @@
 
 typedef void ( *callback_t )( callbackEvent_t& );
 
-class ChessBoard {
+class Chess {
 public:
 	static const int TeamCount = 2;
 	static const int TeamPieceCount = 16;
 	static const int PieceCount = 32;
 
-	ChessBoard( const gameConfig_t& cfg ) {
+	Chess( const gameConfig_t& cfg ) {
 		pieceNum = 0;
 		enableOpenAttackCheck = true;
 		winner = teamCode_t::NONE;
@@ -21,7 +21,7 @@ public:
 		CountTeamPieces();
 	}
 
-	~ChessBoard() {
+	~Chess() {
 		pieceNum = 0;
 		for ( int i = 0; i < PieceCount; ++i ) {
 			delete pieces[ i ];
@@ -97,13 +97,13 @@ public:
 	}
 
 	inline const pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) const {
-		return const_cast<ChessBoard*>( this )->FindPiece( team, type, instance );
+		return const_cast<Chess*>( this )->FindPiece( team, type, instance );
 	}
 
 	pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance );
 
 	inline const Piece* GetPiece( const pieceHandle_t handle ) const {
-		return const_cast<ChessBoard*>( this )->GetPiece( handle );
+		return const_cast<Chess*>( this )->GetPiece( handle );
 	}
 
 	inline Piece* GetPiece( const pieceHandle_t handle ) {
@@ -114,7 +114,7 @@ public:
 	}
 
 	inline const Piece* GetPiece( const int x, const int y ) const {
-		return const_cast<ChessBoard*>( this )->GetPiece( x, y );
+		return const_cast<Chess*>( this )->GetPiece( x, y );
 	}
 
 	inline Piece* GetPiece( const int x, const int y ) {

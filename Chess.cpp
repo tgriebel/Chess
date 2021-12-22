@@ -4,7 +4,7 @@
 #include <sstream>
 #include "chess.h"
 #include "piece.h"
-#include "board.h"
+#include "chessGame.h"
 #include "commands.h"
 
 using namespace std;

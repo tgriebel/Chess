@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "chess.h"
 #include "piece.h"
-#include "board.h"
+#include "chessGame.h"
 #include "tests.h"
 #include "commands.h"
 
@@ -22,7 +22,7 @@ void ClearScreen() {
 	system( "CLS" );
 }
 
-std::string PrintSquare( const ChessBoard& board, const int x, const int y ) {
+std::string PrintSquare( const Chess& board, const int x, const int y ) {
 	std::string squareFormat;
 	const Piece* piece = board.GetPiece( x, y );
 	const bool isBlack = ( x % 2 ) == ( y % 2 );
@@ -59,9 +59,9 @@ std::string PrintSquare( const ChessBoard& board, const int x, const int y ) {
 	return squareFormat;
 }
 
-std::string PrintTeamCapturres( const ChessBoard& board, const teamCode_t team ) {
+std::string PrintTeamCapturres( const Chess& board, const teamCode_t team ) {
 	int captureCount = 0;
-	const Piece* captures[ ChessBoard::TeamPieceCount ];
+	const Piece* captures[ Chess::TeamPieceCount ];
 	board.GetTeamCaptures( team, captures, captureCount );
 	std::string captureFormat;
 	captureFormat = "    Captures: ";
@@ -77,7 +77,7 @@ std::string PrintTeamCapturres( const ChessBoard& board, const teamCode_t team )
 	return captureFormat;
 }
 
-void PrintBoard( const ChessBoard& board, const bool printCaptures ) {
+void PrintBoard( const Chess& board, const bool printCaptures ) {
 	std::cout << "   ";
 	for ( int i = 0; i < BoardSize; ++i ) {
 		std::cout << "  ";
@@ -115,7 +115,7 @@ void PrintBoard( const ChessBoard& board, const bool printCaptures ) {
 	};
 }
 
-void RunTestCommands( ChessBoard& board, std::vector< std::string >& commands ) {
+void RunTestCommands( Chess& board, std::vector< std::string >& commands ) {
 	int turnNum = 0;
 	teamCode_t turnTeam = teamCode_t::WHITE;
 	for ( auto it = commands.begin(); it != commands.end(); ++it ) {
@@ -151,7 +151,7 @@ reset_game:
 	int turnNum = 0;
 	teamCode_t turnTeam = teamCode_t::WHITE;
 	teamCode_t winner = teamCode_t::NONE;
-	ChessBoard board( cfg );
+	Chess board( cfg );
 	board.SetEventCallback( &ProcessEvent );
 
 	while ( true ) {
@@ -239,7 +239,7 @@ int main()
 		std::vector< std::string > commands;
 		GameTest0( cfg, commands );
 
-		ChessBoard board( cfg );
+		Chess board( cfg );
 		RunTestCommands( board, commands );
 	}
 #else

@@ -2,7 +2,7 @@
 #include "chess.h"
 #include <limits>
 
-class ChessBoard;
+class Chess;
 
 class Piece {
 protected:
@@ -51,7 +51,7 @@ public:
 		return -1;
 	}
 private:
-	void BindBoard( ChessBoard* board, const pieceHandle_t handle ) {
+	void BindBoard( Chess* board, const pieceHandle_t handle ) {
 		this->board = board;
 		this->handle = handle;
 	}
@@ -67,9 +67,9 @@ protected:
 	moveAction_t		actions[ MaxActions ];
 	pieceHandle_t		handle;
 
-	ChessBoard*			board;
+	Chess*			board;
 
-	friend class ChessBoard;
+	friend class Chess;
 };
 
 class Pawn : public Piece {

@@ -1,9 +1,9 @@
-#include "board.h"
+#include "chessGame.h"
 #include "piece.h"
 
 #include <iostream>
 
-bool ChessBoard::IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const {
+bool Chess::IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const {
 	if ( OnBoard( targetX, targetY ) == false ) {
 		return false;
 	}
@@ -25,7 +25,7 @@ bool ChessBoard::IsLegalMove( const Piece* piece, const int targetX, const int t
 	return isLegal;
 }
 
-void ChessBoard::CapturePiece( const teamCode_t attacker, Piece* targetPiece ) {
+void Chess::CapturePiece( const teamCode_t attacker, Piece* targetPiece ) {
 	if ( targetPiece == nullptr ) {
 		return;
 	}
@@ -48,7 +48,7 @@ void ChessBoard::CapturePiece( const teamCode_t attacker, Piece* targetPiece ) {
 	return;
 }
 
-bool ChessBoard::IsOpenToAttackAt( const Piece* targetPiece, const int x, const int y ) const {
+bool Chess::IsOpenToAttackAt( const Piece* targetPiece, const int x, const int y ) const {
 	if ( enableOpenAttackCheck == false ) {
 		return false;
 	}
@@ -69,7 +69,7 @@ bool ChessBoard::IsOpenToAttackAt( const Piece* targetPiece, const int x, const 
 	return false;
 }
 
-bool ChessBoard::FindCheckMate( const teamCode_t team ) {
+bool Chess::FindCheckMate( const teamCode_t team ) {
 	const pieceHandle_t kingHdl = FindPiece( team, pieceType_t::KING, 0 );
 	const Piece* king = GetPiece( kingHdl );
 	// King was captured
@@ -89,7 +89,7 @@ bool ChessBoard::FindCheckMate( const teamCode_t team ) {
 	return true;
 }
 
-void ChessBoard::CountTeamPieces() {
+void Chess::CountTeamPieces() {
 	for ( int i = 0; i < TeamCount; ++i ) {
 		for ( int j = 0; j < static_cast<int>( pieceType_t::COUNT ); ++j ) {
 			teams[ i ].typeCounts[ j ] = 0;
@@ -110,7 +110,7 @@ void ChessBoard::CountTeamPieces() {
 	}
 }
 
-void ChessBoard::PromotePawn( const pieceHandle_t pieceHdl ) {
+void Chess::PromotePawn( const pieceHandle_t pieceHdl ) {
 	const Piece* piece = GetPiece( pieceHdl );
 	if ( ( piece == nullptr ) || ( piece->type != pieceType_t::PAWN ) ) {
 		return;
@@ -145,7 +145,7 @@ void ChessBoard::PromotePawn( const pieceHandle_t pieceHdl ) {
 	pieces[ pieceHdl ]->Move( x, y );
 }
 
-bool ChessBoard::PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY ) {
+bool Chess::PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY ) {
 	Piece* piece = GetPiece( pieceHdl );
 	if ( piece == nullptr ) {
 		return false;
@@ -164,7 +164,7 @@ bool ChessBoard::PerformMoveAction( const pieceHandle_t pieceHdl, const int targ
 	return true;
 }
 
-pieceHandle_t ChessBoard::FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) {
+pieceHandle_t Chess::FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) {
 	if ( ( team == teamCode_t::NONE ) || ( type == pieceType_t::NONE ) ) {
 		return NoPiece;
 	}
@@ -179,7 +179,7 @@ pieceHandle_t ChessBoard::FindPiece( const teamCode_t team, const pieceType_t ty
 	return NoPiece;
 }
 
-bool ChessBoard::IsValidHandle( const pieceHandle_t handle ) const {
+bool Chess::IsValidHandle( const pieceHandle_t handle ) const {
 	if ( handle == NoPiece ) {
 		return false;
 	}
@@ -189,7 +189,7 @@ bool ChessBoard::IsValidHandle( const pieceHandle_t handle ) const {
 	return true;
 }
 
-pieceHandle_t ChessBoard::GetHandle( const int x, const int y ) const {
+pieceHandle_t Chess::GetHandle( const int x, const int y ) const {
 	if ( OnBoard( x, y ) == false ) {
 		return OffBoard;
 	}

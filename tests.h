@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include "chess.h"
-#include "board.h"
+#include "chessGame.h"
 #include "piece.h"
 
 static void ClearBoard( gameConfig_t& config ) {
