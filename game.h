@@ -12,7 +12,6 @@ public:
 
 	Chess( const gameConfig_t& cfg ) {
 		pieceNum = 0;
-		enableOpenAttackCheck = true;
 		winner = teamCode_t::NONE;
 		inCheck = teamCode_t::NONE;
 		memset( pieces, 0, sizeof( Piece* ) * PieceCount );
@@ -146,7 +145,6 @@ public:
 		return winner;
 	}
 
-	bool IsKingChecked( const teamCode_t team ) const;
 	bool IsOpenToAttackAt( const Piece* targetPiece, const int targetX, const int targetY ) const;
 	void SetEnpassant( const pieceHandle_t handle ) {
 		enpassantPawn = handle;
@@ -178,7 +176,6 @@ private:
 	teamCode_t		inCheck;
 	teamCode_t		winner;
 	pieceHandle_t	enpassantPawn;
-	mutable bool	enableOpenAttackCheck; // Disables recursion
 	int				pieceNum;
 	Piece*			pieces[ PieceCount ];
 	team_t			teams[ TeamCount ];

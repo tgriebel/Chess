@@ -24,7 +24,9 @@ bool Chess::IsLegalMove( const Piece* piece, const int targetX, const int target
 	const int x = piece->x;
 	const int y = piece->y;
 	const_cast<Piece*>( piece )->Set( targetX, targetY ); // FIXME: hack
-	if ( IsKingChecked( piece->team ) ) {
+	const pieceHandle_t kingHdl = FindPiece( piece->team, pieceType_t::KING, 0 );
+	const Piece* king = GetPiece( kingHdl );
+	if ( IsOpenToAttackAt( king, king->x, king->y ) ) {
 		isLegal = false;
 	}
 	const_cast<Piece*>( piece )->Set( x, y ); // FIXME: hack
@@ -57,24 +59,10 @@ void Chess::CapturePiece( const teamCode_t attacker, Piece* targetPiece ) {
 	return;
 }
 
-bool Chess::IsKingChecked( const teamCode_t team ) const {
-	// It's illegal for any move to leave that team's king open
-	const pieceHandle_t kingHdl = FindPiece( team, pieceType_t::KING, 0 );
-	const Piece* king = GetPiece( kingHdl );
-	if ( IsOpenToAttackAt( king, king->x, king->y ) ) {
-		return true;
-	}
-	return false;
-}
-
 bool Chess::IsOpenToAttackAt( const Piece* targetPiece, const int x, const int y ) const {
-	if ( enableOpenAttackCheck == false ) {
-		return false;
-	}
 	if ( OnBoard( x, y ) == false ) {
 		return false;
 	}
-	enableOpenAttackCheck = false;
 	const teamCode_t opposingTeam = ( targetPiece->team == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 	const int index = static_cast<int>( opposingTeam );
 	for ( int i = 0; i < teams[ index ].livingCount; ++i ) {
@@ -82,12 +70,10 @@ bool Chess::IsOpenToAttackAt( const Piece* targetPiece, const int x, const int y
 		const int actionCount = piece->GetActionCount();
 		for ( int action = 0; action < actionCount; ++action ) {
 			if ( piece->InActionPath( action, x, y ) ) {
-				enableOpenAttackCheck = true;
 				return true;
 			}
 		}
 	}
-	enableOpenAttackCheck = true;
 	return false;
 }
 
