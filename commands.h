@@ -84,7 +84,7 @@ static char GetRank( const int rankNum ) {
 	return '?';
 }
 
-static resultCode_t TranslateCommandString( const Chess& board, const teamCode_t team, const std::string& commandString, command_t& outCmd ) {
+static resultCode_t TranslateActionCommand( const Chess& board, const teamCode_t team, const std::string& commandString, command_t& outCmd ) {
 	if ( commandString.size() != 4 ) {
 		return RESULT_INPUT_INVALID_COMMAND;
 	}

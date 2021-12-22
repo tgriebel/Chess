@@ -41,7 +41,10 @@ void Piece::CalculateStep( const int actionNum, int& actionX, int& actionY ) con
 	actionY += actions[ actionNum ].y;
 }
 
-int Piece::GetStepCount( const int actionNum, const int targetX, const int targetY, const int maxSteps ) const {
+int Piece::GetStepCount( const int actionNum, const int targetX, const int targetY ) const {
+	if ( IsValidAction( actionNum ) == false ) {
+		return BoardSize;
+	}
 	if ( board->GetTeam( targetX, targetY ) == team ) {
 		return BoardSize;
 	}
@@ -49,6 +52,7 @@ int Piece::GetStepCount( const int actionNum, const int targetX, const int targe
 	int nextY = y;
 	int prevDist = INT_MAX;
 	int dist = INT_MAX;
+	const int maxSteps = actions[ actionNum ].maxSteps;
 	for ( int step = 1; step <= maxSteps; ++step ) {
 		CalculateStep( actionNum, nextX, nextY );
 		prevDist = dist;
@@ -70,8 +74,23 @@ bool Piece::InActionPath( const int actionNum, const int targetX, const int targ
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
 	}
-	const int stepCount = GetStepCount( actionNum, targetX, targetY, BoardSize );
-	return ( stepCount < BoardSize );
+	const int stepCount = GetStepCount( actionNum, targetX, targetY );
+	return ( stepCount <= actions[ actionNum ].maxSteps );
+}
+
+void Piece::EnumerateActions( std::vector< moveAction_t >& actionList ) const {
+	const int actionCount = GetActionCount();
+	for ( int action = 0; action < actionCount; ++action ) {
+		const int maxSteps = actions[ action ].maxSteps;
+		for ( int step = 1; step <= maxSteps; ++step ) {
+			int nextX = x;
+			int nextY = y;
+			CalculateStep( action, nextX, nextY );
+			if ( GetStepCount( action, nextX, nextY ) == 1 ) {
+				actionList.push_back( moveAction_t( nextX, nextY, GetMoveType( action ), 1 ) );
+			}
+		}
+	}
 }
 
 bool Pawn::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
@@ -80,17 +99,19 @@ bool Pawn::InActionPath( const int actionNum, const int targetX, const int targe
 	}
 	const teamCode_t occupiedTeam = board->GetTeam( targetX, targetY );
 	const bool isOccupied = ( occupiedTeam != teamCode_t::NONE );
-	const int steps = GetStepCount( actionNum, targetX, targetY, 1 );
+	const int maxSteps = actions[ actionNum ].maxSteps;
+	const int steps = GetStepCount( actionNum, targetX, targetY );
 	const moveType_t type = actions[ actionNum ].type;
+
 	if ( type == PAWN_T2X ) {
-		return ( isOccupied == false ) && ( steps == 1 ) && ( HasMoved() == false );
+		return ( isOccupied == false ) && ( steps <= maxSteps ) && ( HasMoved() == false );
 	}
 	if ( ( type == PAWN_KILL_L ) || ( type == PAWN_KILL_R ) ) {
 		const bool wasEnpassant = ( board->GetEnpassant( targetX, targetY ) != nullptr );
 		const bool isEnemy = ( isOccupied || wasEnpassant ) && ( occupiedTeam != team );
-		return isEnemy && ( steps == 1 );
+		return isEnemy && ( steps <= maxSteps );
 	}
-	return ( isOccupied == false ) && ( steps == 1 );
+	return ( isOccupied == false ) && ( steps <= maxSteps );
 }
 
 bool Pawn::CanPromote() const {
@@ -117,19 +138,11 @@ void Pawn::Move( const int targetX, const int targetY ) {
 	}
 }
 
-bool Knight::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
-	if ( IsValidAction( actionNum ) == false ) {
-		return false;
-	}
-	const int stepCount = GetStepCount( actionNum, targetX, targetY, 1 );
-	return ( stepCount == 1 );
-}
-
 bool King::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
 	}
-	const int stepCount = GetStepCount( actionNum, targetX, targetY, 1 );
+	const int stepCount = GetStepCount( actionNum, targetX, targetY );
 	if ( stepCount != 1 ) {
 		return false;
 	}

@@ -83,6 +83,9 @@ public:
 	bool IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
 
 	teamCode_t GetTeam( const int x, const int y ) const {
+		if ( OnBoard( x, y ) == false ) {
+			return teamCode_t::NONE;
+		}
 		const Piece* targetPiece = GetPiece( x, y );
 		const bool isOccupied = ( targetPiece != nullptr );
 		return ( targetPiece != nullptr ) ? targetPiece->team : teamCode_t::NONE;

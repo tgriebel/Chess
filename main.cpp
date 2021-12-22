@@ -84,7 +84,7 @@ void RunTestCommands( Chess& board, std::vector< std::string >& commands ) {
 	teamCode_t turnTeam = teamCode_t::WHITE;
 	for ( auto it = commands.begin(); it != commands.end(); ++it ) {
 		command_t cmd{};
-		resultCode_t result = TranslateCommandString( board, turnTeam, *it, cmd );
+		resultCode_t result = TranslateActionCommand( board, turnTeam, *it, cmd );
 		if ( result != RESULT_SUCCESS ) {
 			std::cout << *it << "-> Inavlid String" << std::endl;
 			continue;
@@ -163,8 +163,31 @@ read_input:
 			if ( commandString == "reset" ) {
 				goto reset_game;
 			}
+			if ( commandString == "select" ) {
+				if ( commandString.size() < 6 ) {
+					std::cout << GetErrorMsg( RESULT_INPUT_INVALID_COMMAND ) << std::endl;
+					goto read_input;
+				}
+				std::string args = "p0'";
+				if ( args.size() < 3 ) {
+					std::cout << GetErrorMsg( RESULT_INPUT_INVALID_COMMAND ) << std::endl;
+					goto read_input;
+				}
+				const pieceType_t pieceType = GetPieceType( args[ 0 ] );
+				const int instance = args[ 1 ] - '0';
+				const teamCode_t team = ( args[ 2 ] == '\'' ) ? teamCode_t::BLACK : teamCode_t::WHITE;
+				const pieceHandle_t hdl = board.FindPiece( team, pieceType, instance );
+				const Piece* piece = board.GetPiece( hdl );
+				if ( piece != nullptr ) {
+					std::vector< moveAction_t > actions;
+					piece->EnumerateActions( actions );
+				} else {
+					std::cout << GetErrorMsg( RESULT_INPUT_INVALID_COMMAND ) << std::endl;
+					goto read_input;
+				}
+			}
 			command_t cmd{};
-			resultCode_t result = TranslateCommandString( board, turnTeam, commandString, cmd );
+			resultCode_t result = TranslateActionCommand( board, turnTeam, commandString, cmd );
 			if ( result != RESULT_SUCCESS ) {
 				std::cout << GetErrorMsg( result ) << std::endl;
 				goto read_input;

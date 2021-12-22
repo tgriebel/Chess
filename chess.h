@@ -128,13 +128,15 @@ struct moveAction_t {
 	moveAction_t() {
 		x = 0;
 		y = 0;
+		maxSteps = 0;
 		type = moveType_t::NONE;
 	}
-	moveAction_t( const int x, int const y, const moveType_t type ) :
-		x( x ), y( y ), type( type ) {}
+	moveAction_t( const int x, int const y, const moveType_t type, const int maxSteps ) :
+		x( x ), y( y ), type( type ), maxSteps( maxSteps ) {}
 	int				x;
 	int				y;
-	moveType_t	type;
+	int				maxSteps;
+	moveType_t		type;
 };
 
 struct command_t {
