@@ -52,6 +52,9 @@ bool Chess::IsOpenToAttackAt( const Piece* targetPiece, const int x, const int y
 	if ( enableOpenAttackCheck == false ) {
 		return false;
 	}
+	if ( OnBoard( x, y ) == false ) {
+		return false;
+	}
 	enableOpenAttackCheck = false;
 	const teamCode_t opposingTeam = ( targetPiece->team == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 	const int index = static_cast<int>( opposingTeam );
@@ -82,7 +85,7 @@ bool Chess::FindCheckMate( const teamCode_t team ) {
 		int nextX = king->x;
 		int nextY = king->y;
 		king->CalculateStep( action, nextX, nextY );
-		if( IsLegalMove( king, nextX, nextY ) ) {
+		if( IsOpenToAttackAt( king, nextX, nextY ) == false ) {
 			return false;
 		}
 	}
