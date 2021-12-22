@@ -110,13 +110,6 @@ void ChessBoard::CountTeamPieces() {
 	}
 }
 
-bool ChessBoard::CanPromotePawn( const Pawn* pawn ) const {
-	int nextX = pawn->x;
-	int nextY = pawn->y;
-	pawn->CalculateStep( 0, nextX, nextY );
-	return ( OnBoard( nextX, nextY ) == false );
-}
-
 void ChessBoard::PromotePawn( const pieceHandle_t pieceHdl ) {
 	const Piece* piece = GetPiece( pieceHdl );
 	if ( ( piece == nullptr ) || ( piece->type != pieceType_t::PAWN ) ) {

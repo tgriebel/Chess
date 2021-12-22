@@ -161,7 +161,6 @@ public:
 		return nullptr;
 	}
 
-	bool CanPromotePawn( const Pawn* pawn ) const;
 	void PromotePawn( const pieceHandle_t pieceHdl );
 
 private:

@@ -32,6 +32,9 @@ moveType_t Piece::GetMoveType( const int actionNum ) const {
 }
 
 void Piece::CalculateStep( const int actionNum, int& actionX, int& actionY ) const {
+	if ( IsValidAction( actionNum ) == false ) {
+		return;
+	}
 	actionX += actions[ actionNum ].x;
 	actionY += actions[ actionNum ].y;
 }
@@ -88,6 +91,13 @@ bool Pawn::InActionPath( const int actionNum, const int targetX, const int targe
 	return ( isOccupied == false ) && ( steps == 1 );
 }
 
+bool Pawn::CanPromote() const {
+	int nextX = x;
+	int nextY = y;
+	CalculateStep( GetActionNum( PAWN_T ), nextX, nextY );
+	return ( board->OnBoard( nextX, nextY ) == false );
+}
+
 void Pawn::Move( const int targetX, const int targetY ) {
 	const bool doubleMove = ( abs( targetY - y ) == 2 );
 	Piece* targetPiece = board->GetEnpassant( targetX, targetY );
@@ -97,8 +107,10 @@ void Pawn::Move( const int targetX, const int targetY ) {
 	Piece::Move( targetX, targetY );
 	if ( doubleMove ) {
 		board->SetEnpassant( handle );
+	} else {
+		board->SetEnpassant( NoPiece );
 	}
-	if ( board->CanPromotePawn( reinterpret_cast<Pawn*>( this ) ) ) {
+	if ( CanPromote() ) {
 		board->PromotePawn( handle );
 	}
 }

@@ -42,6 +42,14 @@ public:
 	bool OnBoard() const {
 		return ( board != nullptr );
 	}
+	int GetActionNum( const moveType_t moveType ) const {
+		for ( int i = 0; i < numActions; ++i ) {
+			if ( actions->type == moveType ) {
+				return i;
+			}
+		}
+		return -1;
+	}
 private:
 	void BindBoard( ChessBoard* board, const pieceHandle_t handle ) {
 		this->board = board;
@@ -82,6 +90,7 @@ public:
 
 	bool InActionPath( const int actionNum, const int targetX, const int targetY ) const override;
 	void Move( const int targetX, const int targetY ) override;
+	bool CanPromote() const;
 
 	inline int GetDirection() const {
 		return ( team == teamCode_t::WHITE ) ? -1 : 1;
