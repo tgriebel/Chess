@@ -45,6 +45,9 @@ int Piece::GetStepCount( const int actionNum, const int targetX, const int targe
 	if ( IsValidAction( actionNum ) == false ) {
 		return BoardSize;
 	}
+	if ( board->OnBoard( targetX, targetY ) == false ) {
+		return BoardSize;
+	}
 	if ( board->GetTeam( targetX, targetY ) == team ) {
 		return BoardSize;
 	}
@@ -81,12 +84,13 @@ bool Piece::InActionPath( const int actionNum, const int targetX, const int targ
 void Piece::EnumerateActions( std::vector< moveAction_t >& actionList ) const {
 	const int actionCount = GetActionCount();
 	for ( int action = 0; action < actionCount; ++action ) {
+		// Find all potential positions and then filter out
+		int nextX = x;
+		int nextY = y;
 		const int maxSteps = actions[ action ].maxSteps;
 		for ( int step = 1; step <= maxSteps; ++step ) {
-			int nextX = x;
-			int nextY = y;
 			CalculateStep( action, nextX, nextY );
-			if ( GetStepCount( action, nextX, nextY ) == 1 ) {
+			if ( board->IsLegalMove( this, nextX, nextY ) ) {
 				actionList.push_back( moveAction_t( nextX, nextY, GetMoveType( action ), 1 ) );
 			}
 		}
@@ -164,7 +168,7 @@ bool King::InActionPath( const int actionNum, const int targetX, const int targe
 	}
 	const int flankOffset = ( targetX > x ) ? -1 : 1;
 	const int rookTargetX = targetX + flankOffset;
-	const bool rookMove = board->IsLegalMove( rook, rookTargetX, y );
+	const bool rookMove = rook->InActionPath( rook->GetActionNum( ROOK_R ), rookTargetX, y );
 	if ( rookMove == false ) {
 		return false;
 	}

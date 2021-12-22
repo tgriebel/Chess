@@ -146,7 +146,8 @@ public:
 		return winner;
 	}
 
-	bool IsOpenToAttackAt( const Piece* targetPiece, const int x, const int y ) const;
+	bool IsKingChecked( const teamCode_t team ) const;
+	bool IsOpenToAttackAt( const Piece* targetPiece, const int targetX, const int targetY ) const;
 	void SetEnpassant( const pieceHandle_t handle ) {
 		enpassantPawn = handle;
 	}

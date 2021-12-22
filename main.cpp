@@ -22,7 +22,7 @@ void ClearScreen() {
 	system( "CLS" );
 }
 
-void PrintBoard( const Chess& board, const bool printCaptures ) {
+void PrintBoard( const Chess& board, std::vector< moveAction_t >* actions, const bool printCaptures ) {
 	std::cout << "   ";
 	for ( int i = 0; i < BoardSize; ++i ) {
 		std::cout << "  ";
@@ -62,7 +62,20 @@ void PrintBoard( const Chess& board, const bool printCaptures ) {
 					SetTextColor( 15 );
 				}
 			}
-			std::cout << SquareToString( board, i, j );
+			std::string square = SquareToString( board, i, j );
+			if ( actions != nullptr ) {
+				for ( size_t action = 0; action < actions->size(); ++action ) {
+					if ( ( (*actions)[ action ].x == i ) && ( ( *actions )[ action ].y == j ) ) {
+						if ( isBlack ) {
+							SetTextColor( 242 );
+						} else {
+							SetTextColor( 2 );
+						}
+						square = "****";
+					}
+				}
+			}
+			std::cout << square;
 			SetTextColor( 15 );
 			std::cout << "|";
 		}
@@ -96,7 +109,7 @@ void RunTestCommands( Chess& board, std::vector< std::string >& commands ) {
 		std::cout << turnNum  << ": " << *it << "-> Completed" << std::endl;
 		turnTeam = ( turnTeam == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 		++turnNum;
-		PrintBoard( board, true );
+		PrintBoard( board, nullptr, true );
 	}
 //	ClearScreen();
 //	PrintBoard( board, true );
@@ -119,15 +132,16 @@ reset_game:
 	Chess board( cfg );
 	board.SetEventCallback( &ProcessEvent );
 
+	std::vector< moveAction_t > actions;
+
 	while ( true ) {
 		teamCode_t nextTeam;
-
 		// Print Board
 clear_screen:
 		{
 			ClearScreen();
 			//std::wcout << L"♔";
-			PrintBoard( board, true );
+			PrintBoard( board, &actions, true );
 		}
 
 		if ( winner != teamCode_t::NONE ) {
@@ -146,9 +160,7 @@ read_input:
 				std::cout << turnNum << ": Purple>>";
 				nextTeam = teamCode_t::WHITE;
 			}
-			char c_str[ 16 ];
-			std::cin >> c_str;
-			commandString = c_str;
+			std::getline( std::cin, commandString );
 			std::transform( commandString.begin(), commandString.end(), commandString.begin(), []( unsigned char c ) { return std::tolower( c ); } );
 		}
 
@@ -163,24 +175,25 @@ read_input:
 			if ( commandString == "reset" ) {
 				goto reset_game;
 			}
-			if ( commandString == "select" ) {
+			if ( commandString.substr( 0, 6 ) == "select" ) {
+				actions.clear();
 				if ( commandString.size() < 6 ) {
 					std::cout << GetErrorMsg( RESULT_INPUT_INVALID_COMMAND ) << std::endl;
 					goto read_input;
 				}
-				std::string args = "p0'";
-				if ( args.size() < 3 ) {
+				std::string args = commandString.substr( 7, 9 );
+				if ( ( args.size() != 2 ) && ( args.size() != 3 ) ) {
 					std::cout << GetErrorMsg( RESULT_INPUT_INVALID_COMMAND ) << std::endl;
 					goto read_input;
 				}
 				const pieceType_t pieceType = GetPieceType( args[ 0 ] );
 				const int instance = args[ 1 ] - '0';
-				const teamCode_t team = ( args[ 2 ] == '\'' ) ? teamCode_t::BLACK : teamCode_t::WHITE;
+				const teamCode_t team = ( ( args.size() == 3 ) && ( args[ 2 ] == '\'' ) ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 				const pieceHandle_t hdl = board.FindPiece( team, pieceType, instance );
 				const Piece* piece = board.GetPiece( hdl );
 				if ( piece != nullptr ) {
-					std::vector< moveAction_t > actions;
 					piece->EnumerateActions( actions );
+					goto clear_screen;
 				} else {
 					std::cout << GetErrorMsg( RESULT_INPUT_INVALID_COMMAND ) << std::endl;
 					goto read_input;
@@ -219,6 +232,15 @@ int main()
 {
 	SetWindowTitle( L"Chess by Thomas Griebel" );
 
+	//HANDLE hConsole = GetStdHandle( STD_OUTPUT_HANDLE );
+	//// you can loop k higher to see more color choices
+	//for ( int k = 1; k < 255; k++ )
+	//{
+	//	// pick the colorattribute k you want
+	//	SetConsoleTextAttribute( hConsole, k );
+	//	std::cout << k << " I want to be nice today!" << std::endl;
+	//}
+
 	gameConfig_t cfg;
 //#define TEST
 #if defined( TEST )
@@ -231,7 +253,7 @@ int main()
 		RunTestCommands( board, commands );
 	}
 #else
-	LoadConfig( "tests/default_board.txt", cfg );
+	LoadConfig( "tests/no_pawn.txt", cfg );
 	RunCmdLineGameLoop( cfg );
 #endif
 }

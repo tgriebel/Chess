@@ -105,10 +105,10 @@ public:
 		this->team = team;
 
 		numActions = 0;
-		actions[ numActions++ ] = moveAction_t( 0, 1, ROOK_T, BoardSize );
-		actions[ numActions++ ] = moveAction_t( 0, -1, ROOK_B, BoardSize );
-		actions[ numActions++ ] = moveAction_t( 1, 0, ROOK_R, BoardSize );
-		actions[ numActions++ ] = moveAction_t( -1, 0, ROOK_L, BoardSize );
+		actions[ numActions++ ] = moveAction_t( 0, 1, ROOK_T, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 0, -1, ROOK_B, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, 0, ROOK_R, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( -1, 0, ROOK_L, BoardSize - 1 );
 		assert( numActions <= MaxActions );
 	}
 };
@@ -139,10 +139,10 @@ public:
 		this->team = team;
 
 		numActions = 0;
-		actions[ numActions++ ] = moveAction_t( -1, -1, BISHOP_TL, BoardSize );
-		actions[ numActions++ ] = moveAction_t( 1, -1, BISHOP_TR, BoardSize );
-		actions[ numActions++ ] = moveAction_t( 1, 1, BISHOP_BR, BoardSize );
-		actions[ numActions++ ] = moveAction_t( -1, 1, BISHOP_BL, BoardSize );
+		actions[ numActions++ ] = moveAction_t( -1, -1, BISHOP_TL, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, -1, BISHOP_TR, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, 1, BISHOP_BR, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( -1, 1, BISHOP_BL, BoardSize - 1 );
 		assert( numActions <= MaxActions );
 	}
 };
@@ -176,14 +176,14 @@ public:
 		this->team = team;
 
 		numActions = 0;
-		actions[ numActions++ ] = moveAction_t( -1, -1, QUEEN_TL, BoardSize );
-		actions[ numActions++ ] = moveAction_t( 0, -1, QUEEN_T, BoardSize );
-		actions[ numActions++ ] = moveAction_t( 1, -1, QUEEN_TR, BoardSize );
-		actions[ numActions++ ] = moveAction_t( 1, 0, QUEEN_R, BoardSize );
-		actions[ numActions++ ] = moveAction_t( 1, 1, QUEEN_BR, BoardSize );
-		actions[ numActions++ ] = moveAction_t( 0, 1, QUEEN_B, BoardSize );
-		actions[ numActions++ ] = moveAction_t( -1, 1, QUEEN_BL, BoardSize );
-		actions[ numActions++ ] = moveAction_t( -1, 0, QUEEN_L, BoardSize );
+		actions[ numActions++ ] = moveAction_t( -1, -1, QUEEN_TL, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 0, -1, QUEEN_T, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, -1, QUEEN_TR, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, 0, QUEEN_R, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, 1, QUEEN_BR, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 0, 1, QUEEN_B, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( -1, 1, QUEEN_BL, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( -1, 0, QUEEN_L, BoardSize - 1 );
 		assert( numActions <= MaxActions );
 	}
 };

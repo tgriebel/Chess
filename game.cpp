@@ -16,11 +16,20 @@ bool Chess::IsLegalMove( const Piece* piece, const int targetX, const int target
 			break;
 		}
 	}
-	// It's illegal for any move to leave that team's king open
-	const pieceHandle_t kingHdl = FindPiece( piece->team, pieceType_t::KING, 0 );
-	const Piece* king = GetPiece( kingHdl );
-	if ( IsOpenToAttackAt( king, king->x, king->y ) ) {
+	if ( isLegal == false ) {
+		return false;
+	}
+	// It's illegal for any move to leave that team's king checked
+	const Piece* movedPiece = GetPiece( targetX, targetY );
+	const int x = piece->x;
+	const int y = piece->y;
+	const_cast<Piece*>( piece )->Set( targetX, targetY ); // FIXME: hack
+	if ( IsKingChecked( piece->team ) ) {
 		isLegal = false;
+	}
+	const_cast<Piece*>( piece )->Set( x, y ); // FIXME: hack
+	if ( movedPiece != nullptr ) {
+		const_cast<Piece*>( movedPiece )->Set( targetX, targetY ); // FIXME: hack
 	}
 	return isLegal;
 }
@@ -46,6 +55,16 @@ void Chess::CapturePiece( const teamCode_t attacker, Piece* targetPiece ) {
 		}
 	}
 	return;
+}
+
+bool Chess::IsKingChecked( const teamCode_t team ) const {
+	// It's illegal for any move to leave that team's king open
+	const pieceHandle_t kingHdl = FindPiece( team, pieceType_t::KING, 0 );
+	const Piece* king = GetPiece( kingHdl );
+	if ( IsOpenToAttackAt( king, king->x, king->y ) ) {
+		return true;
+	}
+	return false;
 }
 
 bool Chess::IsOpenToAttackAt( const Piece* targetPiece, const int x, const int y ) const {
