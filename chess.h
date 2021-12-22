@@ -8,6 +8,8 @@ typedef int pieceHandle_t;
 static const pieceHandle_t NoPiece = -1;
 static const pieceHandle_t OffBoard = -2;
 
+class Chess;
+
 enum resultCode_t {
 	ERROR_RANGE_START				= -101,
 	RESULT_INPUT_INVALID_COMMAND	= ERROR_RANGE_START,
@@ -229,5 +231,8 @@ struct gameConfig_t {
 	squareCfg_t board[ BoardSize ][ BoardSize ];
 };
 
+std::string SquareToString( const Chess& board, const int x, const int y );
+std::string TeamCaptureString( const Chess& board, const teamCode_t team );
+std::string BoardToString( const Chess& board, const bool printCaptures );
 void LoadConfig( const std::string& fileName, gameConfig_t& config );
 void LoadHistory( const std::string& fileName, std::vector< std::string >& commands );

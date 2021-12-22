@@ -22,61 +22,6 @@ void ClearScreen() {
 	system( "CLS" );
 }
 
-std::string PrintSquare( const Chess& board, const int x, const int y ) {
-	std::string squareFormat;
-	const Piece* piece = board.GetPiece( x, y );
-	const bool isBlack = ( x % 2 ) == ( y % 2 );
-	if ( piece != nullptr ) {
-		const pieceType_t type = piece->type;
-		const teamCode_t team = piece->team;
-		const int instance = piece->instance;
-		if ( team == teamCode_t::BLACK ) {
-			if ( isBlack ) {
-				SetTextColor( 245 );
-			} else {
-				SetTextColor( 5 );
-			}
-		} else {
-			if ( isBlack ) {
-				SetTextColor( 252 );
-			}
-			else {
-				SetTextColor( 12 );
-			}
-		}
-		squareFormat += " ";
-		squareFormat += GetPieceCode( type );
-		squareFormat += '0' + instance;
-		squareFormat += ( team == teamCode_t::WHITE ) ? " " : "'";
-	} else {
-		if ( isBlack ) {
-			SetTextColor( 240 );
-		}else {
-			SetTextColor( 15 );
-		}
-		squareFormat += ( isBlack ? "    " : "    " );
-	}
-	return squareFormat;
-}
-
-std::string PrintTeamCapturres( const Chess& board, const teamCode_t team ) {
-	int captureCount = 0;
-	const Piece* captures[ Chess::TeamPieceCount ];
-	board.GetTeamCaptures( team, captures, captureCount );
-	std::string captureFormat;
-	captureFormat = "    Captures: ";
-	for ( int i = 0; i < captureCount; ++i ) {
-		if ( captures == nullptr ) {
-			break;
-		}
-		captureFormat += GetPieceCode( captures[ i ]->type );
-		captureFormat += captures[ i ]->instance + '0';
-		captureFormat += ( team == teamCode_t::BLACK ) ? "" : "\'";
-		captureFormat += ", ";
-	}
-	return captureFormat;
-}
-
 void PrintBoard( const Chess& board, const bool printCaptures ) {
 	std::cout << "   ";
 	for ( int i = 0; i < BoardSize; ++i ) {
@@ -84,33 +29,52 @@ void PrintBoard( const Chess& board, const bool printCaptures ) {
 		std::cout << char( i + 'a' );
 		std::cout << "  ";
 	}
-	std::cout << "\n   +";
-	for ( int i = 0; i < BoardSize; ++i ) {
-		std::cout << "----+";
-	}
+	std::cout << "\n   ";
+	std::cout << "+----+----+----+----+----+----+----+----+";
 	std::cout << "\n";
 	for ( int j = 0; j < BoardSize; ++j ) {
-		std::cout << ( BoardSize - j );
+		std::cout << char( BoardSize - j + '0' );
 		SetTextColor( 15 );
 		std::cout << "  |";
 		for ( int i = 0; i < BoardSize; ++i ) {
 			const bool isBlack = ( j % 2 ) == ( i % 2 );
 			SetTextColor( 15 );
-			std::cout << PrintSquare( board, i, j );
+			const Piece* piece = board.GetPiece( i, j );
+			if ( piece != nullptr ) {
+				const teamCode_t team = piece->team;
+				if ( team == teamCode_t::BLACK ) {
+					if ( isBlack ) {
+						SetTextColor( 245 );
+					} else {
+						SetTextColor( 5 );
+					}
+				} else if ( team == teamCode_t::WHITE ) {
+					if ( isBlack ) {
+						SetTextColor( 252 );
+					} else {
+						SetTextColor( 12 );
+					}
+				}
+			} else {
+				if ( isBlack ) {
+					SetTextColor( 240 );
+				} else {
+					SetTextColor( 15 );
+				}
+			}
+			std::cout << SquareToString( board, i, j );
 			SetTextColor( 15 );
 			std::cout << "|";
 		}
 		if ( printCaptures ) {
 			if ( j == 0 ) {
-				std::cout << PrintTeamCapturres( board, teamCode_t::BLACK );
+				std::cout << TeamCaptureString( board, teamCode_t::BLACK );
 			} else if ( j == 7 ) {
-				std::cout << PrintTeamCapturres( board, teamCode_t::WHITE );
+				std::cout << TeamCaptureString( board, teamCode_t::WHITE );
 			}
 		}
-		std::cout << "\n   +";
-		for ( int i = 0; i < BoardSize; ++i ) {
-			std::cout << "----+";
-		}
+		std::cout << "\n   ";
+		std::cout << "+----+----+----+----+----+----+----+----+";
 		std::cout << "\n";
 	};
 }
@@ -233,7 +197,7 @@ int main()
 	SetWindowTitle( L"Chess by Thomas Griebel" );
 
 	gameConfig_t cfg;
-#define TEST
+//#define TEST
 #if defined( TEST )
 	{
 		std::vector< std::string > commands;
@@ -244,7 +208,7 @@ int main()
 		RunTestCommands( board, commands );
 	}
 #else
-	LoadConfig( "tests/enpassant.txt", cfg );
+	LoadConfig( "tests/default_board.txt", cfg );
 	RunCmdLineGameLoop( cfg );
 #endif
 }
