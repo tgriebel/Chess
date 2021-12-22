@@ -5,7 +5,7 @@
 #include <vector>
 #include "chess.h"
 #include "piece.h"
-#include "chessGame.h"
+#include "game.h"
 #include "commands.h"
 
 using namespace std;

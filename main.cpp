@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "chess.h"
 #include "piece.h"
-#include "chessGame.h"
+#include "game.h"
 #include "tests.h"
 #include "commands.h"
 

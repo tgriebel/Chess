@@ -2,7 +2,7 @@
 #include <string>
 #include "chess.h"
 #include "piece.h"
-#include "chessGame.h"
+#include "game.h"
 
 static char GetPieceCode( const pieceType_t type ) {
 	switch ( type ) {

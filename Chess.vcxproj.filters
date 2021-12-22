@@ -24,7 +24,7 @@
     <ClCompile Include="chess.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="chessGame.cpp">
+    <ClCompile Include="game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,7 +41,7 @@
     <ClInclude Include="commands.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="chessGame.h">
+    <ClInclude Include="game.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

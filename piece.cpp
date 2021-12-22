@@ -1,5 +1,5 @@
 #include "piece.h"
-#include "chessGame.h"
+#include "game.h"
 
 bool Piece::IsValidAction( const int actionNum ) const {
 	return ( actionNum >= 0 ) && ( actionNum < GetActionCount() );
