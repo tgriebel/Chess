@@ -11,8 +11,8 @@ protected:
 	Piece() {
 		team = teamCode_t::NONE;
 		type = pieceType_t::NONE;
-		x = 0;
-		y = 0;
+		x = -1;
+		y = -1;
 		numActions = 0;
 		moveCount = 0;
 		instance = 0;
