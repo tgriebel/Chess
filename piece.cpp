@@ -144,7 +144,7 @@ bool King::InActionPath( const int actionNum, const int targetX, const int targe
 	if ( board->GetPiece( rookTargetX, y ) != nullptr ) {
 		return false;
 	}
-	rook->Move( rookTargetX, y );
+	rook->Set( rookTargetX, y );
 
 	return true;
 }
