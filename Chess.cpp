@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <vector>
 #include "chess.h"
 #include "piece.h"
 #include "chessGame.h"
@@ -49,6 +50,17 @@ void LoadConfig( const std::string& fileName, gameConfig_t& config ) {
             }
             col = 0;
             ++row;
+        }
+        configFile.close();
+    }
+}
+
+void LoadHistory( const std::string& fileName, std::vector< std::string >& commands ) {
+    string line;
+    ifstream configFile( fileName );
+    if ( configFile.is_open() ) {
+        while ( getline( configFile, line ) ) {
+            commands.push_back( line );
         }
         configFile.close();
     }

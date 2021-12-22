@@ -1,6 +1,7 @@
 #pragma once
 #include <assert.h>
 #include <string>
+#include <vector>
 
 static const int BoardSize = 8;
 typedef int pieceHandle_t;
@@ -229,3 +230,4 @@ struct gameConfig_t {
 };
 
 void LoadConfig( const std::string& fileName, gameConfig_t& config );
+void LoadHistory( const std::string& fileName, std::vector< std::string >& commands );

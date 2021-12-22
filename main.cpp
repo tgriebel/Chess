@@ -129,12 +129,13 @@ void RunTestCommands( Chess& board, std::vector< std::string >& commands ) {
 			std::cout << *it << "-> Invalid Move" << std::endl;
 			continue;
 		}
-		std::cout << *it << "-> Completed" << std::endl;
+		std::cout << turnNum  << ": " << *it << "-> Completed" << std::endl;
 		turnTeam = ( turnTeam == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
+		++turnNum;
 		PrintBoard( board, true );
 	}
 //	ClearScreen();
-	PrintBoard( board, true );
+//	PrintBoard( board, true );
 }
 
 void ProcessEvent( callbackEvent_t& event ) {
@@ -232,12 +233,12 @@ int main()
 	SetWindowTitle( L"Chess by Thomas Griebel" );
 
 	gameConfig_t cfg;
-//#define TEST
+#define TEST
 #if defined( TEST )
 	{
-		//PawnMovement_Init( cfg );
 		std::vector< std::string > commands;
-		GameTest0( cfg, commands );
+		LoadConfig( "tests/default_board.txt", cfg );
+		LoadHistory( "tests/commands_basic.txt", commands );
 
 		Chess board( cfg );
 		RunTestCommands( board, commands );
