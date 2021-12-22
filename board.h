@@ -63,8 +63,6 @@ public:
 		const int pieceIndex = teams[ teamIndex ].livingCount;
 		teams[ teamIndex ].pieces[ pieceIndex ] = pieceNum;
 		++teams[ teamIndex ].livingCount;
-
-		grid[ y ][ x ] = pieceNum;
 		++pieceNum;
 	}
 
@@ -82,7 +80,7 @@ public:
 		return ( GetWinner() != teamCode_t::NONE ) ? RESULT_GAME_COMPLETE : RESULT_SUCCESS;
 	}
 
-	moveType_t IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
+	bool IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
 
 	teamCode_t GetTeam( const int x, const int y ) const {
 		const Piece* targetPiece = GetPiece( x, y );
@@ -90,8 +88,12 @@ public:
 		return ( targetPiece != nullptr ) ? targetPiece->team : teamCode_t::NONE;
 	}
 
-	inline bool IsOnBoard( const int x, const int y ) const {
+	inline bool OnBoard( const int x, const int y ) const {
 		return ( x >= 0 ) && ( x < BoardSize ) && ( y >= 0 ) && ( y < BoardSize );
+	}
+
+	inline teamCode_t GetOpposingTeam( const teamCode_t team ) const {
+		return ( team == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 	}
 
 	inline const pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) const {
@@ -141,21 +143,38 @@ public:
 		return winner;
 	}
 
-	void MovePiece( Piece* piece, const int targetX, const int targetY );
-	bool IsOpenToAttackAt( const pieceHandle_t pieceHdl, const int x, const int y ) const;
+	bool IsOpenToAttackAt( const Piece* targetPiece, const int x, const int y ) const;
+	void SetEnpassant( const pieceHandle_t handle ) {
+		enpassantPawn = handle;
+	}
+	Piece* GetEnpassant( const int targetX, const int targetY ) {
+		Piece* piece = GetPiece( enpassantPawn );
+		if ( piece != nullptr ) {
+			const Pawn* pawn = reinterpret_cast<const Pawn*>( piece );
+			const int x = pawn->x;
+			const int y = ( pawn->y - pawn->GetDirection() );
+			const bool wasEnpassant = ( x == targetX ) && ( y == targetY );
+			if ( wasEnpassant ) {
+				return piece;
+			}
+		}
+		return nullptr;
+	}
+
+	bool CanPromotePawn( const Pawn* pawn ) const;
+	void PromotePawn( const pieceHandle_t pieceHdl );
 
 private:
 	bool IsValidHandle( const pieceHandle_t handle ) const;
 	pieceHandle_t GetHandle( const int x, const int y ) const;
-	void CapturePiece( const teamCode_t attacker, const int x, const int y );
-	bool CanPromotePawn( const Pawn* pawn ) const;
-	void PromotePawn( const pieceHandle_t pieceHdl );
-	bool ForcedCheckMate( const teamCode_t team ) const;
+	void CapturePiece( const teamCode_t attacker, Piece* targetPiece );
+	bool FindCheckMate( const teamCode_t team );
 	bool PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
 	void CountTeamPieces();
 private:
 	teamCode_t		inCheck;
 	teamCode_t		winner;
+	pieceHandle_t	enpassantPawn;
 	mutable bool	enableOpenAttackCheck; // Disables recursion
 	int				pieceNum;
 	Piece*			pieces[ PieceCount ];
@@ -164,4 +183,7 @@ private:
 	callback_t		callback;
 
 	gameConfig_t	config;
+
+	friend class Piece;
+	friend class Pawn;
 };

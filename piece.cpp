@@ -6,14 +6,22 @@ bool Piece::IsValidAction( const int actionNum ) const {
 }
 
 void Piece::Move( const int targetX, const int targetY ) {
-	this->x = targetX;
-	this->y = targetY;
+	board->SetEnpassant( NoPiece );
+	if ( board->GetTeam( targetX, targetY ) != team ) {
+		board->CapturePiece( team, board->GetPiece( targetX, targetY ) );
+	}
+
+	Set( targetX, targetY );
 	++moveCount;
 }
 
 void Piece::Set( const int targetX, const int targetY ) {
-	this->x = targetX;
-	this->y = targetY;
+	board->grid[ y ][ x ] = NoPiece;
+	if ( board->OnBoard( targetX, targetY ) ) {
+		board->grid[ targetY ][ targetX ] = handle;
+	}
+	x = targetX;
+	y = targetY;
 }
 
 moveType_t Piece::GetMoveType( const int actionNum ) const {
@@ -21,10 +29,6 @@ moveType_t Piece::GetMoveType( const int actionNum ) const {
 		return moveType_t::NONE;
 	}
 	return actions[ actionNum ].type;
-}
-
-bool Piece::IsLocatedAt( const int actionX, const int actionY ) const {
-	return ( x == actionX ) && ( y == actionY );
 }
 
 void Piece::CalculateStep( const int actionNum, int& actionX, int& actionY ) const {
@@ -57,6 +61,14 @@ int Piece::GetStepCount( const int actionNum, const int targetX, const int targe
 	return BoardSize;
 }
 
+bool Piece::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
+	if ( IsValidAction( actionNum ) == false ) {
+		return false;
+	}
+	const int stepCount = GetStepCount( actionNum, targetX, targetY, BoardSize );
+	return ( stepCount < BoardSize );
+}
+
 bool Pawn::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
@@ -69,18 +81,26 @@ bool Pawn::InActionPath( const int actionNum, const int targetX, const int targe
 		return ( isOccupied == false ) && ( steps == 1 ) && ( HasMoved() == false );
 	}
 	if ( ( type == PAWN_KILL_L ) || ( type == PAWN_KILL_R ) ) {
-		const bool isEnemy = isOccupied && ( occupiedTeam != team );
+		const bool wasEnpassant = ( board->GetEnpassant( targetX, targetY ) != nullptr );
+		const bool isEnemy = ( isOccupied || wasEnpassant ) && ( occupiedTeam != team );
 		return isEnemy && ( steps == 1 );
 	}
 	return ( isOccupied == false ) && ( steps == 1 );
 }
 
-bool Rook::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
-	if ( IsValidAction( actionNum ) == false ) {
-		return false;
+void Pawn::Move( const int targetX, const int targetY ) {
+	const bool doubleMove = ( abs( targetY - y ) == 2 );
+	Piece* targetPiece = board->GetEnpassant( targetX, targetY );
+	if ( ( targetPiece != nullptr ) && ( targetPiece->team != team ) ) {
+		board->CapturePiece( team, targetPiece );
 	}
-	const int stepCount = GetStepCount( actionNum, targetX, targetY, BoardSize );
-	return ( stepCount < BoardSize );
+	Piece::Move( targetX, targetY );
+	if ( doubleMove ) {
+		board->SetEnpassant( handle );
+	}
+	if ( board->CanPromotePawn( reinterpret_cast<Pawn*>( this ) ) ) {
+		board->PromotePawn( handle );
+	}
 }
 
 bool Knight::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
@@ -91,23 +111,12 @@ bool Knight::InActionPath( const int actionNum, const int targetX, const int tar
 	return ( stepCount == 1 );
 }
 
-bool Bishop::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
-	if ( IsValidAction( actionNum ) == false ) {
-		return false;
-	}
-	const int stepCount = GetStepCount( actionNum, targetX, targetY, BoardSize );
-	return ( stepCount < BoardSize );
-}
-
 bool King::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
 	}
 	const int stepCount = GetStepCount( actionNum, targetX, targetY, 1 );
 	if ( stepCount != 1 ) {
-		return false;
-	}
-	if ( board->IsOpenToAttackAt( handle, targetX, targetY ) ) {
 		return false;
 	}
 
@@ -128,22 +137,14 @@ bool King::InActionPath( const int actionNum, const int targetX, const int targe
 	}
 	const int flankOffset = ( targetX > x ) ? -1 : 1;
 	const int rookTargetX = targetX + flankOffset;
-	const moveType_t rookMove = board->IsLegalMove( rook, rookTargetX, y );
-	if ( rookMove == moveType_t::NONE ) {
+	const bool rookMove = board->IsLegalMove( rook, rookTargetX, y );
+	if ( rookMove == false ) {
 		return false;
 	}
 	if ( board->GetPiece( rookTargetX, y ) != nullptr ) {
 		return false;
 	}
-	board->MovePiece( rook, rookTargetX, y );
+	rook->Move( rookTargetX, y );
 
 	return true;
-}
-
-bool Queen::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
-	if ( IsValidAction( actionNum ) == false ) {
-		return false;
-	}
-	const int stepCount = GetStepCount( actionNum, targetX, targetY, BoardSize );
-	return ( stepCount < BoardSize );
 }

@@ -243,7 +243,7 @@ int main()
 		RunTestCommands( board, commands );
 	}
 #else
-	LoadConfig( "tests/check.txt", cfg );
+	LoadConfig( "tests/enpassant.txt", cfg );
 	RunCmdLineGameLoop( cfg );
 #endif
 }

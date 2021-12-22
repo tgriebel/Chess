@@ -21,14 +21,13 @@ protected:
 	}
 
 	bool IsValidAction( const int actionNum ) const;
-	void Move( const int targetX, const int targetY );
 	void Set( const int targetX, const int targetY );
 public:
 	moveType_t GetMoveType( const int actionNum ) const;
-	bool IsLocatedAt( const int actionX, const int actionY ) const;
 	void CalculateStep( const int actionNum, int& actionX, int& actionY ) const;
 	int GetStepCount( const int actionNum, const int targetX, const int targetY, const int maxSteps ) const;
-	virtual bool InActionPath( const int actionNum, const int targetX, const int targetY ) const = 0;
+	virtual bool InActionPath( const int actionNum, const int targetX, const int targetY ) const;
+	virtual void Move( const int targetX, const int targetY );
 
 	bool HasMoved() const {
 		return ( moveCount > 0 );
@@ -37,9 +36,8 @@ public:
 		return numActions;
 	}
 	void RemoveFromPlay() {
+		Set( -1, -1 );
 		board = nullptr;
-		x = -1;
-		y = -1;
 	}
 	bool OnBoard() const {
 		return ( board != nullptr );
@@ -52,10 +50,10 @@ private:
 public:
 	teamCode_t			team;
 	pieceType_t			type;
-	int					x;
-	int					y;
 	int					instance;
 protected:
+	int					x;
+	int					y;
 	int					moveCount;
 	int					numActions;
 	moveAction_t		actions[ MaxActions ];
@@ -83,8 +81,9 @@ public:
 	}
 
 	bool InActionPath( const int actionNum, const int targetX, const int targetY ) const override;
-private:
-	inline int GetDirection() {
+	void Move( const int targetX, const int targetY ) override;
+
+	inline int GetDirection() const {
 		return ( team == teamCode_t::WHITE ) ? -1 : 1;
 	}
 };
@@ -102,7 +101,6 @@ public:
 		actions[ numActions++ ] = moveAction_t( -1, 0, ROOK_L );
 		assert( numActions <= MaxActions );
 	}
-	bool InActionPath( const int actionNum, const int targetX, const int targetY ) const override;
 };
 
 class Knight : public Piece {
@@ -138,7 +136,6 @@ public:
 		actions[ numActions++ ] = moveAction_t( -1, 1, BISHOP_BL );
 		assert( numActions <= MaxActions );
 	}
-	bool InActionPath( const int actionNum, const int targetX, const int targetY ) const override;
 };
 
 class King : public Piece {
@@ -180,5 +177,4 @@ public:
 		actions[ numActions++ ] = moveAction_t( -1, 0, QUEEN_L );
 		assert( numActions <= MaxActions );
 	}
-	bool InActionPath( const int actionNum, const int targetX, const int targetY ) const override;
 };
