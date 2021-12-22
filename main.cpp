@@ -125,7 +125,7 @@ void RunTestCommands( Chess& board, std::vector< std::string >& commands ) {
 			std::cout << *it << "-> Inavlid String" << std::endl;
 			continue;
 		}
-		if ( board.Execute( cmd ) == false ) {
+		if ( board.Execute( cmd ) == resultCode_t::RESULT_GAME_INVALID_MOVE ) {
 			std::cout << *it << "-> Invalid Move" << std::endl;
 			continue;
 		}
