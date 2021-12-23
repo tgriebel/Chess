@@ -18,9 +18,7 @@ public:
 
 	bool IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
 
-	teamCode_t GetTeam( const int x, const int y ) const {
-		return game->GetInfo( x, y ).team;
-	}
+	teamCode_t GetTeam( const int x, const int y ) const;
 
 	inline bool OnBoard( const int x, const int y ) const {
 		return ( x >= 0 ) && ( x < BoardSize ) && ( y >= 0 ) && ( y < BoardSize );
