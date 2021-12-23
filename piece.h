@@ -45,7 +45,7 @@ public:
 	}
 	int GetActionNum( const moveType_t moveType ) const {
 		for ( int i = 0; i < numActions; ++i ) {
-			if ( actions->type == moveType ) {
+			if ( actions[ i ].type == moveType ) {
 				return i;
 			}
 		}
