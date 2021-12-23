@@ -1,10 +1,9 @@
 ﻿#include <iostream>
 #include <string>
 #include <algorithm>
-#include "chess.h"
+#include "common.h"
 #include "piece.h"
-#include "game.h"
-#include "tests.h"
+#include "chess.h"
 #include "commands.h"
 
 #include <windows.h>

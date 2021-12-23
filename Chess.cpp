@@ -1,5 +1,5 @@
+#include "common.h"
 #include "chess.h"
-#include "game.h"
 #include "chessState.h"
 #include "piece.h"
 

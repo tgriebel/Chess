@@ -1,4 +1,4 @@
-#include "game.h"
+#include "chess.h"
 #include "chessState.h"
 
 pieceHandle_t ChessState::GetHandle( const int x, const int y ) const {
@@ -157,6 +157,20 @@ bool ChessState::FindCheckMate( const teamCode_t team ) {
 		}
 	}
 	return true;
+}
+
+pieceHandle_t ChessState::GetEnpassant( const int targetX, const int targetY ) const {
+	const Piece* piece = GetPiece( enpassantPawn );
+	if ( piece != nullptr ) {
+		const Pawn* pawn = reinterpret_cast<const Pawn*>( piece );
+		const int x = pawn->x;
+		const int y = ( pawn->y - pawn->GetDirection() );
+		const bool wasEnpassant = ( x == targetX ) && ( y == targetY );
+		if ( wasEnpassant ) {
+			return piece->handle;
+		}
+	}
+	return NoPiece;
 }
 
 void ChessState::CountTeamPieces() {

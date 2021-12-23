@@ -1,5 +1,5 @@
 #pragma once
-#include "chess.h"
+#include "common.h"
 #include <limits>
 
 class ChessState;
@@ -17,7 +17,7 @@ protected:
 		moveCount = 0;
 		instance = 0;
 		handle = NoPiece;
-		board = nullptr;
+		state = nullptr;
 	}
 
 	bool IsValidAction( const int actionNum ) const;
@@ -38,10 +38,10 @@ public:
 	}
 	void RemoveFromPlay() {
 		Set( -1, -1 );
-		board = nullptr;
+		state = nullptr;
 	}
 	bool OnBoard() const {
-		return ( board != nullptr );
+		return ( state != nullptr );
 	}
 	int GetActionNum( const moveType_t moveType ) const {
 		for ( int i = 0; i < numActions; ++i ) {
@@ -52,8 +52,8 @@ public:
 		return -1;
 	}
 private:
-	void BindBoard( ChessState* board, const pieceHandle_t handle ) {
-		this->board = board;
+	void BindBoard( ChessState* state, const pieceHandle_t handle ) {
+		this->state = state;
 		this->handle = handle;
 	}
 public:
@@ -68,7 +68,7 @@ protected:
 	moveAction_t		actions[ MaxActions ];
 	pieceHandle_t		handle;
 
-	ChessState*			board;
+	ChessState*			state;
 
 	friend class Chess;
 	friend class ChessState;
@@ -83,10 +83,10 @@ public:
 		const int direction = GetDirection();
 
 		numActions = 0;
-		actions[ numActions++ ] = moveAction_t( 0, direction * 1, PAWN_T, 1 );
-		actions[ numActions++ ] = moveAction_t( 0, direction * 2, PAWN_T2X, 1 );
-		actions[ numActions++ ] = moveAction_t( -1, direction * 1, PAWN_KILL_L, 1 );
-		actions[ numActions++ ] = moveAction_t( 1, direction * 1, PAWN_KILL_R, 1 );
+		actions[ numActions++ ] = moveAction_t( 0, direction * 1, moveType_t::PAWN_T, 1 );
+		actions[ numActions++ ] = moveAction_t( 0, direction * 2, moveType_t::PAWN_T2X, 1 );
+		actions[ numActions++ ] = moveAction_t( -1, direction * 1, moveType_t::PAWN_KILL_L, 1 );
+		actions[ numActions++ ] = moveAction_t( 1, direction * 1, moveType_t::PAWN_KILL_R, 1 );
 		assert( numActions <= MaxActions );
 	}
 
@@ -97,6 +97,10 @@ public:
 	inline int GetDirection() const {
 		return ( team == teamCode_t::WHITE ) ? -1 : 1;
 	}
+private:
+	inline bool IsKillAction( const moveType_t type ) const {
+		return ( type == moveType_t::PAWN_KILL_L ) || ( type == moveType_t::PAWN_KILL_R );
+	}
 };
 
 class Rook : public Piece {
@@ -106,10 +110,10 @@ public:
 		this->team = team;
 
 		numActions = 0;
-		actions[ numActions++ ] = moveAction_t( 0, 1, ROOK_T, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( 0, -1, ROOK_B, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( 1, 0, ROOK_R, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( -1, 0, ROOK_L, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 0, 1, moveType_t::ROOK_T, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 0, -1, moveType_t::ROOK_B, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, 0, moveType_t::ROOK_R, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( -1, 0, moveType_t::ROOK_L, BoardSize - 1 );
 		assert( numActions <= MaxActions );
 	}
 };
@@ -121,14 +125,14 @@ public:
 		this->team = team;
 
 		numActions = 0;
-		actions[ numActions++ ] = moveAction_t( -2, -1, KNIGHT_T1L2, 1 );
-		actions[ numActions++ ] = moveAction_t( -1, -2, KNIGHT_T2L1, 1 );
-		actions[ numActions++ ] = moveAction_t( 1, -2, KNIGHT_T1R2, 1 );
-		actions[ numActions++ ] = moveAction_t( 2, -1, KNIGHT_T2R1, 1 );
-		actions[ numActions++ ] = moveAction_t( 2, 1, KNIGHT_B1R2, 1 );
-		actions[ numActions++ ] = moveAction_t( 1, 2, KNIGHT_B2R1, 1 );
-		actions[ numActions++ ] = moveAction_t( -1, 2, KNIGHT_B2L1, 1 );
-		actions[ numActions++ ] = moveAction_t( -2, 1, KNIGHT_B1L2, 1 );
+		actions[ numActions++ ] = moveAction_t( -2, -1, moveType_t::KNIGHT_T1L2, 1 );
+		actions[ numActions++ ] = moveAction_t( -1, -2, moveType_t::KNIGHT_T2L1, 1 );
+		actions[ numActions++ ] = moveAction_t( 1, -2, moveType_t::KNIGHT_T1R2, 1 );
+		actions[ numActions++ ] = moveAction_t( 2, -1, moveType_t::KNIGHT_T2R1, 1 );
+		actions[ numActions++ ] = moveAction_t( 2, 1, moveType_t::KNIGHT_B1R2, 1 );
+		actions[ numActions++ ] = moveAction_t( 1, 2, moveType_t::KNIGHT_B2R1, 1 );
+		actions[ numActions++ ] = moveAction_t( -1, 2, moveType_t::KNIGHT_B2L1, 1 );
+		actions[ numActions++ ] = moveAction_t( -2, 1, moveType_t::KNIGHT_B1L2, 1 );
 		assert( numActions <= MaxActions );
 	}
 };
@@ -140,10 +144,10 @@ public:
 		this->team = team;
 
 		numActions = 0;
-		actions[ numActions++ ] = moveAction_t( -1, -1, BISHOP_TL, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( 1, -1, BISHOP_TR, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( 1, 1, BISHOP_BR, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( -1, 1, BISHOP_BL, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( -1, -1, moveType_t::BISHOP_TL, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, -1, moveType_t::BISHOP_TR, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, 1, moveType_t::BISHOP_BR, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( -1, 1, moveType_t::BISHOP_BL, BoardSize - 1 );
 		assert( numActions <= MaxActions );
 	}
 };
@@ -155,16 +159,16 @@ public:
 		this->team = team;
 
 		numActions = 0;
-		actions[ numActions++ ] = moveAction_t( -1, -1, KING_TL, 1 );
-		actions[ numActions++ ] = moveAction_t( 0, -1, KING_T, 1 );
-		actions[ numActions++ ] = moveAction_t( 1, -1, KING_TR, 1 );
-		actions[ numActions++ ] = moveAction_t( 1, 0, KING_R, 1 );
-		actions[ numActions++ ] = moveAction_t( 1, 1, KING_BR, 1 );
-		actions[ numActions++ ] = moveAction_t( 0, 1, KING_B, 1 );
-		actions[ numActions++ ] = moveAction_t( -1, 1, KING_BL, 1 );
-		actions[ numActions++ ] = moveAction_t( -1, 0, KING_L, 1 );
-		actions[ numActions++ ] = moveAction_t( -2, 0, KING_CASTLE_L, 1 );
-		actions[ numActions++ ] = moveAction_t( 2, 0, KING_CASTLE_R, 1 );
+		actions[ numActions++ ] = moveAction_t( -1, -1, moveType_t::KING_TL, 1 );
+		actions[ numActions++ ] = moveAction_t( 0, -1, moveType_t::KING_T, 1 );
+		actions[ numActions++ ] = moveAction_t( 1, -1, moveType_t::KING_TR, 1 );
+		actions[ numActions++ ] = moveAction_t( 1, 0, moveType_t::KING_R, 1 );
+		actions[ numActions++ ] = moveAction_t( 1, 1, moveType_t::KING_BR, 1 );
+		actions[ numActions++ ] = moveAction_t( 0, 1, moveType_t::KING_B, 1 );
+		actions[ numActions++ ] = moveAction_t( -1, 1, moveType_t::KING_BL, 1 );
+		actions[ numActions++ ] = moveAction_t( -1, 0, moveType_t::KING_L, 1 );
+		actions[ numActions++ ] = moveAction_t( -2, 0, moveType_t::KING_CASTLE_L, 1 );
+		actions[ numActions++ ] = moveAction_t( 2, 0, moveType_t::KING_CASTLE_R, 1 );
 		assert( numActions <= MaxActions );
 	}
 	bool InActionPath( const int actionNum, const int actionX, const int actionY ) const override;
@@ -177,14 +181,14 @@ public:
 		this->team = team;
 
 		numActions = 0;
-		actions[ numActions++ ] = moveAction_t( -1, -1, QUEEN_TL, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( 0, -1, QUEEN_T, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( 1, -1, QUEEN_TR, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( 1, 0, QUEEN_R, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( 1, 1, QUEEN_BR, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( 0, 1, QUEEN_B, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( -1, 1, QUEEN_BL, BoardSize - 1 );
-		actions[ numActions++ ] = moveAction_t( -1, 0, QUEEN_L, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( -1, -1, moveType_t::QUEEN_TL, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 0, -1, moveType_t::QUEEN_T, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, -1, moveType_t::QUEEN_TR, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, 0, moveType_t::QUEEN_R, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 1, 1, moveType_t::QUEEN_BR, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( 0, 1, moveType_t::QUEEN_B, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( -1, 1, moveType_t::QUEEN_BL, BoardSize - 1 );
+		actions[ numActions++ ] = moveAction_t( -1, 0, moveType_t::QUEEN_L, BoardSize - 1 );
 		assert( numActions <= MaxActions );
 	}
 };

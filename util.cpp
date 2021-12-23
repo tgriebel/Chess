@@ -3,21 +3,44 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include "chess.h"
+#include "common.h"
 #include "piece.h"
-#include "game.h"
+#include "chess.h"
 #include "commands.h"
 
 using namespace std;
 
-//BR, BN, BB, BQ, BK, BB, BN, BR
-//BP, BP, BP, BP, BP, BP, BP, BP
-//CL, CL, CL, CL, CL, CL, CL, CL
-//CL, CL, CL, CL, CL, CL, CL, CL
-//CL, CL, CL, CL, CL, CL, CL, CL
-//CL, CL, CL, CL, CL, CL, CL, CL
-//WP, WP, WP, WP, WP, WP, WP, WP
-//WR, CL, CL, CL, WK, WB, WN, WR
+#define BP { teamCode_t::BLACK, pieceType_t::PAWN, 0, false }
+#define BR { teamCode_t::BLACK, pieceType_t::ROOK, 0, false }
+#define BN { teamCode_t::BLACK, pieceType_t::KNIGHT, 0, false }
+#define BB { teamCode_t::BLACK, pieceType_t::BISHOP, 0, false }
+#define BQ { teamCode_t::BLACK, pieceType_t::QUEEN, 0, false }
+#define BK { teamCode_t::BLACK, pieceType_t::KING, 0, false }
+#define WP { teamCode_t::WHITE, pieceType_t::PAWN, 0, false }
+#define WR { teamCode_t::WHITE, pieceType_t::ROOK, 0, false }
+#define WN { teamCode_t::WHITE, pieceType_t::KNIGHT, 0, false }
+#define WB { teamCode_t::WHITE, pieceType_t::BISHOP, 0, false }
+#define WQ { teamCode_t::WHITE, pieceType_t::QUEEN, 0, false }
+#define WK { teamCode_t::WHITE, pieceType_t::KING, 0, false }
+#define CL { teamCode_t::NONE, pieceType_t::NONE, 0, false }
+
+void GetDefaultConfig( gameConfig_t& defaultCfg ) {
+	static constexpr pieceInfo_t DefaultCfg[ BoardSize ][ BoardSize ] = {
+		{ BR, BN, BB, BQ, BK, BB, BN, BR },
+		{ BP, BP, BP, BP, BP, BP, BP, BP },
+		{ CL, CL, CL, CL, CL, CL, CL, CL },
+		{ CL, CL, CL, CL, CL, CL, CL, CL },
+		{ CL, CL, CL, CL, CL, CL, CL, CL },
+		{ CL, CL, CL, CL, CL, CL, CL, CL },
+		{ WP, WP, WP, WP, WP, WP, WP, WP },
+		{ WR, WN, WB, WQ, WK, WB, WN, WR },
+	};
+	for ( int i = 0; i < BoardSize; ++i ) {
+		for ( int j = 0; j < BoardSize; ++j ) {
+			defaultCfg.board[ i ][ j ] = DefaultCfg[ i ][ j ];
+		}
+	}
+}
 
 std::string SquareToString( const Chess& board, const int x, const int y ) {
 	std::string squareFormat;

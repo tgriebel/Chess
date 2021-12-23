@@ -35,20 +35,17 @@
     <ClInclude Include="piece.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="chess.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="tests.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
     <ClInclude Include="commands.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="game.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="chessState.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="common.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chess.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

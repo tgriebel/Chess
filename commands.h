@@ -1,8 +1,8 @@
 #pragma once
 #include <string>
-#include "chess.h"
+#include "common.h"
 #include "piece.h"
-#include "game.h"
+#include "chess.h"
 
 static char GetPieceCode( const pieceType_t type ) {
 	switch ( type ) {

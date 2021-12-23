@@ -1,6 +1,6 @@
 #pragma once
 #pragma once
-#include "chess.h"
+#include "common.h"
 #include "piece.h"
 
 typedef void ( *callback_t )( callbackEvent_t& );
@@ -37,22 +37,10 @@ public:
 	pieceInfo_t GetInfo( const int x, const int y ) const;
 
 	bool IsOpenToAttackAt( const Piece* targetPiece, const int targetX, const int targetY ) const;
-	void SetEnpassant( const pieceHandle_t handle ) {
+	inline void SetEnpassant( const pieceHandle_t handle ) {
 		enpassantPawn = handle;
 	}
-	pieceHandle_t GetEnpassant( const int targetX, const int targetY ) const {
-		const Piece* piece = GetPiece( enpassantPawn );
-		if ( piece != nullptr ) {
-			const Pawn* pawn = reinterpret_cast<const Pawn*>( piece );
-			const int x = pawn->x;
-			const int y = ( pawn->y - pawn->GetDirection() );
-			const bool wasEnpassant = ( x == targetX ) && ( y == targetY );
-			if ( wasEnpassant ) {
-				return piece->handle;
-			}
-		}
-		return NoPiece;
-	}
+	pieceHandle_t GetEnpassant( const int targetX, const int targetY ) const;
 
 	void PromotePawn( const pieceHandle_t pieceHdl );
 
