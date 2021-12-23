@@ -89,7 +89,7 @@ public:
 
 private:
 	bool PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
-	//private:
+//private:
 public:
 
 	ChessState		s;

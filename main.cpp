@@ -38,30 +38,17 @@ void PrintBoard( const Chess& board, std::vector< moveAction_t >* actions, const
 		std::cout << "  |";
 		for ( int i = 0; i < BoardSize; ++i ) {
 			const bool isBlack = ( j % 2 ) == ( i % 2 );
-			SetTextColor( 15 );
-			const Piece* piece = board.s.GetPiece( i, j );
-			if ( piece != nullptr ) {
-				const teamCode_t team = piece->team;
-				if ( team == teamCode_t::BLACK ) {
-					if ( isBlack ) {
-						SetTextColor( 245 );
-					} else {
-						SetTextColor( 5 );
-					}
-				} else if ( team == teamCode_t::WHITE ) {
-					if ( isBlack ) {
-						SetTextColor( 252 );
-					} else {
-						SetTextColor( 12 );
-					}
-				}
+			const teamCode_t team = board.s.GetTeam( i, j );
+			int colorCode = 0;
+			if ( team == teamCode_t::BLACK ) {
+				colorCode = isBlack ? 245 : 5;
+			} else if ( team == teamCode_t::WHITE ) {
+				colorCode = isBlack ? 252 : 12;
 			} else {
-				if ( isBlack ) {
-					SetTextColor( 240 );
-				} else {
-					SetTextColor( 15 );
-				}
+				colorCode = isBlack ? 240 : 15;
 			}
+			SetTextColor( colorCode );
+
 			std::string square = SquareToString( board, i, j );
 			if ( actions != nullptr ) {
 				for ( size_t action = 0; action < actions->size(); ++action ) {
