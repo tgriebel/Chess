@@ -53,6 +53,18 @@ void Chess::SetBoard( const gameConfig_t& cfg ) {
 	}
 }
 
+void Chess::EnterPieceInGame( Piece* piece, const int x, const int y ) {
+	s.pieces[ pieceNum ] = piece;
+	s.pieces[ pieceNum ]->BindBoard( &s, pieceNum );
+	s.pieces[ pieceNum ]->Set( x, y );
+
+	const int teamIndex = static_cast<int>( piece->team );
+	const int pieceIndex = s.teams[ teamIndex ].livingCount;
+	s.teams[ teamIndex ].pieces[ pieceIndex ] = pieceNum;
+	++s.teams[ teamIndex ].livingCount;
+	++pieceNum;
+}
+
 bool Chess::IsValidHandle( const pieceHandle_t handle ) const {
 	if ( handle == NoPiece ) {
 		return false;
@@ -61,6 +73,24 @@ bool Chess::IsValidHandle( const pieceHandle_t handle ) const {
 		return false;
 	}
 	return true;
+}
+
+squareInfo_t Chess::GetInfo( const int x, const int y ) const {
+	squareInfo_t info;
+	const Piece* piece = s.GetPiece( x, y );
+	if ( piece != nullptr ) {
+		info.piece = piece->type;
+		info.team = piece->team;
+		info.instance = piece->instance;
+		info.empty = false;
+	}
+	else {
+		info.piece = pieceType_t::NONE;
+		info.team = teamCode_t::NONE;
+		info.instance = 0;
+		info.empty = true;
+	}
+	return info;
 }
 
 Piece* Chess::CreatePiece( const pieceType_t pieceType, const teamCode_t teamCode ) {

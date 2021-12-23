@@ -172,27 +172,29 @@ struct team_t {
 	int				captureTypeCounts[ (int)pieceType_t::COUNT ];
 };
 
-struct squareCfg_t {
+struct squareInfo_t {
 	teamCode_t	team;
 	pieceType_t	piece;
+	int			instance;
+	bool		empty;
 };
 
-#define BP { teamCode_t::BLACK, pieceType_t::PAWN }
-#define BR { teamCode_t::BLACK, pieceType_t::ROOK }
-#define BN { teamCode_t::BLACK, pieceType_t::KNIGHT }
-#define BB { teamCode_t::BLACK, pieceType_t::BISHOP }
-#define BQ { teamCode_t::BLACK, pieceType_t::QUEEN }
-#define BK { teamCode_t::BLACK, pieceType_t::KING }
-#define WP { teamCode_t::WHITE, pieceType_t::PAWN }
-#define WR { teamCode_t::WHITE, pieceType_t::ROOK }
-#define WN { teamCode_t::WHITE, pieceType_t::KNIGHT }
-#define WB { teamCode_t::WHITE, pieceType_t::BISHOP }
-#define WQ { teamCode_t::WHITE, pieceType_t::QUEEN }
-#define WK { teamCode_t::WHITE, pieceType_t::KING }
-#define CL { teamCode_t::NONE, pieceType_t::NONE }
+#define BP { teamCode_t::BLACK, pieceType_t::PAWN, 0, false }
+#define BR { teamCode_t::BLACK, pieceType_t::ROOK, 0, false }
+#define BN { teamCode_t::BLACK, pieceType_t::KNIGHT, 0, false }
+#define BB { teamCode_t::BLACK, pieceType_t::BISHOP, 0, false }
+#define BQ { teamCode_t::BLACK, pieceType_t::QUEEN, 0, false }
+#define BK { teamCode_t::BLACK, pieceType_t::KING, 0, false }
+#define WP { teamCode_t::WHITE, pieceType_t::PAWN, 0, false }
+#define WR { teamCode_t::WHITE, pieceType_t::ROOK, 0, false }
+#define WN { teamCode_t::WHITE, pieceType_t::KNIGHT, 0, false }
+#define WB { teamCode_t::WHITE, pieceType_t::BISHOP, 0, false }
+#define WQ { teamCode_t::WHITE, pieceType_t::QUEEN, 0, false }
+#define WK { teamCode_t::WHITE, pieceType_t::KING, 0, false }
+#define CL { teamCode_t::NONE, pieceType_t::NONE, 0, false }
 
 struct gameConfig_t {
-	const squareCfg_t DefaultCfg[ BoardSize ][ BoardSize ] = {
+	const squareInfo_t DefaultCfg[ BoardSize ][ BoardSize ] = {
 		{ BR, BN, BB, BQ, BK, BB, BN, BR },
 		{ BP, BP, BP, BP, BP, BP, BP, BP },
 		{ CL, CL, CL, CL, CL, CL, CL, CL },
@@ -233,7 +235,7 @@ struct gameConfig_t {
 		return *this;
 	}
 
-	squareCfg_t board[ BoardSize ][ BoardSize ];
+	squareInfo_t board[ BoardSize ][ BoardSize ];
 };
 
 typedef void ( *callback_t )( callbackEvent_t& );

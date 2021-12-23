@@ -21,12 +21,12 @@ using namespace std;
 
 std::string SquareToString( const Chess& board, const int x, const int y ) {
 	std::string squareFormat;
-	const Piece* piece = board.s.GetPiece( x, y );
+	const squareInfo_t info = board.GetInfo( x, y );
 	const bool isBlack = ( x % 2 ) == ( y % 2 );
-	if ( piece != nullptr ) {
-		const pieceType_t type = piece->type;
-		const teamCode_t team = piece->team;
-		const int instance = piece->instance;
+	if ( info.empty == false ) {
+		const pieceType_t type = info.piece;
+		const teamCode_t team = info.team;
+		const int instance = info.instance;
 		squareFormat += " ";
 		squareFormat += GetPieceCode( type );
 		squareFormat += '0' + instance;
@@ -87,16 +87,18 @@ std::string BoardToString( const Chess& board, const bool printCaptures ) {
 	return boardFormat;
 }
 
-static squareCfg_t GetSquareConfig( const string& token ) {
+static squareInfo_t GetSquareConfig( const string& token ) {
     if ( token.size() != 2 ) {
         return CL;
     }
-    squareCfg_t cfg;   
+    squareInfo_t cfg;  
     switch ( token[ 0 ] ) {
         case 'B': cfg.team = teamCode_t::BLACK; break;
         case 'W': cfg.team = teamCode_t::WHITE; break;
     }
     cfg.piece = GetPieceType( token[ 1 ] );
+	cfg.empty = ( cfg.piece == pieceType_t::NONE );
+	cfg.instance = 0;
     return cfg;
 }
 

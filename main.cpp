@@ -38,11 +38,11 @@ void PrintBoard( const Chess& board, std::vector< moveAction_t >* actions, const
 		std::cout << "  |";
 		for ( int i = 0; i < BoardSize; ++i ) {
 			const bool isBlack = ( j % 2 ) == ( i % 2 );
-			const teamCode_t team = board.s.GetTeam( i, j );
+			const squareInfo_t info = board.GetInfo( i, j );
 			int colorCode = 0;
-			if ( team == teamCode_t::BLACK ) {
+			if ( info.team == teamCode_t::BLACK ) {
 				colorCode = isBlack ? 245 : 5;
-			} else if ( team == teamCode_t::WHITE ) {
+			} else if ( info.team == teamCode_t::WHITE ) {
 				colorCode = isBlack ? 252 : 12;
 			} else {
 				colorCode = isBlack ? 240 : 15;
@@ -177,14 +177,14 @@ read_input:
 				const int instance = args[ 1 ] - '0';
 				const teamCode_t team = ( ( args.size() == 3 ) && ( args[ 2 ] == '\'' ) ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 				const pieceHandle_t hdl = board.FindPiece( team, pieceType, instance );
-				const Piece* piece = board.s.GetPiece( hdl );
+				/*const squareInfo_t info = board.s.GetPiece( hdl );
 				if ( piece != nullptr ) {
 					piece->EnumerateActions( actions );
 					goto clear_screen;
 				} else {
 					std::cout << GetErrorMsg( RESULT_INPUT_INVALID_COMMAND ) << std::endl;
 					goto read_input;
-				}
+				}*/
 			}
 			command_t cmd{};
 			resultCode_t result = TranslateActionCommand( board, turnTeam, commandString, cmd );

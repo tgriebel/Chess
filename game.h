@@ -23,21 +23,11 @@ public:
 		}
 	}
 
-	void EnterPieceInGame( Piece* piece, const int x, const int y ) {
-		s.pieces[ pieceNum ] = piece;
-		s.pieces[ pieceNum ]->BindBoard( &s, pieceNum );
-		s.pieces[ pieceNum ]->Set( x, y );
-
-		const int teamIndex = static_cast<int>( piece->team );
-		const int pieceIndex = s.teams[ teamIndex ].livingCount;
-		s.teams[ teamIndex ].pieces[ pieceIndex ] = pieceNum;
-		++s.teams[ teamIndex ].livingCount;
-		++pieceNum;
-	}
-
-	void SetBoard( const gameConfig_t& cfg );
-
 	static Piece* CreatePiece( const pieceType_t pieceType, const teamCode_t teamCode );
+
+	static inline teamCode_t GetOpposingTeam( const teamCode_t team ) {
+		return ( team == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
+	}
 
 	resultCode_t Execute( const command_t& cmd ) {
 		const pieceHandle_t piece = FindPiece( cmd.team, cmd.pieceType, cmd.instance );
@@ -51,10 +41,6 @@ public:
 			return RESULT_GAME_INVALID_MOVE;
 		}
 		return ( GetWinner() != teamCode_t::NONE ) ? RESULT_GAME_COMPLETE : RESULT_SUCCESS;
-	}
-
-	inline static teamCode_t GetOpposingTeam( const teamCode_t team ) {
-		return ( team == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 	}
 
 	inline const pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) const {
@@ -73,6 +59,7 @@ public:
 		}
 	}
 
+	squareInfo_t GetInfo( const int x, const int y ) const;
 	void SetEventCallback( callback_t callback ) {
 		this->s.callback = callback;
 	}
@@ -88,10 +75,10 @@ public:
 	bool IsValidHandle( const pieceHandle_t handle ) const;
 
 private:
+	void SetBoard( const gameConfig_t& cfg );
+	void EnterPieceInGame( Piece* piece, const int x, const int y );
 	bool PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
-//private:
-public:
-
+private:
 	ChessState		s;
 	int				pieceNum;
 	teamCode_t		winner;
