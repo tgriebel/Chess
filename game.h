@@ -3,8 +3,6 @@
 #include "chessState.h"
 #include "piece.h"
 
-typedef void ( *callback_t )( callbackEvent_t& );
-
 class Chess {
 public:
 	Chess( const gameConfig_t& cfg ) {
@@ -15,6 +13,7 @@ public:
 		memset( s->pieces, 0, sizeof( Piece* ) * PieceCount );
 		config = cfg;
 		SetBoard( config );
+		s->game = this;
 		s->CountTeamPieces();
 	}
 
@@ -26,19 +25,7 @@ public:
 		delete s;
 	}
 
-	void SetBoard( const gameConfig_t& cfg ) {
-		for ( int i = 0; i < BoardSize; ++i ) {
-			for ( int j = 0; j < BoardSize; ++j ) {
-				s->grid[ i ][ j ] = NoPiece;
-				const pieceType_t pieceType = cfg.board[ i ][ j ].piece;
-				const teamCode_t teamCode = cfg.board[ i ][ j ].team;
-				Piece* piece = CreatePiece( pieceType, teamCode );
-				if ( piece != nullptr ) {
-					s->EnterPieceInGame( piece, j, i );
-				}
-			}
-		}
-	}
+	void SetBoard( const gameConfig_t& cfg );
 
 	static Piece* CreatePiece( const pieceType_t pieceType, const teamCode_t teamCode );
 
@@ -66,7 +53,7 @@ public:
 
 	pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance );
 
-	inline void GetTeamCaptures( const teamCode_t teamCode, const Piece* capturedPieces[ TeamPieceCount ], int& captureCount ) const {
+	void GetTeamCaptures( const teamCode_t teamCode, const Piece* capturedPieces[ TeamPieceCount ], int& captureCount ) const {
 		const int index = static_cast<int>( teamCode );
 		if ( ( index >= 0 ) && ( index < TeamCount ) ) {
 			captureCount = s->teams[ index ].capturedCount;
@@ -84,14 +71,14 @@ public:
 		return winner;
 	}
 
-	bool IsValidHandle( const pieceHandle_t handle ) const;
+//	bool IsValidHandle( const pieceHandle_t handle ) const;
 
 private:
 	bool PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
-//private:
+	//private:
 public:
 
-	ChessState*		s;
+	ChessState* s;
 	teamCode_t		winner;
 	teamCode_t		inCheck;
 	gameConfig_t	config;

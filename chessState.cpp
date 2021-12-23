@@ -8,20 +8,6 @@ pieceHandle_t ChessState::GetHandle( const int x, const int y ) const {
 	return grid[ y ][ x ];
 }
 
-void ChessState::SetBoard( const gameConfig_t& cfg ) {
-	for ( int i = 0; i < BoardSize; ++i ) {
-		for ( int j = 0; j < BoardSize; ++j ) {
-			grid[ i ][ j ] = NoPiece;
-			const pieceType_t pieceType = cfg.board[ i ][ j ].piece;
-			const teamCode_t teamCode = cfg.board[ i ][ j ].team;
-			Piece* piece = Chess::CreatePiece( pieceType, teamCode );
-			if ( piece != nullptr ) {
-				EnterPieceInGame( piece, j, i );
-			}
-		}
-	}
-}
-
 bool ChessState::IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const {
 	if ( OnBoard( targetX, targetY ) == false ) {
 		return false;
@@ -39,19 +25,19 @@ bool ChessState::IsLegalMove( const Piece* piece, const int targetX, const int t
 		return false;
 	}
 	//// It's illegal for any move to leave that team's king checked
-	//const Piece* movedPiece = GetPiece( targetX, targetY );
-	//const int x = piece->x;
-	//const int y = piece->y;
-	//const_cast<Piece*>( piece )->Set( targetX, targetY ); // FIXME: hack
-	//const pieceHandle_t kingHdl = FindPiece( piece->team, pieceType_t::KING, 0 );
-	//const Piece* king = GetPiece( kingHdl );
-	//if ( IsOpenToAttackAt( king, king->x, king->y ) ) {
-	//	isLegal = false;
-	//}
-	//const_cast<Piece*>( piece )->Set( x, y ); // FIXME: hack
-	//if ( movedPiece != nullptr ) {
-	//	const_cast<Piece*>( movedPiece )->Set( targetX, targetY ); // FIXME: hack
-	//}
+	const Piece* movedPiece = GetPiece( targetX, targetY );
+	const int x = piece->x;
+	const int y = piece->y;
+	const_cast<Piece*>( piece )->Set( targetX, targetY ); // FIXME: hack
+	const pieceHandle_t kingHdl = game->FindPiece( piece->team, pieceType_t::KING, 0 );
+	const Piece* king = GetPiece( kingHdl );
+	if ( IsOpenToAttackAt( king, king->x, king->y ) ) {
+		isLegal = false;
+	}
+	const_cast<Piece*>( piece )->Set( x, y ); // FIXME: hack
+	if ( movedPiece != nullptr ) {
+		const_cast<Piece*>( movedPiece )->Set( targetX, targetY ); // FIXME: hack
+	}
 	return isLegal;
 }
 
@@ -132,22 +118,22 @@ bool ChessState::IsOpenToAttackAt( const Piece* targetPiece, const int x, const 
 }
 
 bool ChessState::FindCheckMate( const teamCode_t team ) {
-	//const pieceHandle_t kingHdl = FindPiece( team, pieceType_t::KING, 0 );
-	//const Piece* king = GetPiece( kingHdl );
-	//// King was captured
-	//if ( king == nullptr ) {			
-	//	return true;
-	//}
-	//// King can't move
-	//const int actionCount = king->GetActionCount();
-	//for ( int action = 0; action < actionCount; ++action ) {
-	//	int nextX = king->x;
-	//	int nextY = king->y;
-	//	king->CalculateStep( action, nextX, nextY );
-	//	if( IsOpenToAttackAt( king, nextX, nextY ) == false ) {
-	//		return false;
-	//	}
-	//}
+	const pieceHandle_t kingHdl = game->FindPiece( team, pieceType_t::KING, 0 );
+	const Piece* king = GetPiece( kingHdl );
+	// King was captured
+	if ( king == nullptr ) {			
+		return true;
+	}
+	// King can't move
+	const int actionCount = king->GetActionCount();
+	for ( int action = 0; action < actionCount; ++action ) {
+		int nextX = king->x;
+		int nextY = king->y;
+		king->CalculateStep( action, nextX, nextY );
+		if( IsOpenToAttackAt( king, nextX, nextY ) == false ) {
+			return false;
+		}
+	}
 	return true;
 }
 

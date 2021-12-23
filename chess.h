@@ -236,6 +236,8 @@ struct gameConfig_t {
 	squareCfg_t board[ BoardSize ][ BoardSize ];
 };
 
+typedef void ( *callback_t )( callbackEvent_t& );
+
 std::string SquareToString( const Chess& board, const int x, const int y );
 std::string TeamCaptureString( const Chess& board, const teamCode_t team );
 std::string BoardToString( const Chess& board, const bool printCaptures );

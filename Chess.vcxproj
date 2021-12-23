@@ -140,8 +140,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="chessState.cpp" />
-    <ClCompile Include="game.cpp" />
     <ClCompile Include="chess.cpp" />
+    <ClCompile Include="util.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="piece.cpp" />
   </ItemGroup>

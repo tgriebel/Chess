@@ -16,8 +16,6 @@ public:
 
 	}
 
-	void SetBoard( const gameConfig_t& cfg );
-
 	void EnterPieceInGame( Piece* piece, const int x, const int y ) {
 		pieces[ pieceNum ] = piece;
 		pieces[ pieceNum ]->BindBoard( this, pieceNum );
@@ -101,6 +99,7 @@ private:
 	Piece*			pieces[ PieceCount ];
 	team_t			teams[ TeamCount ];
 	pieceHandle_t	grid[ BoardSize ][ BoardSize ]; // (0,0) is top left
+	Chess*			game;
 
 	friend class Piece;
 	friend class Pawn;
