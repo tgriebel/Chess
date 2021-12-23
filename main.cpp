@@ -39,7 +39,7 @@ void PrintBoard( const Chess& board, std::vector< moveAction_t >* actions, const
 		for ( int i = 0; i < BoardSize; ++i ) {
 			const bool isBlack = ( j % 2 ) == ( i % 2 );
 			SetTextColor( 15 );
-			const Piece* piece = board.GetPiece( i, j );
+			const Piece* piece = board.s->GetPiece( i, j );
 			if ( piece != nullptr ) {
 				const teamCode_t team = piece->team;
 				if ( team == teamCode_t::BLACK ) {
@@ -190,7 +190,7 @@ read_input:
 				const int instance = args[ 1 ] - '0';
 				const teamCode_t team = ( ( args.size() == 3 ) && ( args[ 2 ] == '\'' ) ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 				const pieceHandle_t hdl = board.FindPiece( team, pieceType, instance );
-				const Piece* piece = board.GetPiece( hdl );
+				const Piece* piece = board.s->GetPiece( hdl );
 				if ( piece != nullptr ) {
 					piece->EnumerateActions( actions );
 					goto clear_screen;

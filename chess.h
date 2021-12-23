@@ -3,7 +3,10 @@
 #include <string>
 #include <vector>
 
-static const int BoardSize = 8;
+static const int BoardSize		= 8;
+static const int TeamCount		= 2;
+static const int TeamPieceCount	= 16;
+static const int PieceCount		= 32;
 typedef int pieceHandle_t;
 static const pieceHandle_t NoPiece = -1;
 static const pieceHandle_t OffBoard = -2;

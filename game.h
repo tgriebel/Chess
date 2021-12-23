@@ -1,24 +1,21 @@
 #pragma once
 #include "chess.h"
+#include "chessState.h"
 #include "piece.h"
 
 typedef void ( *callback_t )( callbackEvent_t& );
 
 class Chess {
 public:
-	static const int TeamCount = 2;
-	static const int TeamPieceCount = 16;
-	static const int PieceCount = 32;
-
 	Chess( const gameConfig_t& cfg ) {
-		s = new gameState_t();
+		s = new ChessState();
 		s->pieceNum = 0;
-		s->winner = teamCode_t::NONE;
-		s->inCheck = teamCode_t::NONE;
+		winner = teamCode_t::NONE;
+		inCheck = teamCode_t::NONE;
 		memset( s->pieces, 0, sizeof( Piece* ) * PieceCount );
 		config = cfg;
 		SetBoard( config );
-		CountTeamPieces();
+		s->CountTeamPieces();
 	}
 
 	~Chess() {
@@ -37,35 +34,13 @@ public:
 				const teamCode_t teamCode = cfg.board[ i ][ j ].team;
 				Piece* piece = CreatePiece( pieceType, teamCode );
 				if ( piece != nullptr ) {
-					SetPiece( piece, j, i );
+					s->EnterPieceInGame( piece, j, i );
 				}
 			}
 		}
 	}
 
-	Piece* CreatePiece( const pieceType_t pieceType, const teamCode_t teamCode ) {
-		switch ( pieceType ) {
-		case pieceType_t::PAWN:		return new Pawn( teamCode );
-		case pieceType_t::ROOK:		return new Rook( teamCode );
-		case pieceType_t::KNIGHT:	return new Knight( teamCode );
-		case pieceType_t::BISHOP:	return new Bishop( teamCode );
-		case pieceType_t::QUEEN:	return new Queen( teamCode );
-		case pieceType_t::KING:		return new King( teamCode );
-		}
-		return nullptr;
-	}
-
-	void SetPiece( Piece* piece, const int x, const int y ) {
-		s->pieces[ s->pieceNum ] = piece;
-		s->pieces[ s->pieceNum ]->BindBoard( this, s->pieceNum );
-		s->pieces[ s->pieceNum ]->Set( x, y );
-
-		const int teamIndex = static_cast<int>( piece->team );
-		const int pieceIndex = s->teams[ teamIndex ].livingCount;
-		s->teams[ teamIndex ].pieces[ pieceIndex ] = s->pieceNum;
-		++s->teams[ teamIndex ].livingCount;
-		++s->pieceNum;
-	}
+	static Piece* CreatePiece( const pieceType_t pieceType, const teamCode_t teamCode );
 
 	resultCode_t Execute( const command_t& cmd ) {
 		const pieceHandle_t piece = FindPiece( cmd.team, cmd.pieceType, cmd.instance );
@@ -81,22 +56,7 @@ public:
 		return ( GetWinner() != teamCode_t::NONE ) ? RESULT_GAME_COMPLETE : RESULT_SUCCESS;
 	}
 
-	bool IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
-
-	teamCode_t GetTeam( const int x, const int y ) const {
-		if ( OnBoard( x, y ) == false ) {
-			return teamCode_t::NONE;
-		}
-		const Piece* targetPiece = GetPiece( x, y );
-		const bool isOccupied = ( targetPiece != nullptr );
-		return ( targetPiece != nullptr ) ? targetPiece->team : teamCode_t::NONE;
-	}
-
-	inline bool OnBoard( const int x, const int y ) const {
-		return ( x >= 0 ) && ( x < BoardSize ) && ( y >= 0 ) && ( y < BoardSize );
-	}
-
-	inline teamCode_t GetOpposingTeam( const teamCode_t team ) const {
+	inline static teamCode_t GetOpposingTeam( const teamCode_t team ) {
 		return ( team == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 	}
 
@@ -106,88 +66,32 @@ public:
 
 	pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance );
 
-	inline const Piece* GetPiece( const pieceHandle_t handle ) const {
-		return const_cast<Chess*>( this )->GetPiece( handle );
-	}
-
-	inline Piece* GetPiece( const pieceHandle_t handle ) {
-		if ( IsValidHandle( handle ) ) {
-			return s->pieces[ handle ];
-		}
-		return nullptr;
-	}
-
-	inline const Piece* GetPiece( const int x, const int y ) const {
-		return const_cast<Chess*>( this )->GetPiece( x, y );
-	}
-
-	inline Piece* GetPiece( const int x, const int y ) {
-		const pieceHandle_t handle = GetHandle( x, y );
-		if ( IsValidHandle( handle ) == false ) {
-			return nullptr;
-		}
-		return s->pieces[ handle ];
-	}
-
 	inline void GetTeamCaptures( const teamCode_t teamCode, const Piece* capturedPieces[ TeamPieceCount ], int& captureCount ) const {
 		const int index = static_cast<int>( teamCode );
 		if ( ( index >= 0 ) && ( index < TeamCount ) ) {
 			captureCount = s->teams[ index ].capturedCount;
 			for ( int i = 0; i < s->teams[ index ].capturedCount; ++i ) {
-				capturedPieces[ i ] = GetPiece( s->teams[ index ].captured[ i ] );
+				capturedPieces[ i ] = s->GetPiece( s->teams[ index ].captured[ i ] );
 			}
 		}
 	}
 
 	void SetEventCallback( callback_t callback ) {
-		this->callback = callback;
+		this->s->callback = callback;
 	}
 
 	inline teamCode_t GetWinner() const {
-		return s->winner;
+		return winner;
 	}
-
-	bool IsOpenToAttackAt( const Piece* targetPiece, const int targetX, const int targetY ) const;
-	void SetEnpassant( const pieceHandle_t handle ) {
-		s->enpassantPawn = handle;
-	}
-	Piece* GetEnpassant( const int targetX, const int targetY ) {
-		Piece* piece = GetPiece( s->enpassantPawn );
-		if ( piece != nullptr ) {
-			const Pawn* pawn = reinterpret_cast<const Pawn*>( piece );
-			const int x = pawn->x;
-			const int y = ( pawn->y - pawn->GetDirection() );
-			const bool wasEnpassant = ( x == targetX ) && ( y == targetY );
-			if ( wasEnpassant ) {
-				return piece;
-			}
-		}
-		return nullptr;
-	}
-
-	void PromotePawn( const pieceHandle_t pieceHdl );
 
 private:
-	bool IsValidHandle( const pieceHandle_t handle ) const;
-	pieceHandle_t GetHandle( const int x, const int y ) const;
-	void CapturePiece( const teamCode_t attacker, Piece* targetPiece );
-	bool FindCheckMate( const teamCode_t team );
 	bool PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
-	void CountTeamPieces();
-private:
+//private:
+public:
 
-	struct gameState_t {
-		teamCode_t		inCheck;
-		teamCode_t		winner;
-		pieceHandle_t	enpassantPawn;
-		int				pieceNum;
-		Piece*			pieces[ PieceCount ];
-		team_t			teams[ TeamCount ];
-		pieceHandle_t	grid[ BoardSize ][ BoardSize ]; // (0,0) is top left
-	};
-
-	gameState_t*	s;
-	callback_t		callback;
+	ChessState*		s;
+	teamCode_t		winner;
+	teamCode_t		inCheck;
 	gameConfig_t	config;
 
 	friend class Piece;

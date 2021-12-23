@@ -27,6 +27,9 @@
     <ClCompile Include="game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="chessState.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="piece.h">
@@ -43,6 +46,9 @@
     </ClInclude>
     <ClInclude Include="game.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="chessState.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
