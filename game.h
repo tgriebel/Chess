@@ -59,6 +59,20 @@ public:
 		}
 	}
 
+	void EnumerateActions( const pieceHandle_t pieceHdl, std::vector< moveAction_t >& actionList ) const {
+		const Piece* piece = s.GetPiece( pieceHdl );
+		if ( piece != nullptr ) {
+			const int actionCount = piece->GetActionCount();
+			for ( int action = 0; action < actionCount; ++action ) {
+				moveAction_t path[ BoardSize ];
+				const int pathLength = piece->GetActionPath( action, path );
+				for ( int i = 0; i < pathLength; ++i ) {
+					actionList.push_back( path[ i ] );
+				}
+			}
+		}
+	}
+
 	squareInfo_t GetInfo( const int x, const int y ) const;
 	void SetEventCallback( callback_t callback ) {
 		this->s.callback = callback;

@@ -25,7 +25,7 @@ public:
 	moveType_t GetMoveType( const int actionNum ) const;
 	void CalculateStep( const int actionNum, int& actionX, int& actionY ) const;
 	int GetStepCount( const int actionNum, const int targetX, const int targetY ) const;
-	void EnumerateActions( std::vector< moveAction_t >& actions ) const;
+	int GetActionPath( const int actionNum, moveAction_t path[ BoardSize ] ) const;
 	virtual bool InActionPath( const int actionNum, const int targetX, const int targetY ) const;
 	virtual void Move( const int targetX, const int targetY );
 	void Set( const int targetX, const int targetY );

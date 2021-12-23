@@ -177,14 +177,8 @@ read_input:
 				const int instance = args[ 1 ] - '0';
 				const teamCode_t team = ( ( args.size() == 3 ) && ( args[ 2 ] == '\'' ) ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 				const pieceHandle_t hdl = board.FindPiece( team, pieceType, instance );
-				/*const squareInfo_t info = board.s.GetPiece( hdl );
-				if ( piece != nullptr ) {
-					piece->EnumerateActions( actions );
-					goto clear_screen;
-				} else {
-					std::cout << GetErrorMsg( RESULT_INPUT_INVALID_COMMAND ) << std::endl;
-					goto read_input;
-				}*/
+				board.EnumerateActions( hdl, actions );
+				goto clear_screen;
 			}
 			command_t cmd{};
 			resultCode_t result = TranslateActionCommand( board, turnTeam, commandString, cmd );

@@ -81,20 +81,22 @@ bool Piece::InActionPath( const int actionNum, const int targetX, const int targ
 	return ( stepCount <= actions[ actionNum ].maxSteps );
 }
 
-void Piece::EnumerateActions( std::vector< moveAction_t >& actionList ) const {
+int Piece::GetActionPath( const int actionNum, moveAction_t path[ BoardSize ] ) const {
+	if ( IsValidAction( actionNum ) == false ) {
+		return 0;
+	}
+	int validSquares = 0;
 	const int actionCount = GetActionCount();
-	for ( int action = 0; action < actionCount; ++action ) {
-		// Find all potential positions and then filter out
-		int nextX = x;
-		int nextY = y;
-		const int maxSteps = actions[ action ].maxSteps;
-		for ( int step = 1; step <= maxSteps; ++step ) {
-			CalculateStep( action, nextX, nextY );
-			if ( board->IsLegalMove( this, nextX, nextY ) ) {
-				actionList.push_back( moveAction_t( nextX, nextY, GetMoveType( action ), 1 ) );
-			}
+	int nextX = x;
+	int nextY = y;
+	const int maxSteps = actions[ actionNum ].maxSteps;
+	for ( int step = 1; step <= maxSteps; ++step ) {
+		CalculateStep( actionNum, nextX, nextY );
+		if ( board->IsLegalMove( this, nextX, nextY ) ) {
+			path[ validSquares++ ] = moveAction_t( nextX, nextY, GetMoveType( actionNum ), 1 );
 		}
 	}
+	return validSquares;
 }
 
 bool Pawn::InActionPath( const int actionNum, const int targetX, const int targetY ) const {
