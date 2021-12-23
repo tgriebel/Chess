@@ -11,26 +11,28 @@ public:
 	static const int PieceCount = 32;
 
 	Chess( const gameConfig_t& cfg ) {
-		pieceNum = 0;
-		winner = teamCode_t::NONE;
-		inCheck = teamCode_t::NONE;
-		memset( pieces, 0, sizeof( Piece* ) * PieceCount );
+		s = new gameState_t();
+		s->pieceNum = 0;
+		s->winner = teamCode_t::NONE;
+		s->inCheck = teamCode_t::NONE;
+		memset( s->pieces, 0, sizeof( Piece* ) * PieceCount );
 		config = cfg;
 		SetBoard( config );
 		CountTeamPieces();
 	}
 
 	~Chess() {
-		pieceNum = 0;
+		s->pieceNum = 0;
 		for ( int i = 0; i < PieceCount; ++i ) {
-			delete pieces[ i ];
+			delete s->pieces[ i ];
 		}
+		delete s;
 	}
 
 	void SetBoard( const gameConfig_t& cfg ) {
 		for ( int i = 0; i < BoardSize; ++i ) {
 			for ( int j = 0; j < BoardSize; ++j ) {
-				grid[ i ][ j ] = NoPiece;
+				s->grid[ i ][ j ] = NoPiece;
 				const pieceType_t pieceType = cfg.board[ i ][ j ].piece;
 				const teamCode_t teamCode = cfg.board[ i ][ j ].team;
 				Piece* piece = CreatePiece( pieceType, teamCode );
@@ -54,15 +56,15 @@ public:
 	}
 
 	void SetPiece( Piece* piece, const int x, const int y ) {
-		pieces[ pieceNum ] = piece;
-		pieces[ pieceNum ]->BindBoard( this, pieceNum );
-		pieces[ pieceNum ]->Set( x, y );
+		s->pieces[ s->pieceNum ] = piece;
+		s->pieces[ s->pieceNum ]->BindBoard( this, s->pieceNum );
+		s->pieces[ s->pieceNum ]->Set( x, y );
 
 		const int teamIndex = static_cast<int>( piece->team );
-		const int pieceIndex = teams[ teamIndex ].livingCount;
-		teams[ teamIndex ].pieces[ pieceIndex ] = pieceNum;
-		++teams[ teamIndex ].livingCount;
-		++pieceNum;
+		const int pieceIndex = s->teams[ teamIndex ].livingCount;
+		s->teams[ teamIndex ].pieces[ pieceIndex ] = s->pieceNum;
+		++s->teams[ teamIndex ].livingCount;
+		++s->pieceNum;
 	}
 
 	resultCode_t Execute( const command_t& cmd ) {
@@ -110,7 +112,7 @@ public:
 
 	inline Piece* GetPiece( const pieceHandle_t handle ) {
 		if ( IsValidHandle( handle ) ) {
-			return pieces[ handle ];
+			return s->pieces[ handle ];
 		}
 		return nullptr;
 	}
@@ -124,15 +126,15 @@ public:
 		if ( IsValidHandle( handle ) == false ) {
 			return nullptr;
 		}
-		return pieces[ handle ];
+		return s->pieces[ handle ];
 	}
 
 	inline void GetTeamCaptures( const teamCode_t teamCode, const Piece* capturedPieces[ TeamPieceCount ], int& captureCount ) const {
 		const int index = static_cast<int>( teamCode );
 		if ( ( index >= 0 ) && ( index < TeamCount ) ) {
-			captureCount = teams[ index ].capturedCount;
-			for ( int i = 0; i < teams[ index ].capturedCount; ++i ) {
-				capturedPieces[ i ] = GetPiece( teams[ index ].captured[ i ] );
+			captureCount = s->teams[ index ].capturedCount;
+			for ( int i = 0; i < s->teams[ index ].capturedCount; ++i ) {
+				capturedPieces[ i ] = GetPiece( s->teams[ index ].captured[ i ] );
 			}
 		}
 	}
@@ -142,15 +144,15 @@ public:
 	}
 
 	inline teamCode_t GetWinner() const {
-		return winner;
+		return s->winner;
 	}
 
 	bool IsOpenToAttackAt( const Piece* targetPiece, const int targetX, const int targetY ) const;
 	void SetEnpassant( const pieceHandle_t handle ) {
-		enpassantPawn = handle;
+		s->enpassantPawn = handle;
 	}
 	Piece* GetEnpassant( const int targetX, const int targetY ) {
-		Piece* piece = GetPiece( enpassantPawn );
+		Piece* piece = GetPiece( s->enpassantPawn );
 		if ( piece != nullptr ) {
 			const Pawn* pawn = reinterpret_cast<const Pawn*>( piece );
 			const int x = pawn->x;
@@ -173,15 +175,19 @@ private:
 	bool PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
 	void CountTeamPieces();
 private:
-	teamCode_t		inCheck;
-	teamCode_t		winner;
-	pieceHandle_t	enpassantPawn;
-	int				pieceNum;
-	Piece*			pieces[ PieceCount ];
-	team_t			teams[ TeamCount ];
-	pieceHandle_t	grid[ BoardSize ][ BoardSize ]; // (0,0) is top left
-	callback_t		callback;
 
+	struct gameState_t {
+		teamCode_t		inCheck;
+		teamCode_t		winner;
+		pieceHandle_t	enpassantPawn;
+		int				pieceNum;
+		Piece*			pieces[ PieceCount ];
+		team_t			teams[ TeamCount ];
+		pieceHandle_t	grid[ BoardSize ][ BoardSize ]; // (0,0) is top left
+	};
+
+	gameState_t*	s;
+	callback_t		callback;
 	gameConfig_t	config;
 
 	friend class Piece;
