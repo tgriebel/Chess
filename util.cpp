@@ -21,9 +21,9 @@ using namespace std;
 
 std::string SquareToString( const Chess& board, const int x, const int y ) {
 	std::string squareFormat;
-	const squareInfo_t info = board.GetInfo( x, y );
+	const pieceInfo_t info = board.GetInfo( x, y );
 	const bool isBlack = ( x % 2 ) == ( y % 2 );
-	if ( info.empty == false ) {
+	if ( info.onBoard == true ) {
 		const pieceType_t type = info.piece;
 		const teamCode_t team = info.team;
 		const int instance = info.instance;
@@ -39,7 +39,7 @@ std::string SquareToString( const Chess& board, const int x, const int y ) {
 
 std::string TeamCaptureString( const Chess& board, const teamCode_t team ) {
 	int captureCount = 0;
-	const Piece* captures[ TeamPieceCount ];
+	pieceInfo_t captures[ TeamPieceCount ];
 	board.GetTeamCaptures( team, captures, captureCount );
 	std::string captureFormat;
 	captureFormat = "    Captures: ";
@@ -47,8 +47,8 @@ std::string TeamCaptureString( const Chess& board, const teamCode_t team ) {
 		if ( captures == nullptr ) {
 			break;
 		}
-		captureFormat += GetPieceCode( captures[ i ]->type );
-		captureFormat += captures[ i ]->instance + '0';
+		captureFormat += GetPieceCode( captures[ i ].piece );
+		captureFormat += captures[ i ].instance + '0';
 		captureFormat += ( team == teamCode_t::BLACK ) ? "" : "\'";
 		captureFormat += ", ";
 	}
@@ -87,17 +87,17 @@ std::string BoardToString( const Chess& board, const bool printCaptures ) {
 	return boardFormat;
 }
 
-static squareInfo_t GetSquareConfig( const string& token ) {
+static pieceInfo_t GetSquareConfig( const string& token ) {
     if ( token.size() != 2 ) {
         return CL;
     }
-    squareInfo_t cfg;  
+    pieceInfo_t cfg;  
     switch ( token[ 0 ] ) {
         case 'B': cfg.team = teamCode_t::BLACK; break;
         case 'W': cfg.team = teamCode_t::WHITE; break;
     }
     cfg.piece = GetPieceType( token[ 1 ] );
-	cfg.empty = ( cfg.piece == pieceType_t::NONE );
+	cfg.onBoard = ( cfg.piece != pieceType_t::NONE );
 	cfg.instance = 0;
     return cfg;
 }

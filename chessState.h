@@ -18,8 +18,6 @@ public:
 
 	bool IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
 
-	teamCode_t GetTeam( const int x, const int y ) const;
-
 	inline bool OnBoard( const int x, const int y ) const {
 		return ( x >= 0 ) && ( x < BoardSize ) && ( y >= 0 ) && ( y < BoardSize );
 	}
@@ -35,6 +33,8 @@ public:
 	}
 
 	inline Piece* GetPiece( const int x, const int y );
+
+	pieceInfo_t GetInfo( const int x, const int y ) const;
 
 	bool IsOpenToAttackAt( const Piece* targetPiece, const int targetX, const int targetY ) const;
 	void SetEnpassant( const pieceHandle_t handle ) {

@@ -49,12 +49,13 @@ public:
 
 	pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance );
 
-	void GetTeamCaptures( const teamCode_t teamCode, const Piece* capturedPieces[ TeamPieceCount ], int& captureCount ) const {
+	void GetTeamCaptures( const teamCode_t teamCode, pieceInfo_t capturedPieces[ TeamPieceCount ], int& captureCount ) const {
+		memset( capturedPieces, 0, sizeof( capturedPieces[ 0 ] ) * TeamPieceCount );
 		const int index = static_cast<int>( teamCode );
 		if ( ( index >= 0 ) && ( index < TeamCount ) ) {
 			captureCount = s.teams[ index ].capturedCount;
 			for ( int i = 0; i < s.teams[ index ].capturedCount; ++i ) {
-				capturedPieces[ i ] = s.GetPiece( s.teams[ index ].captured[ i ] );
+				capturedPieces[ i ] = GetInfo( s.teams[ index ].captured[ i ] );
 			}
 		}
 	}
@@ -73,7 +74,8 @@ public:
 		}
 	}
 
-	squareInfo_t GetInfo( const int x, const int y ) const;
+	pieceInfo_t GetInfo( const pieceHandle_t pieceType ) const;
+	pieceInfo_t GetInfo( const int x, const int y ) const;
 	void SetEventCallback( callback_t callback ) {
 		this->s.callback = callback;
 	}

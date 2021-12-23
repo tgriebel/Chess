@@ -172,11 +172,11 @@ struct team_t {
 	int				captureTypeCounts[ (int)pieceType_t::COUNT ];
 };
 
-struct squareInfo_t {
+struct pieceInfo_t {
 	teamCode_t	team;
 	pieceType_t	piece;
 	int			instance;
-	bool		empty;
+	bool		onBoard;
 };
 
 #define BP { teamCode_t::BLACK, pieceType_t::PAWN, 0, false }
@@ -194,7 +194,7 @@ struct squareInfo_t {
 #define CL { teamCode_t::NONE, pieceType_t::NONE, 0, false }
 
 struct gameConfig_t {
-	const squareInfo_t DefaultCfg[ BoardSize ][ BoardSize ] = {
+	const pieceInfo_t DefaultCfg[ BoardSize ][ BoardSize ] = {
 		{ BR, BN, BB, BQ, BK, BB, BN, BR },
 		{ BP, BP, BP, BP, BP, BP, BP, BP },
 		{ CL, CL, CL, CL, CL, CL, CL, CL },
@@ -235,7 +235,7 @@ struct gameConfig_t {
 		return *this;
 	}
 
-	squareInfo_t board[ BoardSize ][ BoardSize ];
+	pieceInfo_t board[ BoardSize ][ BoardSize ];
 };
 
 typedef void ( *callback_t )( callbackEvent_t& );

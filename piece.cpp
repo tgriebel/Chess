@@ -7,7 +7,7 @@ bool Piece::IsValidAction( const int actionNum ) const {
 
 void Piece::Move( const int targetX, const int targetY ) {
 	board->SetEnpassant( NoPiece );
-	if ( board->GetTeam( targetX, targetY ) != team ) {
+	if ( board->GetInfo( targetX, targetY ).team != team ) {
 		board->CapturePiece( team, board->GetPiece( targetX, targetY ) );
 	}
 
@@ -48,7 +48,7 @@ int Piece::GetStepCount( const int actionNum, const int targetX, const int targe
 	if ( board->OnBoard( targetX, targetY ) == false ) {
 		return BoardSize;
 	}
-	if ( board->GetTeam( targetX, targetY ) == team ) {
+	if ( board->GetInfo( targetX, targetY ).team == team ) {
 		return BoardSize;
 	}
 	int nextX = x;
@@ -103,7 +103,7 @@ bool Pawn::InActionPath( const int actionNum, const int targetX, const int targe
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
 	}
-	const teamCode_t occupiedTeam = board->GetTeam( targetX, targetY );
+	const teamCode_t occupiedTeam = board->GetInfo( targetX, targetY ).team;
 	const bool isOccupied = ( occupiedTeam != teamCode_t::NONE );
 	const int maxSteps = actions[ actionNum ].maxSteps;
 	const int steps = GetStepCount( actionNum, targetX, targetY );

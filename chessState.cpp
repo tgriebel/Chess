@@ -23,12 +23,15 @@ Piece* ChessState::GetPiece( const int x, const int y ) {
 	return pieces[ handle ];
 }
 
-teamCode_t ChessState::GetTeam( const int x, const int y ) const {
-	return game->GetInfo( x, y ).team;
+pieceInfo_t ChessState::GetInfo( const int x, const int y ) const {
+	return game->GetInfo( x, y );
 }
 
 bool ChessState::IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const {
 	if ( OnBoard( targetX, targetY ) == false ) {
+		return false;
+	}
+	if ( OnBoard( piece->x, piece->y ) == false ) {
 		return false;
 	}
 	// Check piece actions

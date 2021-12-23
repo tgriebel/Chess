@@ -38,7 +38,7 @@ void PrintBoard( const Chess& board, std::vector< moveAction_t >* actions, const
 		std::cout << "  |";
 		for ( int i = 0; i < BoardSize; ++i ) {
 			const bool isBlack = ( j % 2 ) == ( i % 2 );
-			const squareInfo_t info = board.GetInfo( i, j );
+			const pieceInfo_t info = board.GetInfo( i, j );
 			int colorCode = 0;
 			if ( info.team == teamCode_t::BLACK ) {
 				colorCode = isBlack ? 245 : 5;
