@@ -84,6 +84,8 @@ public:
 		return winner;
 	}
 
+	bool IsValidHandle( const pieceHandle_t handle ) const;
+
 private:
 	bool PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
 //private:
