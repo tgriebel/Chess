@@ -26,19 +26,12 @@ void Piece::Set( const int targetX, const int targetY ) {
 	y = targetY;
 }
 
-moveType_t Piece::GetMoveType( const int actionNum ) const {
-	if ( IsValidAction( actionNum ) == false ) {
-		return moveType_t::NONE;
-	}
-	return actions[ actionNum ].type;
-}
-
 void Piece::CalculateStep( const int actionNum, int& actionX, int& actionY ) const {
 	if ( IsValidAction( actionNum ) == false ) {
 		return;
 	}
-	actionX += actions[ actionNum ].x;
-	actionY += actions[ actionNum ].y;
+	actionX += GetActions()[ actionNum ].x;
+	actionY += GetActions()[ actionNum ].y;
 }
 
 int Piece::GetStepCount( const int actionNum, const int targetX, const int targetY ) const {
@@ -55,7 +48,7 @@ int Piece::GetStepCount( const int actionNum, const int targetX, const int targe
 	int nextY = y;
 	int prevDist = INT_MAX;
 	int dist = INT_MAX;
-	const int maxSteps = actions[ actionNum ].maxSteps;
+	const int maxSteps = GetActions()[ actionNum ].maxSteps;
 	for ( int step = 1; step <= maxSteps; ++step ) {
 		CalculateStep( actionNum, nextX, nextY );
 		prevDist = dist;
@@ -78,7 +71,7 @@ bool Piece::InActionPath( const int actionNum, const int targetX, const int targ
 		return false;
 	}
 	const int stepCount = GetStepCount( actionNum, targetX, targetY );
-	return ( stepCount <= actions[ actionNum ].maxSteps );
+	return ( stepCount <= GetActions()[ actionNum ].maxSteps );
 }
 
 int Piece::GetActionPath( const int actionNum, moveAction_t path[ BoardSize ] ) const {
@@ -89,11 +82,11 @@ int Piece::GetActionPath( const int actionNum, moveAction_t path[ BoardSize ] ) 
 	const int actionCount = GetActionCount();
 	int nextX = x;
 	int nextY = y;
-	const int maxSteps = actions[ actionNum ].maxSteps;
+	const int maxSteps = GetActions()[ actionNum ].maxSteps;
 	for ( int step = 1; step <= maxSteps; ++step ) {
 		CalculateStep( actionNum, nextX, nextY );
 		if ( state->IsLegalMove( this, nextX, nextY ) ) {
-			path[ validSquares++ ] = moveAction_t( nextX, nextY, GetMoveType( actionNum ), 1 );
+			path[ validSquares++ ] = moveAction_t( nextX, nextY, GetAction( actionNum ).type, 1 );
 		}
 	}
 	return validSquares;
@@ -105,9 +98,9 @@ bool Pawn::InActionPath( const int actionNum, const int targetX, const int targe
 	}
 	const teamCode_t occupiedTeam = state->GetInfo( targetX, targetY ).team;
 	const bool isOccupied = ( occupiedTeam != teamCode_t::NONE );
-	const int maxSteps = actions[ actionNum ].maxSteps;
+	const int maxSteps = GetAction( actionNum ).maxSteps;
 	const int steps = GetStepCount( actionNum, targetX, targetY );
-	const moveType_t type = actions[ actionNum ].type;
+	const moveType_t type = GetAction( actionNum ).type;
 
 	if ( type == moveType_t::PAWN_T2X ) {
 		return ( isOccupied == false ) && ( steps <= maxSteps ) && ( HasMoved() == false );
@@ -155,7 +148,7 @@ bool King::InActionPath( const int actionNum, const int targetX, const int targe
 	}
 
 	Piece* rook = nullptr;
-	const moveType_t type = actions[ actionNum ].type;
+	const moveType_t type = GetAction( actionNum ).type;
 	if ( type == moveType_t::KING_CASTLE_L ) {
 		rook = state->GetPiece( 0, y );
 	} else if ( type == moveType_t::KING_CASTLE_R ) {
