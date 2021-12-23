@@ -43,12 +43,6 @@ public:
 		return ( GetWinner() != teamCode_t::NONE ) ? RESULT_GAME_COMPLETE : RESULT_SUCCESS;
 	}
 
-	inline const pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) const {
-		return const_cast<Chess*>( this )->FindPiece( team, type, instance );
-	}
-
-	pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance );
-
 	void GetTeamCaptures( const teamCode_t teamCode, pieceInfo_t capturedPieces[ TeamPieceCount ], int& captureCount ) const {
 		memset( capturedPieces, 0, sizeof( capturedPieces[ 0 ] ) * TeamPieceCount );
 		const int index = static_cast<int>( teamCode );
@@ -74,33 +68,26 @@ public:
 		}
 	}
 
-	pieceInfo_t GetInfo( const pieceHandle_t pieceType ) const;
-	pieceInfo_t GetInfo( const int x, const int y ) const;
-	void SetEventCallback( callback_t callback ) {
-		this->s.callback = callback;
+	inline const pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) const {
+		return const_cast<Chess*>( this )->FindPiece( team, type, instance );
 	}
 
-	inline teamCode_t GetWinner() const {
-		return winner;
-	}
-
-	inline int GetPieceCount() const {
-		return pieceNum;
-	}
-
-	bool IsValidHandle( const pieceHandle_t handle ) const;
+	pieceHandle_t		FindPiece( const teamCode_t team, const pieceType_t type, const int instance );
+	pieceInfo_t			GetInfo( const pieceHandle_t pieceType ) const;
+	pieceInfo_t			GetInfo( const int x, const int y ) const;
+	void				SetEventCallback( callback_t callback ) { this->s.callback = callback; }
+	inline teamCode_t	GetWinner() const { return winner; }
+	inline int			GetPieceCount() const { return pieceNum; }
+	bool				IsValidHandle( const pieceHandle_t handle ) const;
 
 private:
-	void SetBoard( const gameConfig_t& cfg );
-	void EnterPieceInGame( Piece* piece, const int x, const int y );
-	bool PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
+	void				SetBoard( const gameConfig_t& cfg );
+	void				EnterPieceInGame( Piece* piece, const int x, const int y );
+	bool				PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY );
 private:
-	ChessState		s;
-	int				pieceNum;
-	teamCode_t		winner;
-	teamCode_t		inCheck;
-	gameConfig_t	config;
-
-	friend class Piece;
-	friend class Pawn;
+	ChessState			s;
+	int					pieceNum;
+	teamCode_t			winner;
+	teamCode_t			inCheck;
+	gameConfig_t		config;
 };

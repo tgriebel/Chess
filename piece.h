@@ -85,19 +85,15 @@ public:
 	virtual void	Move( const int targetX, const int targetY );
 	void			Set( const int targetX, const int targetY );
 
-	bool HasMoved() const {
-		return ( moveCount > 0 );
-	}
-	int GetActionCount() const {
-		return numActions;
-	}
+	bool			HasMoved() const { return ( moveCount > 0 ); }
+	int				GetActionCount() const { return numActions; }
+	bool			OnBoard() const { return ( state != nullptr ); }
+
 	void RemoveFromPlay() {
 		Set( -1, -1 );
 		state = nullptr;
 	}
-	bool OnBoard() const {
-		return ( state != nullptr );
-	}
+
 	int GetActionNum( const moveType_t moveType ) const {
 		const moveAction_t* actions = GetActions();
 		const int actionCount = GetActionCount();
