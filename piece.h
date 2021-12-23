@@ -70,6 +70,7 @@ protected:
 
 	ChessState*			board;
 
+	friend class Chess;
 	friend class ChessState;
 };
 

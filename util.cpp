@@ -21,7 +21,7 @@ using namespace std;
 
 std::string SquareToString( const Chess& board, const int x, const int y ) {
 	std::string squareFormat;
-	const Piece* piece = board.s->GetPiece( x, y );
+	const Piece* piece = board.s.GetPiece( x, y );
 	const bool isBlack = ( x % 2 ) == ( y % 2 );
 	if ( piece != nullptr ) {
 		const pieceType_t type = piece->type;

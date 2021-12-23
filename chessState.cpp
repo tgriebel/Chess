@@ -8,6 +8,21 @@ pieceHandle_t ChessState::GetHandle( const int x, const int y ) const {
 	return grid[ y ][ x ];
 }
 
+Piece* ChessState::GetPiece( const pieceHandle_t handle ) {
+	if ( game->IsValidHandle( handle ) ) {
+		return pieces[ handle ];
+	}
+	return nullptr;
+}
+
+Piece* ChessState::GetPiece( const int x, const int y ) {
+	const pieceHandle_t handle = GetHandle( x, y );
+	if ( game->IsValidHandle( handle ) == false ) {
+		return nullptr;
+	}
+	return pieces[ handle ];
+}
+
 bool ChessState::IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const {
 	if ( OnBoard( targetX, targetY ) == false ) {
 		return false;

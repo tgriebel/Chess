@@ -111,7 +111,7 @@ bool Pawn::InActionPath( const int actionNum, const int targetX, const int targe
 		return ( isOccupied == false ) && ( steps <= maxSteps ) && ( HasMoved() == false );
 	}
 	if ( ( type == PAWN_KILL_L ) || ( type == PAWN_KILL_R ) ) {
-		const bool wasEnpassant = ( board->GetEnpassant( targetX, targetY ) != nullptr );
+		const bool wasEnpassant = ( board->GetEnpassant( targetX, targetY ) != NoPiece );
 		const bool isEnemy = ( isOccupied || wasEnpassant ) && ( occupiedTeam != team );
 		return isEnemy && ( steps <= maxSteps );
 	}
@@ -127,7 +127,8 @@ bool Pawn::CanPromote() const {
 
 void Pawn::Move( const int targetX, const int targetY ) {
 	const bool doubleMove = ( abs( targetY - y ) == 2 );
-	Piece* targetPiece = board->GetEnpassant( targetX, targetY );
+	const pieceHandle_t pieceHdl = board->GetEnpassant( targetX, targetY );
+	Piece* targetPiece = board->GetPiece( pieceHdl );
 	if ( ( targetPiece != nullptr ) && ( targetPiece->team != team ) ) {
 		board->CapturePiece( team, targetPiece );
 	}
