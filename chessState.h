@@ -8,8 +8,10 @@ typedef void ( *callback_t )( callbackEvent_t& );
 class Chess;
 class ChessState {
 public:
-	ChessState(/* const ChessState& baseState */) {
-		
+	ChessState() {}
+
+	ChessState( const ChessState& state ) {
+		CopyState( state );
 	}
 
 	~ChessState() {
@@ -17,11 +19,11 @@ public:
 	}
 
 	bool				IsLegalMove( const Piece* piece, const int targetX, const int targetY ) const;
-	inline bool			OnBoard( const int x, const int y ) const { return ( x >= 0 ) && ( x < BoardSize ) && ( y >= 0 ) && ( y < BoardSize ); }
-	inline const Piece*	GetPiece( const pieceHandle_t handle ) const { return const_cast<ChessState*>( this )->GetPiece( handle ); }
+	inline bool			OnBoard( const int x, const int y ) const;
+	inline const Piece* GetPiece( const pieceHandle_t handle ) const;
 	inline Piece*		GetPiece( const pieceHandle_t handle );
-	inline const Piece* GetPiece( const int x, const int y ) const { return const_cast<ChessState*>( this )->GetPiece( x, y ); }
-	inline Piece*		GetPiece( const int x, const int y );
+	const Piece*		GetPiece( const int x, const int y ) const;
+	Piece*				GetPiece( const int x, const int y );
 	pieceInfo_t			GetInfo( const int x, const int y ) const;
 
 	bool				IsOpenToAttackAt( const Piece* targetPiece, const int targetX, const int targetY ) const;
@@ -31,6 +33,7 @@ public:
 
 private:
 	pieceHandle_t		GetHandle( const int x, const int y ) const;
+	void				CopyState( const ChessState& state );
 	void				CapturePiece( const teamCode_t attacker, Piece* targetPiece );
 	bool				FindCheckMate( const teamCode_t team );
 	void				CountTeamPieces();
