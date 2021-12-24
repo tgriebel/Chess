@@ -103,6 +103,8 @@ void ChessState::PromotePawn( const pieceHandle_t pieceHdl ) {
 	event.type = PAWN_PROMOTION;
 	event.promotionType = pieceType_t::NONE;
 
+	// A.I. can use a callback to run a heuristic (e.g. always pick Queen)
+	// While a user needs to make their pick of piece
 	if ( callback != nullptr ) {
 		( *callback )( event );
 	}
