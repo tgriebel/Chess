@@ -6,7 +6,7 @@ class ChessState;
 
 static const moveAction_t PawnActions[ (int)moveType_t::PAWN_ACTIONS ] ={
 	moveAction_t( 0, 1, moveType_t::PAWN_T, 1 ),
-	moveAction_t( 0, 2, moveType_t::PAWN_T2X, 1 ),
+	moveAction_t( 0, 1, moveType_t::PAWN_T2X, 2 ),
 	moveAction_t( -1, 1, moveType_t::PAWN_KILL_L, 1 ),
 	moveAction_t( 1, 1, moveType_t::PAWN_KILL_R, 1 )
 };

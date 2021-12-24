@@ -233,7 +233,7 @@ int main()
 		RunTestCommands( board, commands );
 	}
 #else
-	LoadConfig( "tests/no_pawn.txt", cfg );
+	LoadConfig( "tests/default_board.txt", cfg );
 	RunCmdLineGameLoop( cfg );
 #endif
 }
