@@ -17,10 +17,10 @@ void Piece::Move( const int targetX, const int targetY ) {
 
 void Piece::Set( const int targetX, const int targetY ) {
 	if ( state->OnBoard( x, y ) ) {
-		state->grid[ y ][ x ] = NoPiece;
+		state->SetHandle( NoPiece, x, y );
 	}
 	if ( state->OnBoard( targetX, targetY ) ) {
-		state->grid[ targetY ][ targetX ] = handle;
+		state->SetHandle( handle, targetX, targetY );
 	}
 	x = targetX;
 	y = targetY;

@@ -1,6 +1,13 @@
 #include "chess.h"
 #include "chessState.h"
 
+void ChessState::SetHandle( const pieceHandle_t pieceHdl, const int x, const int y ) {
+	if ( OnBoard( x, y ) == false ) {
+		return;
+	}
+	grid[ y ][ x ] = pieceHdl;
+}
+
 pieceHandle_t ChessState::GetHandle( const int x, const int y ) const {
 	if ( OnBoard( x, y ) == false ) {
 		return OffBoard;
