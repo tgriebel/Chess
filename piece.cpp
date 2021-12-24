@@ -30,8 +30,9 @@ void Piece::CalculateStep( const int actionNum, int& actionX, int& actionY ) con
 	if ( IsValidAction( actionNum ) == false ) {
 		return;
 	}
-	actionX += GetActions()[ actionNum ].x;
-	actionY += GetActions()[ actionNum ].y;
+	const moveAction_t& action = GetAction( actionNum );
+	actionX += action.x;
+	actionY += action.y * GetDirection();
 }
 
 int Piece::GetStepCount( const int actionNum, const int targetX, const int targetY ) const {

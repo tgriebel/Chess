@@ -89,6 +89,10 @@ public:
 	int				GetActionCount() const { return numActions; }
 	bool			OnBoard() const { return ( state != nullptr ); }
 
+	virtual inline int GetDirection() const {
+		return 1;
+	}
+
 	void RemoveFromPlay() {
 		Set( -1, -1 );
 		state = nullptr;
