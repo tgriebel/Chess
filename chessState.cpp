@@ -226,5 +226,6 @@ void ChessState::CopyState( const ChessState& state ) {
 		const Piece* srcPiece = state.pieces[ i ];
 		pieces[ i ] = Chess::CreatePiece( srcPiece->type, srcPiece->team );
 		*pieces[ i ] = *state.pieces[ i ];
+		pieces[ i ]->BindBoard( this, i );
 	}
 }

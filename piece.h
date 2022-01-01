@@ -78,6 +78,22 @@ protected:
 
 	bool			IsValidAction( const int actionNum ) const;
 public:
+	Piece( const Piece& src ) {
+		*this = src;
+	}
+
+	Piece& operator=( const Piece& src ) {
+		this->x = x;
+		this->y = y;
+		this->moveCount = moveCount;
+		this->numActions = numActions;
+		this->handle = handle;
+
+		state = nullptr;
+
+		return *this;
+	}
+
 	void			CalculateStep( const int actionNum, int& actionX, int& actionY ) const;
 	int				GetStepCount( const int actionNum, const int targetX, const int targetY ) const;
 	int				GetActionPath( const int actionNum, moveAction_t path[ BoardSize ] ) const;
