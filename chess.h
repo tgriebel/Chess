@@ -6,6 +6,19 @@
 class Chess {
 public:
 	Chess( const gameConfig_t& cfg ) {
+		Init( cfg );
+	}
+
+	Chess() {}
+
+	~Chess() {
+		pieceNum = 0;
+		for ( int i = 0; i < PieceCount; ++i ) {
+			delete s.pieces[ i ];
+		}
+	}
+
+	void Init( const gameConfig_t& cfg ) {
 		pieceNum = 0;
 		winner = teamCode_t::NONE;
 		inCheck = teamCode_t::NONE;
@@ -14,13 +27,6 @@ public:
 		SetBoard( config );
 		s.game = this;
 		s.CountTeamPieces();
-	}
-
-	~Chess() {
-		pieceNum = 0;
-		for ( int i = 0; i < PieceCount; ++i ) {
-			delete s.pieces[ i ];
-		}
 	}
 
 	static Piece* CreatePiece( const pieceType_t pieceType, const teamCode_t teamCode );
