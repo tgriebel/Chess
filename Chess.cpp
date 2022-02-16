@@ -92,6 +92,19 @@ pieceInfo_t Chess::GetInfo( const int x, const int y ) const {
 	return info;
 }
 
+bool Chess::GetLocation( const pieceHandle_t pieceType, int& x, int& y ) const {
+	const Piece* piece = s.GetPiece( pieceType );
+	if ( piece != nullptr ) {
+		x = piece->x;
+		y = piece->y;
+		return true;
+	} else {
+		x = -1;
+		y = -1;
+		return false;
+	}
+}
+
 pieceInfo_t Chess::GetInfo( const pieceHandle_t pieceType ) const {
 	pieceInfo_t info;
 	const Piece* piece = s.GetPiece( pieceType );

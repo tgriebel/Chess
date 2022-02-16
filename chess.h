@@ -81,6 +81,7 @@ public:
 	pieceHandle_t		FindPiece( const teamCode_t team, const pieceType_t type, const int instance );
 	pieceInfo_t			GetInfo( const pieceHandle_t pieceType ) const;
 	pieceInfo_t			GetInfo( const int x, const int y ) const;
+	bool				GetLocation( const pieceHandle_t pieceType, int& x, int& y ) const;
 	void				SetEventCallback( callback_t callback ) { this->s.callback = callback; }
 	inline teamCode_t	GetWinner() const { return winner; }
 	inline int			GetPieceCount() const { return pieceNum; }
