@@ -107,8 +107,10 @@ bool Pawn::InActionPath( const int actionNum, const int targetX, const int targe
 		return ( isOccupied == false ) && ( steps <= maxSteps ) && ( HasMoved() == false );
 	}
 	if ( ( type == moveType_t::PAWN_KILL_L ) || ( type == moveType_t::PAWN_KILL_R ) ) {
-		const bool wasEnpassant = ( state->GetEnpassant( targetX, targetY ) != NoPiece ); // TODO: enpassant can't be same team
-		const bool isEnemy = ( isOccupied || wasEnpassant ) && ( occupiedTeam != team );
+		const pieceHandle_t enpassantPieceHdl = state->GetEnpassant( targetX, targetY );
+		const Piece* enpassantPiece = state->GetPiece( enpassantPieceHdl );
+		const bool isEnpassantEnemy = ( enpassantPieceHdl != NoPiece ) && ( enpassantPiece->team != team );
+		const bool isEnemy = ( isOccupied || isEnpassantEnemy ) && ( occupiedTeam != team );
 		return isEnemy && ( steps <= maxSteps );
 	}
 	return ( isOccupied == false ) && ( steps <= maxSteps );
