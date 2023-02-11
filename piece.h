@@ -78,19 +78,24 @@ protected:
 
 	bool			IsValidAction( const int actionNum ) const;
 public:
-	Piece( const Piece& src ) {
+	Piece( const Piece& src )
+	{
 		*this = src;
 	}
 
-	Piece& operator=( const Piece& src ) {
-		this->x = x;
-		this->y = y;
-		this->moveCount = moveCount;
-		this->numActions = numActions;
-		this->handle = handle;
-
-		state = nullptr;
-
+	Piece& operator=( const Piece& src )
+	{
+		if ( this != &src )
+		{
+			this->x = src.x;
+			this->y = src.y;
+			this->team = src.team;
+			this->type = src.type;
+			this->moveCount = src.moveCount;
+			this->numActions = src.numActions;
+			this->handle = src.handle;
+			this->state = src.state;
+		}
 		return *this;
 	}
 
