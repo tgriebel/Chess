@@ -1,10 +1,7 @@
 ﻿#include <iostream>
 #include <string>
 #include <algorithm>
-#include "common.h"
-#include "piece.h"
 #include "chess.h"
-#include "commands.h"
 
 #include <windows.h>
 

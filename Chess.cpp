@@ -1,11 +1,8 @@
-#include "common.h"
-#include "chess.h"
-#include "chessState.h"
-#include "piece.h"
+#include "Chess.h"
 
 #include <iostream>
 
-bool Chess::PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY ) {
+bool ChessEngine::PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, const int targetY ) {
 	Piece* piece = s.GetPiece( pieceHdl );
 	if ( piece == nullptr ) {
 		return false;
@@ -24,7 +21,7 @@ bool Chess::PerformMoveAction( const pieceHandle_t pieceHdl, const int targetX, 
 	return true;
 }
 
-pieceHandle_t Chess::FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) {
+pieceHandle_t ChessEngine::FindPiece( const teamCode_t team, const pieceType_t type, const int instance ) {
 	if ( ( team == teamCode_t::NONE ) || ( type == pieceType_t::NONE ) ) {
 		return NoPiece;
 	}
@@ -39,13 +36,13 @@ pieceHandle_t Chess::FindPiece( const teamCode_t team, const pieceType_t type, c
 	return NoPiece;
 }
 
-void Chess::SetBoard( const gameConfig_t& cfg ) {
+void ChessEngine::SetBoard( const gameConfig_t& cfg ) {
 	for ( int i = 0; i < BoardSize; ++i ) {
 		for ( int j = 0; j < BoardSize; ++j ) {
 			s.grid[ i ][ j ] = NoPiece;
 			const pieceType_t pieceType = cfg.board[ i ][ j ].piece;
 			const teamCode_t teamCode = cfg.board[ i ][ j ].team;
-			Piece* piece = Chess::CreatePiece( pieceType, teamCode );
+			Piece* piece = ChessEngine::CreatePiece( pieceType, teamCode );
 			if ( piece != nullptr ) {
 				EnterPieceInGame( piece, j, i );
 			}
@@ -53,7 +50,7 @@ void Chess::SetBoard( const gameConfig_t& cfg ) {
 	}
 }
 
-void Chess::EnterPieceInGame( Piece* piece, const int x, const int y ) {
+void ChessEngine::EnterPieceInGame( Piece* piece, const int x, const int y ) {
 	s.pieces[ pieceNum ] = piece;
 	s.pieces[ pieceNum ]->BindBoard( &s, pieceNum );
 	s.pieces[ pieceNum ]->Set( x, y );
@@ -65,7 +62,7 @@ void Chess::EnterPieceInGame( Piece* piece, const int x, const int y ) {
 	++pieceNum;
 }
 
-bool Chess::IsValidHandle( const pieceHandle_t handle ) const {
+bool ChessEngine::IsValidHandle( const pieceHandle_t handle ) const {
 	if ( handle == NoPiece ) {
 		return false;
 	}
@@ -75,7 +72,7 @@ bool Chess::IsValidHandle( const pieceHandle_t handle ) const {
 	return true;
 }
 
-pieceInfo_t Chess::GetInfo( const int x, const int y ) const {
+pieceInfo_t ChessEngine::GetInfo( const int x, const int y ) const {
 	pieceInfo_t info;
 	const Piece* piece = s.GetPiece( x, y );
 	if ( piece != nullptr ) {
@@ -92,7 +89,7 @@ pieceInfo_t Chess::GetInfo( const int x, const int y ) const {
 	return info;
 }
 
-bool Chess::GetLocation( const pieceHandle_t pieceType, int& x, int& y ) const {
+bool ChessEngine::GetLocation( const pieceHandle_t pieceType, int& x, int& y ) const {
 	const Piece* piece = s.GetPiece( pieceType );
 	if ( piece != nullptr ) {
 		x = piece->x;
@@ -105,7 +102,7 @@ bool Chess::GetLocation( const pieceHandle_t pieceType, int& x, int& y ) const {
 	}
 }
 
-pieceInfo_t Chess::GetInfo( const pieceHandle_t pieceType ) const {
+pieceInfo_t ChessEngine::GetInfo( const pieceHandle_t pieceType ) const {
 	pieceInfo_t info;
 	const Piece* piece = s.GetPiece( pieceType );
 	if ( piece != nullptr ) {
@@ -122,7 +119,7 @@ pieceInfo_t Chess::GetInfo( const pieceHandle_t pieceType ) const {
 	return info;
 }
 
-Piece* Chess::CreatePiece( const pieceType_t pieceType, const teamCode_t teamCode ) {
+Piece* ChessEngine::CreatePiece( const pieceType_t pieceType, const teamCode_t teamCode ) {
 	switch ( pieceType ) {
 	case pieceType_t::PAWN:		return new Pawn( teamCode );
 	case pieceType_t::ROOK:		return new Rook( teamCode );

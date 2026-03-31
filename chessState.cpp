@@ -1,5 +1,4 @@
-#include "chess.h"
-#include "chessState.h"
+#include "Chess.h"
 
 void ChessState::SetHandle( const pieceHandle_t pieceHdl, const int x, const int y ) {
 	if ( OnBoard( x, y ) == false ) {
@@ -69,7 +68,7 @@ bool ChessState::IsLegalMove( const Piece* piece, const int targetX, const int t
 	ChessState state( *this );
 	Piece* movedPiece = state.GetPiece( piece->handle );
 	movedPiece->Move( targetX, targetY );
-	const teamCode_t opposingTeam = Chess::GetOpposingTeam( movedPiece->team );
+	const teamCode_t opposingTeam = ChessEngine::GetOpposingTeam( movedPiece->team );
 	if ( state.FindCheckMate( opposingTeam ) ) {
 		isLegal = false;
 	}
@@ -132,7 +131,7 @@ void ChessState::PromotePawn( const pieceHandle_t pieceHdl ) {
 
 	delete pieces[ pieceHdl ];
 
-	pieces[ pieceHdl ] = Chess::CreatePiece( event.promotionType, team );
+	pieces[ pieceHdl ] = ChessEngine::CreatePiece( event.promotionType, team );
 	pieces[ pieceHdl ]->BindBoard( this, pieceHdl );
 	pieces[ pieceHdl ]->Move( x, y );
 }
@@ -141,7 +140,7 @@ bool ChessState::IsOpenToAttackAt( const Piece* targetPiece, const int x, const 
 	if ( OnBoard( x, y ) == false ) {
 		return false;
 	}
-	const teamCode_t opposingTeam = Chess::GetOpposingTeam( targetPiece->team );
+	const teamCode_t opposingTeam = ChessEngine::GetOpposingTeam( targetPiece->team );
 	const int index = static_cast<int>( opposingTeam );
 	for ( int i = 0; i < teams[ index ].livingCount; ++i ) {
 		const Piece* piece = GetPiece( teams[ index ].pieces[ i ] );
@@ -224,7 +223,7 @@ void ChessState::CopyState( const ChessState& state ) {
 	}
 	for ( int i = 0; i < game->GetPieceCount(); ++i ) {
 		const Piece* srcPiece = state.pieces[ i ];
-		pieces[ i ] = Chess::CreatePiece( srcPiece->type, srcPiece->team );
+		pieces[ i ] = ChessEngine::CreatePiece( srcPiece->type, srcPiece->team );
 		*pieces[ i ] = *state.pieces[ i ];
 		pieces[ i ]->BindBoard( this, i );
 	}

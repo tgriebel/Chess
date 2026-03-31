@@ -1,12 +1,4 @@
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include "common.h"
-#include "piece.h"
-#include "chess.h"
-#include "commands.h"
+#include "Chess.h"
 
 using namespace std;
 
@@ -42,7 +34,7 @@ void GetDefaultConfig( gameConfig_t& defaultCfg ) {
 	}
 }
 
-std::string SquareToString( const Chess& board, const int x, const int y ) {
+std::string SquareToString( const ChessEngine& board, const int x, const int y ) {
 	std::string squareFormat;
 	const pieceInfo_t info = board.GetInfo( x, y );
 	const bool isBlack = ( x % 2 ) == ( y % 2 );
@@ -60,7 +52,7 @@ std::string SquareToString( const Chess& board, const int x, const int y ) {
 	return squareFormat;
 }
 
-std::string TeamCaptureString( const Chess& board, const teamCode_t team ) {
+std::string TeamCaptureString( const ChessEngine& board, const teamCode_t team ) {
 	int captureCount = 0;
 	pieceInfo_t captures[ TeamPieceCount ];
 	board.GetTeamCaptures( team, captures, captureCount );
@@ -78,7 +70,7 @@ std::string TeamCaptureString( const Chess& board, const teamCode_t team ) {
 	return captureFormat;
 }
 
-std::string BoardToString( const Chess& board, const bool printCaptures ) {
+std::string BoardToString( const ChessEngine& board, const bool printCaptures ) {
 	std::string boardFormat;
 	boardFormat = "   ";
 	for ( int i = 0; i < BoardSize; ++i ) {
