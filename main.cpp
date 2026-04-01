@@ -7,22 +7,29 @@
 
 #include <windows.h>
 
-void SetTextColor( const int color ) {
+void SetTextColor( const int color )
+{
 	HANDLE hConsole = GetStdHandle( STD_OUTPUT_HANDLE );
 	SetConsoleTextAttribute( hConsole, color );
 }
 
-void SetWindowTitle( const wchar_t* title ) {
+
+void SetWindowTitle( const wchar_t* title )
+{
 	SetConsoleTitle( title );
 }
 
-void ClearScreen() {
+
+void ClearScreen()
+{
 	system( "CLS" );
 }
 
-void PrintBoard( const Chess& board, std::vector< moveAction_t >* actions, const bool printCaptures ) {
+
+void PrintBoard( const Chess& board, std::vector< moveAction_t >* actions, const bool printCaptures )
+{
 	std::cout << "   ";
-	for ( int i = 0; i < BoardSize; ++i ) {
+	for ( int32_t i = 0; i < BoardSize; ++i ) {
 		std::cout << "  ";
 		std::cout << char( i + 'a' );
 		std::cout << "  ";
@@ -30,14 +37,14 @@ void PrintBoard( const Chess& board, std::vector< moveAction_t >* actions, const
 	std::cout << "\n   ";
 	std::cout << "+----+----+----+----+----+----+----+----+";
 	std::cout << "\n";
-	for ( int j = 0; j < BoardSize; ++j ) {
+	for ( int32_t j = 0; j < BoardSize; ++j ) {
 		std::cout << char( BoardSize - j + '0' );
 		SetTextColor( 15 );
 		std::cout << "  |";
-		for ( int i = 0; i < BoardSize; ++i ) {
+		for ( int32_t i = 0; i < BoardSize; ++i ) {
 			const bool isBlack = ( j % 2 ) == ( i % 2 );
 			const pieceInfo_t info = board.GetInfo( i, j );
-			int colorCode = 0;
+			int32_t colorCode = 0;
 			if ( info.team == teamCode_t::BLACK ) {
 				colorCode = isBlack ? 245 : 5;
 			} else if ( info.team == teamCode_t::WHITE ) {
@@ -77,8 +84,10 @@ void PrintBoard( const Chess& board, std::vector< moveAction_t >* actions, const
 	};
 }
 
-void RunTestCommands( Chess& board, std::vector< std::string >& commands ) {
-	int turnNum = 0;
+
+void RunTestCommands( Chess& board, std::vector< std::string >& commands )
+{
+	int32_t turnNum = 0;
 	teamCode_t turnTeam = teamCode_t::WHITE;
 	for ( auto it = commands.begin(); it != commands.end(); ++it ) {
 		command_t cmd{};
@@ -100,7 +109,9 @@ void RunTestCommands( Chess& board, std::vector< std::string >& commands ) {
 //	PrintBoard( board, true );
 }
 
-void ProcessEvent( callbackEvent_t& event ) {
+
+void ProcessEvent( callbackEvent_t& event )
+{
 	std::cout << "Enter Pawn Promotion\n";
 	std::cout << "(Q)ueen, K(N)ight, (B)ishop, (R)ook: ";
 
@@ -109,9 +120,11 @@ void ProcessEvent( callbackEvent_t& event ) {
 	event.promotionType = GetPieceType( choice[ 0 ] );
 }
 
-void RunCmdLineGameLoop( gameConfig_t& cfg ) {
+
+void RunCmdLineGameLoop( gameConfig_t& cfg )
+{
 reset_game:
-	int turnNum = 0;
+	int32_t turnNum = 0;
 	teamCode_t turnTeam = teamCode_t::WHITE;
 	teamCode_t winner = teamCode_t::NONE;
 	Chess board( cfg );
@@ -172,7 +185,7 @@ read_input:
 					goto read_input;
 				}
 				const pieceType_t pieceType = GetPieceType( args[ 0 ] );
-				const int instance = args[ 1 ] - '0';
+				const int32_t instance = args[ 1 ] - '0';
 				const teamCode_t team = ( ( args.size() == 3 ) && ( args[ 2 ] == '\'' ) ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 				const pieceHandle_t hdl = board.FindPiece( team, pieceType, instance );
 				board.EnumerateActions( hdl, actions );
@@ -207,13 +220,14 @@ exit_program:
 	std::cout << "Game Complete" << std::endl;
 }
 
-int main()
+
+int32_t main()
 {
 	SetWindowTitle( L"Chess by Thomas Griebel" );
 
 	//HANDLE hConsole = GetStdHandle( STD_OUTPUT_HANDLE );
 	//// you can loop k higher to see more color choices
-	//for ( int k = 1; k < 255; k++ )
+	//for ( int32_t k = 1; k < 255; k++ )
 	//{
 	//	// pick the colorattribute k you want
 	//	SetConsoleTextAttribute( hConsole, k );

@@ -16,7 +16,9 @@ using namespace std;
 #define WK { teamCode_t::WHITE, pieceType_t::KING, 0, false }
 #define CL { teamCode_t::NONE, pieceType_t::NONE, 0, false }
 
-void GetDefaultConfig( gameConfig_t& defaultCfg ) {
+
+void GetDefaultConfig( gameConfig_t& defaultCfg )
+{
 	static constexpr pieceInfo_t DefaultCfg[ BoardSize ][ BoardSize ] = {
 		{ BR, BN, BB, BQ, BK, BB, BN, BR },
 		{ BP, BP, BP, BP, BP, BP, BP, BP },
@@ -27,38 +29,50 @@ void GetDefaultConfig( gameConfig_t& defaultCfg ) {
 		{ WP, WP, WP, WP, WP, WP, WP, WP },
 		{ WR, WN, WB, WQ, WK, WB, WN, WR },
 	};
-	for ( int i = 0; i < BoardSize; ++i ) {
-		for ( int j = 0; j < BoardSize; ++j ) {
+	for ( int32_t i = 0; i < BoardSize; ++i )
+	{
+		for ( int32_t j = 0; j < BoardSize; ++j )
+		{
 			defaultCfg.board[ i ][ j ] = DefaultCfg[ i ][ j ];
 		}
 	}
 }
 
-std::string SquareToString( const ChessEngine& board, const int x, const int y ) {
+std::string SquareToString( const ChessEngine& board, const int32_t x, const int32_t y )
+{
 	std::string squareFormat;
 	const pieceInfo_t info = board.GetInfo( x, y );
 	const bool isBlack = ( x % 2 ) == ( y % 2 );
-	if ( info.onBoard == true ) {
+
+	if ( info.onBoard == true )
+	{
 		const pieceType_t type = info.piece;
 		const teamCode_t team = info.team;
-		const int instance = info.instance;
+		const int32_t instance = info.instance;
 		squareFormat += " ";
 		squareFormat += GetPieceCode( type );
 		squareFormat += '0' + instance;
 		squareFormat += ( team == teamCode_t::WHITE ) ? " " : "'";
-	} else {
+	}
+	else
+	{
 		squareFormat += ( isBlack ? "    " : "    " );
 	}
 	return squareFormat;
 }
 
-std::string TeamCaptureString( const ChessEngine& board, const teamCode_t team ) {
-	int captureCount = 0;
+
+std::string TeamCaptureString( const ChessEngine& board, const teamCode_t team )
+{
+	int32_t captureCount = 0;
 	pieceInfo_t captures[ TeamPieceCount ];
 	board.GetTeamCaptures( team, captures, captureCount );
+
 	std::string captureFormat;
 	captureFormat = "    Captures: ";
-	for ( int i = 0; i < captureCount; ++i ) {
+
+	for ( int32_t i = 0; i < captureCount; ++i )
+	{
 		if ( captures == nullptr ) {
 			break;
 		}
@@ -70,10 +84,13 @@ std::string TeamCaptureString( const ChessEngine& board, const teamCode_t team )
 	return captureFormat;
 }
 
-std::string BoardToString( const ChessEngine& board, const bool printCaptures ) {
+
+std::string BoardToString( const ChessEngine& board, const bool printCaptures )
+{
 	std::string boardFormat;
 	boardFormat = "   ";
-	for ( int i = 0; i < BoardSize; ++i ) {
+
+	for ( int32_t i = 0; i < BoardSize; ++i ) {
 		boardFormat += "  ";
 		boardFormat += char( i + 'a' );
 		boardFormat += "  ";
@@ -81,14 +98,20 @@ std::string BoardToString( const ChessEngine& board, const bool printCaptures ) 
 	boardFormat += "\n   ";
 	boardFormat += "+----+----+----+----+----+----+----+----+";
 	boardFormat += "\n";
-	for ( int j = 0; j < BoardSize; ++j ) {
+
+	for ( int32_t j = 0; j < BoardSize; ++j )
+	{
 		boardFormat += char( BoardSize - j + '0' );
 		boardFormat += "  |";
-		for ( int i = 0; i < BoardSize; ++i ) {
+
+		for ( int32_t i = 0; i < BoardSize; ++i )
+		{
 			boardFormat += SquareToString( board, i, j );
 			boardFormat += "|";
 		}
-		if ( printCaptures ) {
+
+		if ( printCaptures )
+		{
 			if ( j == 0 ) {
 				boardFormat += TeamCaptureString( board, teamCode_t::BLACK );
 			} else if ( j == 7 ) {
@@ -102,30 +125,42 @@ std::string BoardToString( const ChessEngine& board, const bool printCaptures ) 
 	return boardFormat;
 }
 
-static pieceInfo_t GetSquareConfig( const string& token ) {
+
+static pieceInfo_t GetSquareConfig( const string& token )
+{
     if ( token.size() != 2 ) {
         return CL;
     }
+
     pieceInfo_t cfg;  
-    switch ( token[ 0 ] ) {
+    switch ( token[ 0 ] )
+	{
         case 'B': cfg.team = teamCode_t::BLACK; break;
         case 'W': cfg.team = teamCode_t::WHITE; break;
     }
+
     cfg.piece = GetPieceType( token[ 1 ] );
 	cfg.onBoard = ( cfg.piece != pieceType_t::NONE );
 	cfg.instance = 0;
+
     return cfg;
 }
 
-void LoadConfig( const std::string& fileName, gameConfig_t& config ) {
+void LoadConfig( const std::string& fileName, gameConfig_t& config )
+{
     string line;
     ifstream configFile( fileName );
-    int row = 0;
-    int col = 0;
-    if ( configFile.is_open() ) {
-        while ( getline( configFile, line ) ) {
+
+	int32_t row = 0;
+	int32_t col = 0;
+
+    if ( configFile.is_open() )
+	{
+        while ( getline( configFile, line ) )
+		{
             stringstream lineStream( line );
-            while ( lineStream.eof() == false ) {
+            while ( lineStream.eof() == false )
+			{
                 string token;
                 lineStream >> token;
                 string delimiter = ",";
@@ -140,7 +175,9 @@ void LoadConfig( const std::string& fileName, gameConfig_t& config ) {
     }
 }
 
-void LoadHistory( const std::string& fileName, std::vector< std::string >& commands ) {
+
+void LoadHistory( const std::string& fileName, std::vector< std::string >& commands )
+{
     string line;
     ifstream configFile( fileName );
     if ( configFile.is_open() ) {
