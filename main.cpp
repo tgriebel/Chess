@@ -1,4 +1,6 @@
-﻿#include <iostream>
+﻿#ifndef CHESS_NO_MAIN
+
+#include <iostream>
 #include <string>
 #include <algorithm>
 #include "chess.h"
@@ -234,3 +236,5 @@ int main()
 	RunCmdLineGameLoop( cfg );
 #endif
 }
+
+#endif // CHESS_NO_MAIN
