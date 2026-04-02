@@ -42,6 +42,28 @@ void Piece::PlaceAt( const int32_t targetX, const int32_t targetY )
 }
 
 
+void Piece::TempPlacement( const int32_t targetX, const int32_t targetY )
+{
+	assert( ( x != -1 ) && ( y != -1 ) );
+
+	prevX = x;
+	prevY = y;
+
+	PlaceAt( -1, -1 );
+}
+
+
+void Piece::ReturnPlacement()
+{
+	assert( ( prevX != -1 ) && ( prevY != -1 ) );
+
+	PlaceAt( prevX, prevY );
+
+	prevX = -1;
+	prevY = -1;
+}
+
+
 void Piece::CalculateStep( const int32_t actionNum, int32_t& actionX, int32_t& actionY ) const
 {
 	assert( IsValidAction( actionNum ) );
@@ -211,6 +233,7 @@ bool King::InActionPath( const int32_t actionNum, const int32_t targetX, const i
 	Piece* rook = nullptr;
 	const moveType_t type = GetAction( actionNum ).type;
 
+	// FIXME: move to after legal action test
 	if ( type == moveType_t::KING_CASTLE_L ) {
 		rook = state->GetPiece( 0, y );
 	} else if ( type == moveType_t::KING_CASTLE_R ) {

@@ -325,6 +325,7 @@
   <ItemGroup>
     <ClCompile Include="chessState.cpp" />
     <ClCompile Include="chess.cpp" />
+    <ClCompile Include="timer.cpp" />
     <ClCompile Include="util.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="piece.cpp" />
@@ -334,6 +335,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="chess.h" />
+    <ClInclude Include="timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

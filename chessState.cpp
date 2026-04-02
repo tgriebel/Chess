@@ -87,9 +87,7 @@ bool ChessState::IsLegalMove( const Piece* piece, const int32_t targetX, const i
 	}
 
 	// It's illegal for any move to leave that team's king checked
-	int32_t currentX = piece->x;
-	int32_t currentY = piece->y;
-	const_cast<Piece*>( piece )->PlaceAt( targetX, targetY );
+	const_cast<Piece*>( piece )->TempPlacement( -1, -1 );
 
 	const pieceHandle_t kingHdl = game->FindPiece( piece->team, pieceType_t::KING, 0 );
 	const Piece* king = GetPiece( kingHdl );
@@ -99,7 +97,7 @@ bool ChessState::IsLegalMove( const Piece* piece, const int32_t targetX, const i
 	}
 
 	// Reset position to honor this function's const-contract
-	const_cast<Piece*>( piece )->PlaceAt( currentX, currentY );
+	const_cast<Piece*>( piece )->ReturnPlacement();
 
 	return isLegal;
 }
@@ -203,6 +201,29 @@ bool ChessState::IsOpenToAttackAt( const Piece* targetPiece, const int32_t x, co
 }
 
 
+bool ChessState::IsKingCaptured( const teamCode_t checkedTeamCode ) const
+{
+	const pieceHandle_t kingHdl = game->FindPiece( checkedTeamCode, pieceType_t::KING, 0 );
+	const Piece* king = GetPiece( kingHdl );
+
+	return ( king == nullptr ) ? true : false;
+}
+
+
+bool ChessState::IsChecked( const teamCode_t checkedTeamCode ) const
+{
+	const pieceHandle_t kingHdl = game->FindPiece( checkedTeamCode, pieceType_t::KING, 0 );
+	const Piece* king = GetPiece( kingHdl );
+
+	// Game is over, consider checked too
+	if ( king == nullptr ) {
+		return true;
+	}
+
+	return IsOpenToAttack( king );
+}
+
+
 bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTeamCode ) const
 {
 	const pieceHandle_t kingHdl = game->FindPiece( checkedTeamCode, pieceType_t::KING, 0 );
@@ -211,11 +232,6 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 	// King was captured after last move
 	if ( king == nullptr ) {			
 		return true;
-	}
-
-	// Can attacker be killed?
-	if ( IsOpenToAttack( attacker ) ) {
-		return false;
 	}
 
 	// King is pinned
@@ -230,11 +246,28 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 			continue;
 		}
 
-		if ( GetPiece( nextX, nextY ) != nullptr ) {
+		const Piece* piece = GetPiece( nextX, nextY );
+
+		const bool pieceOccupiesTarget = ( piece != nullptr );
+		const bool pieceIsFriendly = pieceOccupiesTarget && ( piece->team == king->team );
+
+		if ( pieceIsFriendly ) {
 			continue;
 		}
 
-		if ( IsOpenToAttack( king ) == false ) {
+		if( pieceOccupiesTarget ) {
+			const_cast<Piece*>( piece )->TempPlacement( -1, - 1 );
+		}
+		const_cast<Piece*>( king )->TempPlacement( nextX, nextY );
+
+		const bool isOpenToAttack = IsOpenToAttackAt( king, nextX, nextY );
+
+		if ( pieceOccupiesTarget ) {
+			const_cast<Piece*>( piece )->ReturnPlacement();
+		}
+		const_cast<Piece*>( king )->ReturnPlacement();
+			
+		if ( isOpenToAttack == false ) {
 			return false;
 		}
 	}

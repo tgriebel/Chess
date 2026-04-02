@@ -11,6 +11,8 @@
 #include <sstream>
 #include <cstdint>
 
+#include "timer.h"
+
 
 // ============================================================
 // Expected outcomes
@@ -227,7 +229,10 @@ static TestResult RunSingleTest( const TestCase& tc )
 		}
 		else
 		{
+			Timer timer( "Execution time", timerPrecision_t::MICROSECOND );
 			moveResult = engine.Execute( cmd );
+
+		//	result.details += "Timer: " + std::to_string( timer.GetCurrentElapsed() ) + "\n";
 		}
 
 		// Check per-move expectations
@@ -596,7 +601,14 @@ int main()
 {
 	TestLogger logger( "test_results.log" );
 
-	const auto& tests = GetTestRegistry();
+#define RUN_FULL_REGISTRY 0
+
+#if RUN_FULL_REGISTRY
+	std::vector<TestCase>& tests = GetTestRegistry();
+#else
+	std::vector<TestCase> tests;
+	tests.push_back( TestCastleThroughCheck );
+#endif
 
 	// Header
 	{
@@ -620,7 +632,7 @@ int main()
 	int32_t passed = 0;
 	int32_t failed = 0;
 
-	for ( const auto& tc : tests )
+	for ( const TestCase& tc : tests )
 	{
 		TestResult result = RunSingleTest( tc );
 		results.push_back( result );

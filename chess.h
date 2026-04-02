@@ -437,7 +437,10 @@ public:
 	int32_t			GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSize ] ) const;					// Get all squares in this action's path
 	virtual bool	InActionPath( const int32_t actionNum, const int32_t targetX, const int32_t targetY ) const;	// This action can reach this location
 	virtual void	Move( const int32_t targetX, const int32_t targetY );											// Performs a game move, rules run
-	void			PlaceAt( const int32_t targetX, const int32_t targetY );										// Places a piece at a location, rules not run
+	void			PlaceAt( const int32_t targetX, const int32_t targetY );										// Places a piece at a location, rules not runn. Temp moves, castling, etc
+
+	void			TempPlacement( const int32_t targetX, const int32_t targetY );									// Place the piece offboard, outside rules engine. Assists other rule checks
+	void			ReturnPlacement();																				// Return the piece offboard, outside rules engine. Assists other rule checks
 
 	bool			HasMoved() const { return ( moveCount > 0 ); }													// Has this piece been moved in this game? (for castling, book-keeping)
 	int32_t			GetActionCount() const { return numActions; }													// How many unique move actions can a piece perform?
@@ -484,6 +487,8 @@ public:
 	int32_t				instance;
 
 protected:
+	int32_t				prevX;
+	int32_t				prevY;
 	int32_t				x;
 	int32_t				y;
 	int32_t				moveCount;
@@ -633,6 +638,8 @@ public:
 	pieceInfo_t			GetInfo( const int32_t x, const int32_t y ) const;
 
 	void				CapturePiece( const teamCode_t attacker, Piece* targetPiece );
+	bool				IsKingCaptured( const teamCode_t checkedTeamCode ) const;
+	bool				IsChecked( const teamCode_t checkedTeamCode ) const;
 	bool				IsCheckMate( const Piece* attacker, const teamCode_t checkedTeamCode ) const;
 	bool				IsOpenToAttack( const Piece* targetPiece ) const;
 	bool				IsOpenToAttackAt( const Piece* targetPiece, const int32_t targetX, const int32_t targetY ) const;
@@ -643,12 +650,12 @@ public:
 private:
 	void				CountTeamPieces();
 private:
-	callback_t			callback;
-	pieceHandle_t		enpassantPawn;
-	Piece*				pieces[ PieceCount ];
-	team_t				teams[ TeamCount ];
-	pieceHandle_t		grid[ BoardSize ][ BoardSize ]; // (0,0) is top left
-	ChessEngine*		game;
+	callback_t				callback;
+	pieceHandle_t			enpassantPawn;
+	Piece*					pieces[ PieceCount ];
+	team_t					teams[ TeamCount ];
+	mutable pieceHandle_t	grid[ BoardSize ][ BoardSize ]; // (0,0) is top left
+	ChessEngine*			game;
 
 	friend class ChessEngine;
 };
@@ -677,12 +684,25 @@ public:
 	{
 		pieceNum = 0;
 		winner = teamCode_t::NONE;
-		checkedTeam = teamCode_t::NONE;
+		
 		memset( s.pieces, 0, sizeof( Piece* ) * PieceCount );
 		config = cfg;
 		SetBoard( config );
 		s.game = this;
 		s.CountTeamPieces();
+
+		const bool whiteChecked = s.IsChecked( teamCode_t::WHITE );
+		const bool blackChecked = s.IsChecked( teamCode_t::BLACK );
+
+		assert( ( whiteChecked && blackChecked ) == false ); // Should be impossible, but maybe ok in test-cases?
+
+		if( whiteChecked ) {
+			checkedTeam = teamCode_t::WHITE;
+		}
+
+		if ( blackChecked ) {
+			checkedTeam = teamCode_t::BLACK;
+		}
 	}
 
 	static Piece* CreatePiece( const pieceType_t pieceType, const teamCode_t teamCode );
