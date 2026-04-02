@@ -22,12 +22,12 @@ void Piece::Move( const int32_t targetX, const int32_t targetY )
 		state->CapturePiece( team, opponentPiece );
 	}
 
-	Set( targetX, targetY );
+	PlaceAt( targetX, targetY );
 	++moveCount;
 }
 
 
-void Piece::Set( const int32_t targetX, const int32_t targetY )
+void Piece::PlaceAt( const int32_t targetX, const int32_t targetY )
 {
 	if ( state->OnBoard( x, y ) ) {
 		state->SetHandle( NoPiece, x, y );
@@ -44,12 +44,11 @@ void Piece::Set( const int32_t targetX, const int32_t targetY )
 
 void Piece::CalculateStep( const int32_t actionNum, int32_t& actionX, int32_t& actionY ) const
 {
-	if ( IsValidAction( actionNum ) == false ) {
-		return;
-	}
+	assert( IsValidAction( actionNum ) );
+
 	const moveAction_t& action = GetAction( actionNum );
 	actionX += action.x;
-	actionY += action.y * GetDirection();
+	actionY += action.y * GetTeamDirection();
 }
 
 
@@ -242,7 +241,7 @@ bool King::InActionPath( const int32_t actionNum, const int32_t targetX, const i
 	if ( state->GetPiece( rookTargetX, y ) != nullptr ) {
 		return false;
 	}
-	rook->Set( rookTargetX, y );
+	rook->PlaceAt( rookTargetX, y );
 
 	return true;
 }

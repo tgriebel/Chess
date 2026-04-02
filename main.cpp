@@ -1,6 +1,4 @@
-﻿#ifndef CHESS_NO_MAIN
-
-#include <iostream>
+﻿#include <iostream>
 #include <string>
 #include <algorithm>
 #include "chess.h"
@@ -220,7 +218,7 @@ exit_program:
 	std::cout << "Game Complete" << std::endl;
 }
 
-
+#ifndef CHESS_NO_MAIN
 int32_t main()
 {
 	SetWindowTitle( L"Chess by Thomas Griebel" );

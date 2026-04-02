@@ -15,9 +15,30 @@ bool ChessEngine::PerformMoveAction( const pieceHandle_t pieceHdl, const int32_t
 	}
 	piece->Move( targetX, targetY );
 
-	const teamCode_t opposingTeam = GetOpposingTeam( piece->team );
-	if ( s.FindCheckMate( opposingTeam ) ) {
-		winner = piece->team;
+	// Check / Checkmate
+	{
+		const teamCode_t opposingTeam = GetOpposingTeam( piece->team );
+
+		const pieceHandle_t kingHdl = FindPiece( opposingTeam, pieceType_t::KING, 0 );
+		const Piece* king = s.GetPiece( kingHdl );
+
+		checkedTeam = teamCode_t::NONE;
+		if( king == nullptr )
+		{
+			winner = piece->team;
+		}
+
+		const bool notCapturedAfterMove = ( king != nullptr );
+
+		if ( notCapturedAfterMove && s.IsOpenToAttack( king ) )
+		{
+			checkedTeam = opposingTeam;
+
+			if ( s.IsCheckMate( piece, opposingTeam ) )
+			{
+				winner = piece->team;
+			}
+		}
 	}
 
 	s.CountTeamPieces();
@@ -70,7 +91,7 @@ void ChessEngine::EnterPieceInGame( Piece* piece, const int32_t x, const int32_t
 {
 	s.pieces[ pieceNum ] = piece;
 	s.pieces[ pieceNum ]->BindBoard( &s, pieceNum );
-	s.pieces[ pieceNum ]->Set( x, y );
+	s.pieces[ pieceNum ]->PlaceAt( x, y );
 
 	const int32_t teamIndex = static_cast<int32_t>( piece->team );
 	const int32_t pieceIndex = s.teams[ teamIndex ].livingCount;
@@ -86,7 +107,7 @@ bool ChessEngine::IsValidHandle( const pieceHandle_t handle ) const
 		return false;
 	}
 
-	if ( ( handle < 0 ) && ( handle >= GetPieceCount() ) ) {
+	if ( ( handle < 0 ) || ( handle >= GetPieceCount() ) ) {
 		return false;
 	}
 	return true;
