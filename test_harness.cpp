@@ -611,7 +611,7 @@ int main()
 	std::vector<TestCase>& tests = GetTestRegistry();
 #else
 	std::vector<TestCase> tests;
-	tests.push_back( TestCastleThroughCheck );
+	tests.push_back( TestInvalidCommand );
 #endif
 
 	// Header

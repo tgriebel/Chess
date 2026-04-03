@@ -1,5 +1,7 @@
 #include "Chess.h"
 
+#include <set>
+#include <tuple>
 
 void ChessState::SetHandle( const pieceHandle_t pieceHdl, const int32_t x, const int32_t y )
 {
@@ -281,72 +283,83 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 	}
 
 	// Path of all attackers can be blocked
+	typedef std::tuple<int32_t, int32_t> move_t;
+	std::set<move_t> attackSquares[ TeamPieceCount ];
+
+	uint32_t attackerCount = 0;
+
 	const teamCode_t opposingTeamCode = ChessEngine::GetOpposingTeam( checkedTeamCode );
 
 	const team_t defenderTeam = teams[ static_cast<int32_t>( checkedTeamCode ) ];
 	const team_t attackerTeam = teams[ static_cast<int32_t>( opposingTeamCode ) ];
 
-	struct attackerPath_t
-	{
-		pieceHandle_t	piece;
-		int32_t			action;
-	};
-
-	int32_t totalAttackers = 0;
-	int32_t blockedAttackers = 0;
-	attackerPath_t attackerPaths[ TeamPieceCount ];
-
 	for ( int32_t attackerIx = 0; attackerIx < attackerTeam.livingCount; ++attackerIx )
 	{
 		const Piece* attackerPiece = GetPiece( attackerTeam.pieces[ attackerIx ] );
-		const int32_t attackerActionCount = attackerPiece->GetActionCount();
+		const int32_t actionCount = attackerPiece->GetActionCount();
 
-		for ( int32_t attackerAction = 0; attackerAction < attackerActionCount; ++attackerAction )
+		for ( int32_t actionNum = 0; actionNum < actionCount; ++actionNum )
 		{
-			if ( attackerPiece->InActionPath( attackerAction, king->x, king->y ) )
-			{
-				attackerPaths[ totalAttackers ].piece = attackerIx;
-				attackerPaths[ totalAttackers ].action = attackerAction;
-				++totalAttackers;
+			if ( attackerPiece->InActionPath( actionNum, king->x, king->y ) == false ) {
 				continue;
 			}
+
+			int32_t nextX = attackerPiece->x;
+			int32_t nextY = attackerPiece->y;
+			const int32_t maxSteps = attackerPiece->GetActions()[ actionNum ].maxSteps;
+
+			for ( int32_t step = 1; step <= maxSteps; ++step )
+			{
+				attackerPiece->CalculateStep( actionNum, nextX, nextY );
+
+				if( nextX == king->x && nextY == king->y ) {
+					break;
+				}
+
+				attackSquares[ attackerCount ].insert( move_t( nextX, nextY ) );
+			}
+			break;
+		}
+		if( attackSquares[ attackerCount ].empty() == false ) {
+			++attackerCount;
 		}
 	}
 
-	// FIXME: Rewrite this. Temp write all possible defender moves to grid then check attacker paths
-	for ( int32_t attackerIx = 0; attackerIx < totalAttackers; ++attackerIx )
+	uint32_t blockCount = 0;
+
+	for ( int32_t defenderIx = 0; defenderIx < defenderTeam.livingCount; ++defenderIx )
 	{
-		const attackerPath_t& attackerPath = attackerPaths[ attackerIx ];
+		const Piece* defenderPiece = GetPiece( defenderTeam.pieces[ defenderIx ] );
+		const int32_t actionCount = defenderPiece->GetActionCount();
 
-		const Piece* attackerPiece = GetPiece( attackerPath.piece );
+		if( defenderPiece->handle == kingHdl ) {
+			continue;
+		}
 
-		moveAction_t path[ BoardSize ];
-		const int32_t pathSteps = attackerPiece->GetActionPath( attackerPath.action, path );
-
-		for ( int32_t step = 0; step < pathSteps; ++step )
+		for ( int32_t attackerIndex = 0; attackerIndex < attackerCount; ++attackerIndex )
 		{
-			bool blocked = false;
-			for ( int32_t defenderIx = 0; defenderIx < defenderTeam.livingCount; ++defenderIx )
-			{			
-				const Piece* defenderPiece = GetPiece( defenderTeam.pieces[ defenderIx ] );
-				const int32_t defenderActionCount = defenderPiece->GetActionCount();
+			bool actionBlocks = false;
 
-				for ( int32_t defenderAction = 0; defenderAction < defenderActionCount; ++defenderAction )
+			for ( int32_t actionNum = 0; actionNum < actionCount; ++actionNum )
+			{				
+				for( const move_t square : attackSquares[ attackerIndex ] )
 				{
-					// Can block
-					if ( defenderPiece->InActionPath( defenderAction, path[ step ].x, path[ step ].y ) )
+					if ( IsLegalMove( defenderPiece, std::get<0>( square ), std::get<1>( square ) ) != moveType_t::NONE )
 					{
-						++blockedAttackers;
-						blocked = true;
+						attackSquares[ attackerIndex ].clear();
+						++blockCount;
+
+						actionBlocks = true;
+
+						if( blockCount == attackerCount ) {
+							return false;
+						}
 						break;
 					}
 				}
-				if( blocked ) {
+				if( actionBlocks ) {
 					break;
 				}
-			}
-			if ( blocked ) {
-				break;
 			}
 		}
 	}
