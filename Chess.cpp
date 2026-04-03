@@ -9,11 +9,11 @@ bool ChessEngine::PerformMoveAction( const pieceHandle_t pieceHdl, const int32_t
 		return false;
 	}
 
-	const bool legalMove = s.IsLegalMove( piece, targetX, targetY );
-	if ( legalMove == false ) {
+	const moveType_t legalMove = s.IsLegalMove( piece, targetX, targetY );
+	if ( legalMove == moveType_t::NONE ) {
 		return false;
 	}
-	piece->Move( targetX, targetY );
+	piece->Move( legalMove, targetX, targetY );
 
 	// Check / Checkmate
 	{

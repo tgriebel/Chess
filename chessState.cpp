@@ -62,44 +62,52 @@ pieceInfo_t ChessState::GetInfo( const int32_t x, const int32_t y ) const
 }
 
 
-bool ChessState::IsLegalMove( const Piece* piece, const int32_t targetX, const int32_t targetY ) const
+moveType_t ChessState::IsLegalMove( const Piece* piece, const int32_t targetX, const int32_t targetY ) const
 {
+	moveType_t moveType = moveType_t::NONE;
+
+	// 1. In bounds
 	if ( OnBoard( targetX, targetY ) == false ) {
-		return false;
+		return moveType_t::NONE;
 	}
 	if ( OnBoard( piece->x, piece->y ) == false ) {
-		return false;
+		return moveType_t::NONE;
 	}
-	// Check piece actions
-	bool isLegal = false;
-	const int32_t actionCount = piece->GetActionCount();
-
-	for ( int32_t action = 0; action < actionCount; ++action )
+	
+	// 2. Check if the piece's actions can reach this location
 	{
-		if ( piece->InActionPath( action, targetX, targetY ) ) {
-			isLegal = true;
-			break;
+		const int32_t actionCount = piece->GetActionCount();
+
+		for ( int32_t action = 0; action < actionCount; ++action )
+		{
+			if ( piece->InActionPath( action, targetX, targetY ) )
+			{
+				moveType = piece->GetActions()[ action ].type;
+				break;
+			}
+		}
+
+		if ( moveType == moveType_t::NONE ) {
+			return moveType_t::NONE;
 		}
 	}
 
-	if ( isLegal == false ) {
-		return false;
+	// 3. It's illegal for any move to leave that team's king checked
+	{
+		const_cast<Piece*>( piece )->TempPlacement( -1, -1 );
+
+		const pieceHandle_t kingHdl = game->FindPiece( piece->team, pieceType_t::KING, 0 );
+		const Piece* king = GetPiece( kingHdl );
+
+		if ( IsOpenToAttack( king ) ) {
+			moveType = moveType_t::NONE;
+		}
+
+		// Reset position to honor this function's const-contract
+		const_cast<Piece*>( piece )->ReturnPlacement();
 	}
 
-	// It's illegal for any move to leave that team's king checked
-	const_cast<Piece*>( piece )->TempPlacement( -1, -1 );
-
-	const pieceHandle_t kingHdl = game->FindPiece( piece->team, pieceType_t::KING, 0 );
-	const Piece* king = GetPiece( kingHdl );
-
-	if ( IsOpenToAttack( king ) ) {
-		isLegal = false;
-	}
-
-	// Reset position to honor this function's const-contract
-	const_cast<Piece*>( piece )->ReturnPlacement();
-
-	return isLegal;
+	return moveType;
 }
 
 
@@ -167,7 +175,7 @@ void ChessState::PromotePawn( const pieceHandle_t pieceHdl )
 
 	pieces[ pieceHdl ] = ChessEngine::CreatePiece( event.promotionType, team );
 	pieces[ pieceHdl ]->BindBoard( this, pieceHdl );
-	pieces[ pieceHdl ]->Move( x, y );
+	pieces[ pieceHdl ]->Move( moveType_t::PAWN_T, x, y );
 }
 
 

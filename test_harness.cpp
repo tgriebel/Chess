@@ -601,7 +601,7 @@ int main()
 {
 	TestLogger logger( "test_results.log" );
 
-#define RUN_FULL_REGISTRY 0
+#define RUN_FULL_REGISTRY 1
 
 #if RUN_FULL_REGISTRY
 	std::vector<TestCase>& tests = GetTestRegistry();

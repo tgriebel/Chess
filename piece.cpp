@@ -7,7 +7,7 @@ bool Piece::IsValidAction( const int32_t actionNum ) const
 }
 
 
-void Piece::Move( const int32_t targetX, const int32_t targetY )
+void Piece::Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY )
 {
 	state->SetEnpassant( NoPiece );
 
@@ -144,7 +144,7 @@ int32_t Piece::GetActionPath( const int32_t actionNum, moveAction_t path[ BoardS
 	{
 		CalculateStep( actionNum, nextX, nextY );
 
-		if ( state->IsLegalMove( this, nextX, nextY ) ) {
+		if ( state->IsLegalMove( this, nextX, nextY ) != moveType_t::NONE ) {
 			path[ validSquares++ ] = moveAction_t( nextX, nextY, GetAction( actionNum ).type, 1 );
 		}
 	}
@@ -194,7 +194,7 @@ bool Pawn::CanPromote() const
 }
 
 
-void Pawn::Move( const int32_t targetX, const int32_t targetY )
+void Pawn::Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY )
 {
 	const bool doubleMove = ( abs( targetY - y ) == 2 );
 	const pieceHandle_t pieceHdl = state->GetEnpassant( targetX, targetY );
@@ -205,7 +205,7 @@ void Pawn::Move( const int32_t targetX, const int32_t targetY )
 		state->CapturePiece( team, targetPiece );
 	}
 
-	Piece::Move( targetX, targetY );
+	Piece::Move( moveType, targetX, targetY );
 
 	if ( doubleMove ) {
 		state->SetEnpassant( handle );
@@ -230,23 +230,22 @@ bool King::InActionPath( const int32_t actionNum, const int32_t targetX, const i
 		return false;
 	}
 
-	Piece* rook = nullptr;
+	Piece* castlePiece = nullptr;
 	const moveType_t type = GetAction( actionNum ).type;
 
-	// FIXME: move to after legal action test
 	if ( type == moveType_t::KING_CASTLE_L ) {
-		rook = state->GetPiece( 0, y );
+		castlePiece = state->GetPiece( 0, y );
 	} else if ( type == moveType_t::KING_CASTLE_R ) {
-		rook = state->GetPiece( BoardSize - 1, y );
+		castlePiece = state->GetPiece( BoardSize - 1, y );
 	} else {
 		return true;
 	}
 
-	if ( ( rook == nullptr ) || ( rook->type != pieceType_t::ROOK ) ) {
+	if ( ( castlePiece == nullptr ) || ( castlePiece->type != pieceType_t::ROOK ) ) {
 		return false;
 	}
 
-	if ( HasMoved() || rook->HasMoved() ) {
+	if ( HasMoved() || castlePiece->HasMoved() ) {
 		return false;
 	}
 
@@ -255,7 +254,7 @@ bool King::InActionPath( const int32_t actionNum, const int32_t targetX, const i
 	const moveType_t moveTest = rightCastle ? moveType_t::ROOK_L : moveType_t::ROOK_R;
 
 	const int32_t rookTargetX = targetX + flankOffset;
-	const bool rookMove = rook->InActionPath( rook->GetActionNum( moveTest ), rookTargetX, y );
+	const bool rookMove = castlePiece->InActionPath( castlePiece->GetActionNum( moveTest ), rookTargetX, y );
 
 	if ( rookMove == false ) {
 		return false;
@@ -264,7 +263,44 @@ bool King::InActionPath( const int32_t actionNum, const int32_t targetX, const i
 	if ( state->GetPiece( rookTargetX, y ) != nullptr ) {
 		return false;
 	}
-	rook->PlaceAt( rookTargetX, y );
+
+	// Illegal: Castle while in check
+	// Illegal: Castle through any attacked square
+	// Illegal: Castle into checked square (covered by general rule)
+	if ( state->IsChecked( team ) || state->IsOpenToAttackAt( castlePiece, rightCastle ? x + 1 : x - 1, y ) ) {
+		return false;
+	}
 
 	return true;
+}
+
+
+void King::Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY )
+{
+	const bool isCastleAction = ( moveType == moveType_t::KING_CASTLE_L ) || ( moveType == moveType_t::KING_CASTLE_R );
+
+	if( isCastleAction == false )
+	{
+		Piece::Move( moveType, targetX, targetY );
+		return;
+	}
+
+	Piece* rook = nullptr;
+	if( moveType == moveType_t::KING_CASTLE_L )
+	{
+		rook = state->GetPiece( 0, y );
+
+		assert( rook && rook->type == pieceType_t::ROOK ); // Already tested legal
+
+		rook->PlaceAt( targetX + 1, y );
+	}
+	else if( moveType == moveType_t::KING_CASTLE_R )
+	{
+		rook = state->GetPiece( BoardSize - 1, y );
+
+		assert( rook && rook->type == pieceType_t::ROOK ); // Already tested legal
+
+		rook->PlaceAt( targetX - 1, y );
+	}
+	PlaceAt( targetX, targetY );
 }

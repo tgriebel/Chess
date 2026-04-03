@@ -436,7 +436,7 @@ public:
 	int32_t			GetStepCount( const int32_t actionNum, const int32_t targetX, const int32_t targetY ) const;	// How many squares are traveled for this action?
 	int32_t			GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSize ] ) const;					// Get all squares in this action's path
 	virtual bool	InActionPath( const int32_t actionNum, const int32_t targetX, const int32_t targetY ) const;	// This action can reach this location
-	virtual void	Move( const int32_t targetX, const int32_t targetY );											// Performs a game move, rules run
+	virtual void	Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY );				// Performs a game move, rules run
 	void			PlaceAt( const int32_t targetX, const int32_t targetY );										// Places a piece at a location, rules not runn. Temp moves, castling, etc
 
 	void			TempPlacement( const int32_t targetX, const int32_t targetY );									// Place the piece offboard, outside rules engine. Assists other rule checks
@@ -516,7 +516,7 @@ public:
 	}
 
 	bool InActionPath( const int32_t actionNum, const int32_t targetX, const int32_t targetY ) const override;
-	void Move( const int32_t targetX, const int32_t targetY ) override;
+	void Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY ) override;
 	bool CanPromote() const;
 
 	const moveAction_t* GetActions() const {
@@ -597,6 +597,7 @@ public:
 	}
 
 	bool InActionPath( const int32_t actionNum, const int32_t actionX, const int32_t actionY ) const override;
+	void Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY ) override;
 };
 
 
@@ -627,7 +628,7 @@ public:
 	ChessState() {}
 	~ChessState() {}
 
-	bool				IsLegalMove( const Piece* piece, const int32_t targetX, const int32_t targetY ) const;
+	moveType_t			IsLegalMove( const Piece* piece, const int32_t targetX, const int32_t targetY ) const;
 	inline bool			OnBoard( const int32_t x, const int32_t y ) const;
 	inline const Piece* GetPiece( const pieceHandle_t handle ) const;
 	inline Piece*		GetPiece( const pieceHandle_t handle );
