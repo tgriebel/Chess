@@ -98,6 +98,7 @@ struct TestResult
 	std::string		details;
 	int32_t			movesExecuted;
 	int32_t			totalMoves;
+	float			averageMoveTimer;
 };
 
 
@@ -209,6 +210,7 @@ static TestResult RunSingleTest( const TestCase& tc )
 		commands = tc.inlineCommands;
 	}
 	result.totalMoves = static_cast<int32_t>( commands.size() );
+	result.averageMoveTimer = 0.0f;
 
 	// Create engine
 	ChessEngine engine( cfg );
@@ -232,7 +234,7 @@ static TestResult RunSingleTest( const TestCase& tc )
 			Timer timer( "Execution time", timerPrecision_t::MICROSECOND );
 			moveResult = engine.Execute( cmd );
 
-		//	result.details += "Timer: " + std::to_string( timer.GetCurrentElapsed() ) + "\n";
+			result.averageMoveTimer += timer.GetCurrentElapsed();
 		}
 
 		// Check per-move expectations
@@ -266,6 +268,8 @@ static TestResult RunSingleTest( const TestCase& tc )
 			++result.movesExecuted;
 		}
 	}
+
+	result.averageMoveTimer /= static_cast<float>( result.totalMoves );
 
 	// Check final outcome
 	const ExpectedOutcome actualOutcome = WinnerToOutcome( engine.GetWinner() );
@@ -660,6 +664,7 @@ int main()
 		{
 			logger.Write( r.details );
 		}
+		logger.Write( "  AverageMoveTime: " + std::to_string( r.averageMoveTimer ) );
 		logger.Write( "" );
 	}
 
