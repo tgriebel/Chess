@@ -206,6 +206,18 @@ bool ChessState::IsOpenToAttackAt( const Piece* targetPiece, const num_t x, cons
 	for ( int32_t i = 0; i < teams[ index ].livingCount; ++i )
 	{
 		const Piece* piece = GetPiece( teams[ index ].pieces[ i ] );
+
+#if USE_MOVE_CACHE_TEST
+		const MoveCache& superset = piece->GetMoveCache();
+
+		const num_t localX = ( x - piece->x );
+		const num_t localY = ( y - piece->y ) * piece->GetTeamDirection();
+
+		if ( !superset.Test( localX, localY ) ) {
+			continue;
+		}
+#endif
+
 		const int32_t actionCount = piece->GetActionCount();
 
 		for ( int32_t action = 0; action < actionCount; ++action )

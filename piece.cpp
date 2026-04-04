@@ -341,7 +341,7 @@ bool King::InActionPath( const int32_t actionNum, const num_t targetX, const num
 	const moveType_t moveTest = rightCastle ? moveType_t::ROOK_L : moveType_t::ROOK_R;
 
 	const num_t rookTargetX = targetX + flankOffset;
-	const bool rookMove = castlePiece->InActionPath( castlePiece->GetActionNum( moveTest ), rookTargetX, y );
+	const bool rookMove = castlePiece->InActionPath( castlePiece->GetActionNum( moveTest ), rookTargetX, y ); // Cheaks a clear path between rook and king
 
 	if ( rookMove == false ) {
 		return false;
