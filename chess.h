@@ -92,21 +92,25 @@ enum resultCode_t
 {
 	RESULT_SUCCESS = 0,
 
-	RESULT_INPUT_INVALID_COMMAND	= ( 1 << 0 ),
-	RESULT_INPUT_INVALID_PIECE		= ( 1 << 1 ),
-	RESULT_INPUT_INVALID_FILE		= ( 1 << 2 ),
-	RESULT_INPUT_INVALID_RANK		= ( 1 << 3 ),
-	RESULT_INPUT_INVALID_MOVE		= ( 1 << 4 ),
-	RESULT_GAME_INVALID_PIECE		= ( 1 << 5 ),
-	RESULT_GAME_INVALID_MOVE		= ( 1 << 6 ),
-	RESULT_GAME_ERROR_MASK			= ( RESULT_INPUT_INVALID_COMMAND | RESULT_INPUT_INVALID_PIECE | \
-										RESULT_INPUT_INVALID_FILE | RESULT_INPUT_INVALID_RANK | \
-										RESULT_GAME_INVALID_PIECE | RESULT_GAME_INVALID_MOVE ),
+	RESULT_INPUT_INVALID_COMMAND		= ( 1 << 0 ),
+	RESULT_INPUT_INVALID_PIECE			= ( 1 << 1 ),
+	RESULT_INPUT_INVALID_FILE			= ( 1 << 2 ),
+	RESULT_INPUT_INVALID_RANK			= ( 1 << 3 ),
+	RESULT_INPUT_INVALID_MOVE			= ( 1 << 4 ),
+	RESULT_GAME_INVALID_PIECE			= ( 1 << 5 ),
+	RESULT_GAME_INVALID_MOVE			= ( 1 << 6 ),
+	RESULT_GAME_ERROR_MASK				= ( RESULT_INPUT_INVALID_COMMAND | RESULT_INPUT_INVALID_PIECE | \
+											RESULT_INPUT_INVALID_FILE | RESULT_INPUT_INVALID_RANK | \
+											RESULT_GAME_INVALID_PIECE | RESULT_GAME_INVALID_MOVE ),
 
-	RESULT_GAME_COMPLETE_WHITE_WINS	= ( 1 << 7 ),
-	RESULT_GAME_COMPLETE_BLACK_WINS	= ( 1 << 8 ),
-	RESULT_GAME_COMPLETE_STALEMATE	= ( 1 << 9 ),
-	RESULT_GAME_COMPLETE			= ( RESULT_GAME_COMPLETE_WHITE_WINS | RESULT_GAME_COMPLETE_BLACK_WINS | RESULT_GAME_COMPLETE_STALEMATE ),
+	RESULT_GAME_COMPLETE_WHITE_WINS		= ( 1 << 7 ),
+	RESULT_GAME_COMPLETE_BLACK_WINS		= ( 1 << 8 ),
+	RESULT_GAME_COMPLETE_STALEMATE		= ( 1 << 9 ),
+	RESULT_GAME_COMPLETE_WHITE_RESIGNS	= ( 1 << 10 ),
+	RESULT_GAME_COMPLETE_BLACK_RESIGNS	= ( 1 << 11 ),
+	RESULT_GAME_COMPLETE				= ( RESULT_GAME_COMPLETE_WHITE_WINS | RESULT_GAME_COMPLETE_BLACK_WINS | \
+											RESULT_GAME_COMPLETE_WHITE_RESIGNS | RESULT_GAME_COMPLETE_BLACK_RESIGNS | \
+											RESULT_GAME_COMPLETE_STALEMATE ),
 };
 
 
@@ -117,19 +121,21 @@ struct resultMessage_t
 };
 
 
-constexpr static uint32_t ResultMessageCount = 10;
+constexpr static uint32_t ResultMessageCount = 12;
 static resultMessage_t ResultMsgs[ ResultMessageCount ] =
 {
-	{ RESULT_INPUT_INVALID_COMMAND,		"Invalid command"			},
-	{ RESULT_INPUT_INVALID_PIECE,		"Invalid piece"				},
-	{ RESULT_INPUT_INVALID_FILE,		"File out of range"			},
-	{ RESULT_INPUT_INVALID_RANK,		"Rank out of range"			},
-	{ RESULT_INPUT_INVALID_MOVE,		"Invalid move command",		},
-	{ RESULT_GAME_INVALID_PIECE,		"Invalid piece selected",	},
-	{ RESULT_GAME_INVALID_MOVE,			"Invalid move action",		},
-	{ RESULT_GAME_COMPLETE_WHITE_WINS,	"White Wins",				},
-	{ RESULT_GAME_COMPLETE_BLACK_WINS,	"Black Wins",				},
-	{ RESULT_GAME_COMPLETE_STALEMATE,	"Stalemate",				},
+	{ RESULT_INPUT_INVALID_COMMAND,			"Invalid command"			},
+	{ RESULT_INPUT_INVALID_PIECE,			"Invalid piece"				},
+	{ RESULT_INPUT_INVALID_FILE,			"File out of range"			},
+	{ RESULT_INPUT_INVALID_RANK,			"Rank out of range"			},
+	{ RESULT_INPUT_INVALID_MOVE,			"Invalid move command",		},
+	{ RESULT_GAME_INVALID_PIECE,			"Invalid piece selected",	},
+	{ RESULT_GAME_INVALID_MOVE,				"Invalid move action",		},
+	{ RESULT_GAME_COMPLETE_WHITE_WINS,		"White Wins",				},
+	{ RESULT_GAME_COMPLETE_BLACK_WINS,		"Black Wins",				},
+	{ RESULT_GAME_COMPLETE_WHITE_RESIGNS,	"White Resigns",			},
+	{ RESULT_GAME_COMPLETE_BLACK_RESIGNS,	"Black Resigns",			},
+	{ RESULT_GAME_COMPLETE_STALEMATE,		"Stalemate",				},
 };
 
 
@@ -796,7 +802,7 @@ public:
 
 		if ( GetWinner() != teamCode_t::NONE )
 		{
-			return resultCode_t::RESULT_GAME_COMPLETE;
+			return GetGameResult();
 		}
 
 		if ( PerformMoveAction( piece, cmd.x, cmd.y ) == false )
@@ -806,7 +812,24 @@ public:
 
 		CalculateGameState( piece );
 
-		return ( GetWinner() != teamCode_t::NONE ) ? resultCode_t::RESULT_GAME_COMPLETE : resultCode_t::RESULT_SUCCESS;
+		return ( GetWinner() != teamCode_t::NONE || IsStalemate() ) ? GetGameResult() : resultCode_t::RESULT_SUCCESS;
+	}
+
+	resultCode_t GetGameResult() const
+	{
+		if ( stalemate )
+		{
+			return resultCode_t::RESULT_GAME_COMPLETE_STALEMATE;
+		}
+		if ( winner == teamCode_t::WHITE )
+		{
+			return resultCode_t::RESULT_GAME_COMPLETE_WHITE_WINS;
+		}
+		if ( winner == teamCode_t::BLACK )
+		{
+			return resultCode_t::RESULT_GAME_COMPLETE_BLACK_WINS;
+		}
+		return resultCode_t::RESULT_SUCCESS;
 	}
 
 	void GetTeamCaptures( const teamCode_t teamCode, pieceInfo_t capturedPieces[ TeamPieceCount ], int32_t& captureCount ) const
@@ -852,6 +875,7 @@ public:
 	bool				GetLocation( const pieceHandle_t pieceType, num_t& x, num_t& y ) const;
 	void				SetEventCallback( callback_t callback ) { this->s.callback = callback; }
 	inline bool			IsStalemate() const { return stalemate; }
+	inline teamCode_t	GetCurrentPlayer() { return currentTurn; } 
 	inline teamCode_t	GetWinner() const { return winner; }
 	inline teamCode_t	GetCheckedTeam() const { return checkedTeam; }
 	inline num_t		GetPieceCount() const { return pieceNum; }
@@ -865,6 +889,8 @@ private:
 private:
 	ChessState			s;
 	num_t				pieceNum;
+	int32_t				turnCount;
+	teamCode_t			currentTurn;
 	teamCode_t			winner;
 	teamCode_t			checkedTeam;
 	bool				stalemate;
@@ -973,6 +999,11 @@ static char GetRank( const int32_t rankNum )
 
 static resultCode_t TranslateActionCommand( const ChessEngine& board, const teamCode_t team, const std::string& commandString, command_t& outCmd )
 {
+	if ( commandString == "Resign" || commandString == "resign" )
+	{
+		return ( team == teamCode_t::WHITE ) ? resultCode_t::RESULT_GAME_COMPLETE_WHITE_RESIGNS : resultCode_t::RESULT_GAME_COMPLETE_BLACK_RESIGNS;
+	}
+
 	if ( commandString.size() != 4 )
 	{
 		return resultCode_t::RESULT_INPUT_INVALID_COMMAND;

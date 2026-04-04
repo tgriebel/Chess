@@ -18,41 +18,6 @@
 
 
 // ============================================================
-// Expected outcomes
-// ============================================================
-
-enum class ExpectedOutcome
-{
-	GAME_IN_PROGRESS,
-	WHITE_WINS,
-	BLACK_WINS,
-	STALEMATE,
-};
-
-static const char* OutcomeToString( const ExpectedOutcome outcome )
-{
-	switch ( outcome )
-	{
-	case ExpectedOutcome::GAME_IN_PROGRESS:	return "GAME_IN_PROGRESS";
-	case ExpectedOutcome::WHITE_WINS:		return "WHITE_WINS";
-	case ExpectedOutcome::BLACK_WINS:		return "BLACK_WINS";
-	case ExpectedOutcome::STALEMATE:		return "STALEMATE";
-	}
-	return "UNKNOWN";
-}
-
-static ExpectedOutcome WinnerToOutcome( const teamCode_t winner )
-{
-	switch ( winner )
-	{
-	case teamCode_t::WHITE:	return ExpectedOutcome::WHITE_WINS;
-	case teamCode_t::BLACK:	return ExpectedOutcome::BLACK_WINS;
-	default:				return ExpectedOutcome::GAME_IN_PROGRESS;
-	}
-}
-
-
-// ============================================================
 // Per-move expectations
 // ============================================================
 
@@ -83,7 +48,7 @@ struct TestCase
 	const char*						boardFile;		// nullptr = use default board
 	const char*						commandsFile;	// nullptr = use inlineCommands
 	std::vector< std::string >		inlineCommands;
-	ExpectedOutcome					expectedOutcome;
+	resultCode_t					expectedOutcome;	// RESULT_SUCCESS = game in progress, or a RESULT_GAME_COMPLETE_* flag
 	std::vector< MoveExpectation >	moveExpectations;
 	std::vector< PieceExpectation >	pieceExpectations;
 };
@@ -220,12 +185,12 @@ static TestResult RunSingleTest( const TestCase& tc )
 	engine.SetEventCallback( &AutoPromoteQueen );
 
 	// Execute commands
-	teamCode_t turnTeam = teamCode_t::WHITE;
+	resultCode_t lastResult = RESULT_SUCCESS;
 
 	for ( int32_t i = 0; i < static_cast<int32_t>( commands.size() ); ++i )
 	{
 		command_t cmd{};
-		resultCode_t translateResult = TranslateActionCommand( engine, turnTeam, commands[ i ], cmd );
+		resultCode_t translateResult = TranslateActionCommand( engine, engine.GetCurrentPlayer(), commands[ i ], cmd );
 
 		resultCode_t moveResult;
 		if ( translateResult != RESULT_SUCCESS )
@@ -245,6 +210,8 @@ static TestResult RunSingleTest( const TestCase& tc )
 			result.averageMoveTimer += timer.GetCurrentElapsed();
 		}
 
+		lastResult = moveResult;
+
 		// Check per-move expectations
 		for ( const auto& me : tc.moveExpectations )
 		{
@@ -256,23 +223,14 @@ static TestResult RunSingleTest( const TestCase& tc )
 					result.details += "  Move " + std::to_string( i ) + " ('" + commands[ i ] + "'): ";
 					result.details += "expected " + std::string( GetErrorMsg( me.expectedResult ) );
 					result.details += ", got ";
-					if ( moveResult == RESULT_SUCCESS )
-					{
-						result.details += "SUCCESS";
-					}
-					else
-					{
-						result.details += GetErrorMsg( moveResult );
-					}
+					result.details += ( moveResult == RESULT_SUCCESS ) ? "SUCCESS" : GetErrorMsg( moveResult );
 					result.details += "\n";
 				}
 			}
 		}
 
-		// Advance turn on success
-		if ( moveResult == RESULT_SUCCESS || moveResult == RESULT_GAME_COMPLETE )
+		if ( !( moveResult & RESULT_GAME_ERROR_MASK ) )
 		{
-			turnTeam = ( turnTeam == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 			++result.movesExecuted;
 		}
 	}
@@ -280,19 +238,15 @@ static TestResult RunSingleTest( const TestCase& tc )
 	result.averageMoveTimer /= static_cast<float>( result.totalMoves );
 
 	// Check final outcome
-	ExpectedOutcome actualOutcome = WinnerToOutcome( engine.GetWinner() ); // TODO: cleanup!
-
-	if( engine.IsStalemate() ) {
-		actualOutcome = ExpectedOutcome::STALEMATE;
-	}
+	const resultCode_t actualOutcome = ( lastResult & RESULT_GAME_COMPLETE ) ? lastResult : RESULT_SUCCESS;
 
 	if ( actualOutcome != tc.expectedOutcome )
 	{
 		result.passed = false;
 		result.details += "  Outcome: expected ";
-		result.details += OutcomeToString( tc.expectedOutcome );
+		result.details += ( tc.expectedOutcome == RESULT_SUCCESS ) ? "GAME_IN_PROGRESS" : GetErrorMsg( tc.expectedOutcome );
 		result.details += ", got ";
-		result.details += OutcomeToString( actualOutcome );
+		result.details += ( actualOutcome == RESULT_SUCCESS ) ? "GAME_IN_PROGRESS" : GetErrorMsg( actualOutcome );
 		result.details += "\n";
 	}
 
@@ -375,7 +329,7 @@ static TestCase TestFoolsMate =
 	"tests/default_board.txt",
 	"tests/fools_mate.txt",
 	{},
-	ExpectedOutcome::BLACK_WINS,
+	RESULT_GAME_COMPLETE_BLACK_WINS,
 	{},
 	{}
 };
@@ -388,7 +342,7 @@ static TestCase TestScholarsMate =
 	"tests/default_board.txt",
 	"tests/scholars_mate.txt",
 	{},
-	ExpectedOutcome::WHITE_WINS,
+	RESULT_GAME_COMPLETE_WHITE_WINS,
 	{},
 	{
 		{ pieceType_t::PAWN, teamCode_t::BLACK, 5, -1, -1 },	// f7 pawn captured
@@ -403,7 +357,7 @@ static TestCase TestItalianOpening =
 	"tests/default_board.txt",
 	"tests/italian_opening.txt",
 	{},
-	ExpectedOutcome::GAME_IN_PROGRESS,
+	RESULT_SUCCESS,
 	{},
 	{
 		// White castled: king on g1, rook on f1
@@ -421,7 +375,7 @@ static TestCase TestQueensGambit =
 	"tests/default_board.txt",
 	"tests/queens_gambit.txt",
 	{},
-	ExpectedOutcome::GAME_IN_PROGRESS,
+	RESULT_SUCCESS,
 	{},
 	{}
 };
@@ -434,7 +388,7 @@ static TestCase TestBasicCommands =
 	"tests/default_board.txt",
 	"tests/commands_basic.txt",
 	{},
-	ExpectedOutcome::GAME_IN_PROGRESS,
+	RESULT_SUCCESS,
 	{},
 	{}
 };
@@ -450,9 +404,9 @@ static TestCase TestBackRankMate =
 	"tests/back_rank_mate_board.txt",
 	"tests/back_rank_mate_cmds.txt",
 	{},
-	ExpectedOutcome::WHITE_WINS,
+	RESULT_GAME_COMPLETE_WHITE_WINS,
 	{
-		{ 0, RESULT_GAME_COMPLETE },
+		{ 0, RESULT_GAME_COMPLETE_WHITE_WINS },
 	},
 	{}
 };
@@ -465,7 +419,7 @@ static TestCase TestPromotion =
 	"tests/promotion_board.txt",
 	"tests/promotion_cmds.txt",
 	{},
-	ExpectedOutcome::GAME_IN_PROGRESS,
+	RESULT_SUCCESS,
 	{
 		{ 0, RESULT_SUCCESS },
 	},
@@ -480,7 +434,7 @@ static TestCase TestEnPassant =
 	"tests/enpassant.txt",
 	"tests/enpassant_cmds.txt",
 	{},
-	ExpectedOutcome::GAME_IN_PROGRESS,
+	RESULT_SUCCESS,
 	{
 		{ 0, RESULT_SUCCESS },		// a2-a4 double push
 		{ 1, RESULT_SUCCESS },		// bxa3 en passant
@@ -498,7 +452,7 @@ static TestCase TestKnightFork =
 	"tests/knight_fork_board.txt",
 	"tests/knight_fork_cmds.txt",
 	{},
-	ExpectedOutcome::GAME_IN_PROGRESS,
+	RESULT_SUCCESS,
 	{
 		{ 0, RESULT_SUCCESS },		// Ne7+ fork
 		{ 1, RESULT_SUCCESS },		// Kf8
@@ -521,9 +475,7 @@ static TestCase TestStalemate =
 	"tests/stalemate_board.txt",
 	"tests/stalemate_cmds.txt",
 	{},
-	// BUG: engine has no stalemate detection, so this should be STALEMATE
-	// but the engine will likely report GAME_IN_PROGRESS or incorrectly declare a winner
-	ExpectedOutcome::STALEMATE,
+	RESULT_GAME_COMPLETE_STALEMATE,
 	{},
 	{}
 };
@@ -536,7 +488,7 @@ static TestCase TestPin =
 	"tests/pin_board.txt",
 	"tests/pin_cmds.txt",
 	{},
-	ExpectedOutcome::GAME_IN_PROGRESS,
+	RESULT_SUCCESS,
 	{
 		{ 0, RESULT_SUCCESS },						// White Kb1 (waiting move)
 		{ 1, RESULT_GAME_INVALID_MOVE },			// Black Nf6 should be rejected (pinned)
@@ -552,7 +504,7 @@ static TestCase TestCastleThroughCheck =
 	"tests/castle_through_check_board.txt",
 	"tests/castle_through_check_cmds.txt",
 	{},
-	ExpectedOutcome::GAME_IN_PROGRESS,
+	RESULT_SUCCESS,
 	{
 		{ 0, RESULT_GAME_INVALID_MOVE },			// O-O should be rejected
 	},
@@ -570,7 +522,7 @@ static TestCase TestInvalidCommand =
 	nullptr,
 	nullptr,
 	{ "zzzz", "p4e4" },
-	ExpectedOutcome::GAME_IN_PROGRESS,
+	RESULT_SUCCESS,
 	{
 		{ 0, RESULT_INPUT_INVALID_PIECE },			// 'z' is not a valid piece
 		{ 1, RESULT_SUCCESS },						// valid move still works
@@ -586,7 +538,7 @@ static TestCase TestMoveOffBoard =
 	nullptr,
 	nullptr,
 	{ "p0a5" },
-	ExpectedOutcome::GAME_IN_PROGRESS,
+	RESULT_SUCCESS,
 	{
 		{ 0, RESULT_GAME_INVALID_MOVE },			// pawn can't jump 3 squares
 	},
@@ -601,13 +553,90 @@ static TestCase TestFriendlyBlock =
 	nullptr,
 	nullptr,
 	{ "r0a2" },
-	ExpectedOutcome::GAME_IN_PROGRESS,
+	RESULT_SUCCESS,
 	{
 		{ 0, RESULT_GAME_INVALID_MOVE },			// rook blocked by pawn on a2
 	},
 	{}
 };
 REGISTER_TEST( TestFriendlyBlock );
+
+
+// --- Performance tests ---
+
+static TestCase TestLongGame =
+{
+	"Long Game (Performance)",
+	"30-move maneuvering game -- no captures, exercises all piece types, castling both sides",
+	"tests/default_board.txt",
+	"tests/long_game.txt",
+	{},
+	RESULT_SUCCESS,
+	{
+		{ 59, RESULT_SUCCESS },						// last move succeeds (validates all prior moves advanced turns correctly)
+	},
+	{
+		// Both kings castled then stepped to the h-file
+		{ pieceType_t::KING, teamCode_t::WHITE, 0, 7, 7 },		// Kh1
+		{ pieceType_t::KING, teamCode_t::BLACK, 0, 7, 0 },		// Kh8
+		// White knights maneuvered and returned
+		{ pieceType_t::KNIGHT, teamCode_t::WHITE, 0, 3, 3 },	// Nd5
+		{ pieceType_t::KNIGHT, teamCode_t::WHITE, 1, 5, 5 },	// Nf3
+		// Black knights maneuvered
+		{ pieceType_t::KNIGHT, teamCode_t::BLACK, 0, 3, 4 },	// Nd4
+		{ pieceType_t::KNIGHT, teamCode_t::BLACK, 1, 5, 2 },	// Nf6
+	}
+};
+REGISTER_TEST( TestLongGame );
+
+
+// --- Famous games ---
+
+static TestCase TestOperaGame =
+{
+	"Opera Game (Morphy 1858)",
+	"Paul Morphy vs Duke of Brunswick & Count Isouard -- 17-move brilliancy ending in Rd8#",
+	"tests/default_board.txt",
+	"tests/opera_game.txt",
+	{},
+	RESULT_GAME_COMPLETE_WHITE_WINS,
+	{
+		{ 32, RESULT_GAME_COMPLETE_WHITE_WINS },	// Rd8# is checkmate
+	},
+	{}
+};
+REGISTER_TEST( TestOperaGame );
+
+static TestCase TestLegallMate =
+{
+	"Legall's Mate (1750)",
+	"De Kermur vs Saint Brie -- queen sacrifice into smothered knight mate: Nd5#",
+	"tests/default_board.txt",
+	"tests/legall_mate.txt",
+	{},
+	RESULT_GAME_COMPLETE_WHITE_WINS,
+	{
+		{ 12, RESULT_GAME_COMPLETE_WHITE_WINS },	// Nd5# is checkmate
+	},
+	{}
+};
+REGISTER_TEST( TestLegallMate );
+
+static TestCase TestDeepBlueVsKasparov =
+{
+	"Deep Blue vs Kasparov (1997 Game 6)",
+	"The decisive game -- Kasparov resigns after 19. c4 in a Caro-Kann Defense",
+	"tests/default_board.txt",
+	"tests/deep_blue_kasparov_1997_g6.txt",
+	{},
+	RESULT_GAME_COMPLETE_BLACK_RESIGNS,
+	{
+		{ 36, RESULT_SUCCESS },						// 19. c4 succeeds
+		{ 37, RESULT_GAME_COMPLETE_BLACK_RESIGNS },	// Kasparov resigns
+	},
+	{}
+};
+REGISTER_TEST( TestDeepBlueVsKasparov );
 
 
 // ============================================================

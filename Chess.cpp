@@ -59,6 +59,10 @@ void ChessEngine::CalculateGameState( const pieceHandle_t movedPieceHdl )
 		}
 	}
 	s.CountTeamPieces();
+
+	currentTurn = ( currentTurn == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
+
+	++turnCount;
 }
 
 
@@ -84,6 +88,9 @@ pieceHandle_t ChessEngine::FindPiece( const teamCode_t team, const pieceType_t t
 
 void ChessEngine::SetBoard( const gameConfig_t& cfg )
 {
+	turnCount = 0;
+	currentTurn = teamCode_t::WHITE;
+
 	for ( int32_t i = 0; i < BoardSize; ++i )
 	{
 		for ( int32_t j = 0; j < BoardSize; ++j )
@@ -111,6 +118,7 @@ void ChessEngine::EnterPieceInGame( Piece* piece, const num_t x, const num_t y )
 
 	const int32_t teamIndex = static_cast<int32_t>( piece->team );
 	const int32_t pieceIndex = s.teams[ teamIndex ].livingCount;
+
 	s.teams[ teamIndex ].pieces[ pieceIndex ] = pieceNum;
 	++s.teams[ teamIndex ].livingCount;
 	++pieceNum;
