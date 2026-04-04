@@ -96,10 +96,10 @@ moveType_t ChessState::IsLegalMove( const Piece* piece, const int32_t targetX, c
 
 	// 3. It's illegal for any move to leave that team's king checked
 	{
-		const_cast<Piece*>( piece )->TempPlacement( -1, -1 );
-
 		const pieceHandle_t kingHdl = game->FindPiece( piece->team, pieceType_t::KING, 0 );
 		const Piece* king = GetPiece( kingHdl );
+
+		const_cast<Piece*>( piece )->TempPlacement( -1, -1 );
 
 		if ( IsOpenToAttack( king ) ) {
 			moveType = moveType_t::NONE;
@@ -240,7 +240,7 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 	const Piece* king = GetPiece( kingHdl );
 
 	// King was captured after last move
-	if ( king == nullptr ) {			
+	if ( king == nullptr ) {
 		return true;
 	}
 
@@ -265,8 +265,8 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 			continue;
 		}
 
-		if( pieceOccupiesTarget ) {
-			const_cast<Piece*>( piece )->TempPlacement( -1, - 1 );
+		if ( pieceOccupiesTarget ) {
+			const_cast<Piece*>( piece )->TempPlacement( -1, -1 );
 		}
 		const_cast<Piece*>( king )->TempPlacement( nextX, nextY );
 
@@ -276,7 +276,7 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 			const_cast<Piece*>( piece )->ReturnPlacement();
 		}
 		const_cast<Piece*>( king )->ReturnPlacement();
-			
+
 		if ( isOpenToAttack == false ) {
 			return false;
 		}
@@ -284,85 +284,100 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 
 	// Path of all attackers can be blocked
 	typedef std::tuple<int32_t, int32_t> move_t;
-	std::set<move_t> attackSquares[ TeamPieceCount ];
+	std::set<move_t> attackSquares;
 
-	uint32_t attackerCount = 0;
+	const int32_t attackerActionCount = attacker->GetActionCount();
 
-	const teamCode_t opposingTeamCode = ChessEngine::GetOpposingTeam( checkedTeamCode );
-
-	const team_t defenderTeam = teams[ static_cast<int32_t>( checkedTeamCode ) ];
-	const team_t attackerTeam = teams[ static_cast<int32_t>( opposingTeamCode ) ];
-
-	for ( int32_t attackerIx = 0; attackerIx < attackerTeam.livingCount; ++attackerIx )
+	for ( int32_t actionNum = 0; actionNum < attackerActionCount; ++actionNum )
 	{
-		const Piece* attackerPiece = GetPiece( attackerTeam.pieces[ attackerIx ] );
-		const int32_t actionCount = attackerPiece->GetActionCount();
-
-		for ( int32_t actionNum = 0; actionNum < actionCount; ++actionNum )
-		{
-			if ( attackerPiece->InActionPath( actionNum, king->x, king->y ) == false ) {
-				continue;
-			}
-
-			int32_t nextX = attackerPiece->x;
-			int32_t nextY = attackerPiece->y;
-			const int32_t maxSteps = attackerPiece->GetActions()[ actionNum ].maxSteps;
-
-			for ( int32_t step = 1; step <= maxSteps; ++step )
-			{
-				attackerPiece->CalculateStep( actionNum, nextX, nextY );
-
-				if( nextX == king->x && nextY == king->y ) {
-					break;
-				}
-
-				attackSquares[ attackerCount ].insert( move_t( nextX, nextY ) );
-			}
-			break;
+		if ( attacker->InActionPath( actionNum, king->x, king->y ) == false ) {
+			continue;
 		}
-		if( attackSquares[ attackerCount ].empty() == false ) {
-			++attackerCount;
+
+		int32_t nextX = attacker->x;
+		int32_t nextY = attacker->y;
+		const int32_t maxSteps = attacker->GetActions()[ actionNum ].maxSteps;
+
+		for ( int32_t step = 1; step <= maxSteps; ++step )
+		{
+			attacker->CalculateStep( actionNum, nextX, nextY );
+
+			if ( nextX == king->x && nextY == king->y ) {
+				break;
+			}
+
+			attackSquares.insert( move_t( nextX, nextY ) );
 		}
 	}
 
-	uint32_t blockCount = 0;
+	const team_t defenderTeam = teams[ static_cast<int32_t>( checkedTeamCode ) ];
 
 	for ( int32_t defenderIx = 0; defenderIx < defenderTeam.livingCount; ++defenderIx )
 	{
 		const Piece* defenderPiece = GetPiece( defenderTeam.pieces[ defenderIx ] );
 		const int32_t actionCount = defenderPiece->GetActionCount();
 
-		if( defenderPiece->handle == kingHdl ) {
+		if ( defenderPiece->handle == kingHdl ) {
 			continue;
 		}
 
-		for ( int32_t attackerIndex = 0; attackerIndex < attackerCount; ++attackerIndex )
+		for ( int32_t actionNum = 0; actionNum < actionCount; ++actionNum )
 		{
-			bool actionBlocks = false;
-
-			for ( int32_t actionNum = 0; actionNum < actionCount; ++actionNum )
-			{				
-				for( const move_t square : attackSquares[ attackerIndex ] )
+			for ( const move_t square : attackSquares )
+			{
+				if ( IsLegalMove( defenderPiece, std::get<0>( square ), std::get<1>( square ) ) != moveType_t::NONE )
 				{
-					if ( IsLegalMove( defenderPiece, std::get<0>( square ), std::get<1>( square ) ) != moveType_t::NONE )
-					{
-						attackSquares[ attackerIndex ].clear();
-						++blockCount;
-
-						actionBlocks = true;
-
-						if( blockCount == attackerCount ) {
-							return false;
-						}
-						break;
-					}
-				}
-				if( actionBlocks ) {
-					break;
+					return false;
 				}
 			}
 		}
 	}
+	return true;
+}
+
+
+bool ChessState::IsStalemate( const teamCode_t teamCode ) const
+{
+	const team_t team = teams[ (int32_t)teamCode ];
+
+	for ( int32_t pieceIx = 0; pieceIx < team.livingCount; ++pieceIx )
+	{
+		const Piece* piece = GetPiece( team.pieces[ pieceIx ] );
+		const int32_t actionCount = piece->GetActionCount();
+
+		for ( int32_t actionNum = 0; actionNum < actionCount; ++actionNum )
+		{
+			int32_t nextX = piece->x;
+			int32_t nextY = piece->y;
+			const int32_t maxSteps = piece->GetActions()[ actionNum ].maxSteps;
+
+			for ( int32_t step = 1; step <= maxSteps; ++step )
+			{
+				piece->CalculateStep( actionNum, nextX, nextY );
+
+				if ( IsLegalMove( piece, nextX, nextY ) != moveType_t::NONE )
+				{
+					const pieceHandle_t kingHdl = game->FindPiece( teamCode, pieceType_t::KING, 0 );
+					const Piece* king = GetPiece( kingHdl );
+
+					if( IsOpenToAttackAt( king, nextX, nextY ) ) {
+						continue;
+					}
+
+					// Need to do one final check that there aren't two kings
+					//if ( GetInfo( nextX, nextY ).piece != pieceType_t::NONE )
+					//{
+					//	if( ( team.livingCount == 1 ) && teams[ (int32_t)GetInfo( nextX, nextY ).team ].livingCount == 2 ) {
+					//		return true;
+					//	}
+					//}
+
+					return false;
+				}
+			}
+		}
+	}
+
 	return true;
 }
 

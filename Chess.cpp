@@ -15,6 +15,17 @@ bool ChessEngine::PerformMoveAction( const pieceHandle_t pieceHdl, const int32_t
 	}
 	piece->Move( legalMove, targetX, targetY );
 
+	return true;
+}
+
+
+void ChessEngine::CalculateGameState( const pieceHandle_t movedPieceHdl )
+{
+	Piece* piece = s.GetPiece( movedPieceHdl );
+	if ( piece == nullptr ) {
+		return;
+	}
+
 	// Check / Checkmate
 	{
 		const teamCode_t opposingTeam = GetOpposingTeam( piece->team );
@@ -23,7 +34,7 @@ bool ChessEngine::PerformMoveAction( const pieceHandle_t pieceHdl, const int32_t
 		const Piece* king = s.GetPiece( kingHdl );
 
 		checkedTeam = teamCode_t::NONE;
-		if( king == nullptr )
+		if ( king == nullptr )
 		{
 			winner = piece->team;
 		}
@@ -39,10 +50,15 @@ bool ChessEngine::PerformMoveAction( const pieceHandle_t pieceHdl, const int32_t
 				winner = piece->team;
 			}
 		}
+		else
+		{
+			if ( s.IsStalemate( opposingTeam ) )
+			{
+				stalemate = true;
+			}
+		}
 	}
-
 	s.CountTeamPieces();
-	return true;
 }
 
 

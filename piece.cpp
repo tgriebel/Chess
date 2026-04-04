@@ -49,7 +49,7 @@ void Piece::TempPlacement( const int32_t targetX, const int32_t targetY )
 	prevX = x;
 	prevY = y;
 
-	PlaceAt( -1, -1 );
+	PlaceAt( targetX, targetY );
 }
 
 

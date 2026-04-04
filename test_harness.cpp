@@ -272,7 +272,12 @@ static TestResult RunSingleTest( const TestCase& tc )
 	result.averageMoveTimer /= static_cast<float>( result.totalMoves );
 
 	// Check final outcome
-	const ExpectedOutcome actualOutcome = WinnerToOutcome( engine.GetWinner() );
+	ExpectedOutcome actualOutcome = WinnerToOutcome( engine.GetWinner() ); // TODO: cleanup!
+
+	if( engine.IsStalemate() ) {
+		actualOutcome = ExpectedOutcome::STALEMATE;
+	}
+
 	if ( actualOutcome != tc.expectedOutcome )
 	{
 		result.passed = false;
@@ -611,7 +616,7 @@ int main()
 	std::vector<TestCase>& tests = GetTestRegistry();
 #else
 	std::vector<TestCase> tests;
-	tests.push_back( TestInvalidCommand );
+	tests.push_back( TestStalemate );
 #endif
 
 	// Header

@@ -642,6 +642,7 @@ public:
 	bool				IsKingCaptured( const teamCode_t checkedTeamCode ) const;
 	bool				IsChecked( const teamCode_t checkedTeamCode ) const;
 	bool				IsCheckMate( const Piece* attacker, const teamCode_t checkedTeamCode ) const;
+	bool				IsStalemate( const teamCode_t teamCode ) const;
 	bool				IsOpenToAttack( const Piece* targetPiece ) const;
 	bool				IsOpenToAttackAt( const Piece* targetPiece, const int32_t targetX, const int32_t targetY ) const;
 	pieceHandle_t		GetEnpassant( const int32_t targetX, const int32_t targetY ) const;
@@ -655,7 +656,7 @@ private:
 	pieceHandle_t			enpassantPawn;
 	Piece*					pieces[ PieceCount ];
 	team_t					teams[ TeamCount ];
-	mutable pieceHandle_t	grid[ BoardSize ][ BoardSize ]; // (0,0) is top left
+	mutable pieceHandle_t	grid[ BoardSize ][ BoardSize ]; // (0,0) is top left, mutable for quick tests (const-functions should always reverse)
 	ChessEngine*			game;
 
 	friend class ChessEngine;
@@ -728,6 +729,9 @@ public:
 		{
 			return resultCode_t::RESULT_GAME_INVALID_MOVE;
 		}
+
+		CalculateGameState( piece );
+
 		return ( GetWinner() != teamCode_t::NONE ) ? resultCode_t::RESULT_GAME_COMPLETE : resultCode_t::RESULT_SUCCESS;
 	}
 
@@ -773,7 +777,9 @@ public:
 	pieceInfo_t			GetInfo( const int32_t x, const int32_t y ) const;
 	bool				GetLocation( const pieceHandle_t pieceType, int32_t& x, int32_t& y ) const;
 	void				SetEventCallback( callback_t callback ) { this->s.callback = callback; }
+	inline bool			IsStalemate() const { return stalemate; }
 	inline teamCode_t	GetWinner() const { return winner; }
+	inline teamCode_t	GetCheckedTeam() const { return checkedTeam; }
 	inline int32_t		GetPieceCount() const { return pieceNum; }
 	bool				IsValidHandle( const pieceHandle_t handle ) const;
 
@@ -781,11 +787,13 @@ private:
 	void				SetBoard( const gameConfig_t& cfg );
 	void				EnterPieceInGame( Piece* piece, const int32_t x, const int32_t y );
 	bool				PerformMoveAction( const pieceHandle_t pieceHdl, const int32_t targetX, const int32_t targetY );
+	void				CalculateGameState( const pieceHandle_t movedPieceHdl );
 private:
 	ChessState			s;
 	int32_t				pieceNum;
 	teamCode_t			winner;
 	teamCode_t			checkedTeam;
+	bool				stalemate;
 	gameConfig_t		config;
 };
 
