@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-bool ChessEngine::PerformMoveAction( const pieceHandle_t pieceHdl, const int8_t targetX, const int8_t targetY )
+bool ChessEngine::PerformMoveAction( const pieceHandle_t pieceHdl, const num_t targetX, const num_t targetY )
 {
 	Piece* piece = s.GetPiece( pieceHdl );
 	if ( piece == nullptr ) {
@@ -62,7 +62,7 @@ void ChessEngine::CalculateGameState( const pieceHandle_t movedPieceHdl )
 }
 
 
-pieceHandle_t ChessEngine::FindPiece( const teamCode_t team, const pieceType_t type, const int8_t instance )
+pieceHandle_t ChessEngine::FindPiece( const teamCode_t team, const pieceType_t type, const num_t instance )
 {
 	if ( ( team == teamCode_t::NONE ) || ( type == pieceType_t::NONE ) ) {
 		return NoPiece;
@@ -103,7 +103,7 @@ void ChessEngine::SetBoard( const gameConfig_t& cfg )
 }
 
 
-void ChessEngine::EnterPieceInGame( Piece* piece, const int8_t x, const int8_t y )
+void ChessEngine::EnterPieceInGame( Piece* piece, const num_t x, const num_t y )
 {
 	s.pieces[ pieceNum ] = piece;
 	s.pieces[ pieceNum ]->BindBoard( &s, pieceNum );
@@ -153,7 +153,7 @@ pieceInfo_t ChessEngine::GetInfo( const pieceHandle_t pieceType ) const
 }
 
 
-pieceInfo_t ChessEngine::GetInfo( const int8_t x, const int8_t y ) const
+pieceInfo_t ChessEngine::GetInfo( const num_t x, const num_t y ) const
 {
 	pieceInfo_t info;
 	const Piece* piece = s.GetPiece( x, y );
@@ -176,7 +176,7 @@ pieceInfo_t ChessEngine::GetInfo( const int8_t x, const int8_t y ) const
 }
 
 
-bool ChessEngine::GetLocation( const pieceHandle_t pieceType, int8_t& x, int8_t& y ) const
+bool ChessEngine::GetLocation( const pieceHandle_t pieceType, num_t& x, num_t& y ) const
 {
 	const Piece* piece = s.GetPiece( pieceType );
 

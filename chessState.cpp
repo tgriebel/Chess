@@ -3,7 +3,7 @@
 #include <set>
 #include <tuple>
 
-void ChessState::SetHandle( const pieceHandle_t pieceHdl, const int8_t x, const int8_t y )
+void ChessState::SetHandle( const pieceHandle_t pieceHdl, const num_t x, const num_t y )
 {
 	if ( OnBoard( x, y ) == false ) {
 		return;
@@ -12,7 +12,7 @@ void ChessState::SetHandle( const pieceHandle_t pieceHdl, const int8_t x, const 
 }
 
 
-pieceHandle_t ChessState::GetHandle( const int8_t x, const int8_t y ) const
+pieceHandle_t ChessState::GetHandle( const num_t x, const num_t y ) const
 {
 	if ( OnBoard( x, y ) == false ) {
 		return OffBoard;
@@ -21,7 +21,7 @@ pieceHandle_t ChessState::GetHandle( const int8_t x, const int8_t y ) const
 }
 
 
-bool ChessState::OnBoard( const int8_t x, const int8_t y ) const
+bool ChessState::OnBoard( const num_t x, const num_t y ) const
 {
 	return ( x >= 0 ) && ( x < BoardSize ) && ( y >= 0 ) && ( y < BoardSize );
 }
@@ -42,13 +42,13 @@ Piece* ChessState::GetPiece( const pieceHandle_t handle )
 }
 
 
-const Piece* ChessState::GetPiece( const int8_t x, const int8_t y ) const
+const Piece* ChessState::GetPiece( const num_t x, const num_t y ) const
 {
 	return const_cast<ChessState*>( this )->GetPiece( x, y );
 }
 
 
-Piece* ChessState::GetPiece( const int8_t x, const int8_t y )
+Piece* ChessState::GetPiece( const num_t x, const num_t y )
 {
 	const pieceHandle_t handle = GetHandle( x, y );
 	if ( game->IsValidHandle( handle ) == false ) {
@@ -58,13 +58,13 @@ Piece* ChessState::GetPiece( const int8_t x, const int8_t y )
 }
 
 
-pieceInfo_t ChessState::GetInfo( const int8_t x, const int8_t y ) const
+pieceInfo_t ChessState::GetInfo( const num_t x, const num_t y ) const
 {
 	return game->GetInfo( x, y );
 }
 
 
-moveType_t ChessState::IsLegalMove( const Piece* piece, const int8_t targetX, const int8_t targetY ) const
+moveType_t ChessState::IsLegalMove( const Piece* piece, const num_t targetX, const num_t targetY ) const
 {
 	moveType_t moveType = moveType_t::NONE;
 
@@ -87,7 +87,7 @@ moveType_t ChessState::IsLegalMove( const Piece* piece, const int8_t targetX, co
 			{
 				moveType = piece->GetActions()[ action ].type;
 
-				assert( moveCache->find( std::pair<int8_t, int8_t>( targetX - piece->x, ( targetY - piece->y ) * piece->GetTeamDirection() ) ) != moveCache->end() );
+				assert( moveCache->find( std::pair<num_t, num_t>( targetX - piece->x, ( targetY - piece->y ) * piece->GetTeamDirection() ) ) != moveCache->end() );
 				break;
 			}
 		}
@@ -126,8 +126,8 @@ void ChessState::CapturePiece( const teamCode_t attacker, Piece* targetPiece )
 	const int32_t index			= static_cast<int32_t>( targetPiece->team );
 	const int32_t attackerIndex	= static_cast<int32_t>( attacker );
 
-	int8_t& capturedCount		= teams[ attackerIndex ].capturedCount;
-	int8_t& playCount			= teams[ index ].livingCount;
+	num_t& capturedCount		= teams[ attackerIndex ].capturedCount;
+	num_t& playCount			= teams[ index ].livingCount;
 	pieceHandle_t* pieces		= teams[ index ].pieces;
 
 	teams[ attackerIndex ].captured[ capturedCount ] = targetPiece->handle;
@@ -190,7 +190,7 @@ bool ChessState::IsOpenToAttack( const Piece* targetPiece ) const
 }
 
 
-bool ChessState::IsOpenToAttackAt( const Piece* targetPiece, const int8_t x, const int8_t y ) const
+bool ChessState::IsOpenToAttackAt( const Piece* targetPiece, const num_t x, const num_t y ) const
 {
 	if ( OnBoard( x, y ) == false ) {
 		return false;
@@ -251,8 +251,8 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 	const int32_t actionCount = king->GetActionCount();
 	for ( int32_t action = 0; action < actionCount; ++action )
 	{
-		int8_t nextX = king->x;
-		int8_t nextY = king->y;
+		num_t nextX = king->x;
+		num_t nextY = king->y;
 		king->CalculateStep( action, nextX, nextY );
 
 		if ( OnBoard( nextX, nextY ) == false ) {
@@ -297,8 +297,8 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 			continue;
 		}
 
-		int8_t nextX = attacker->x;
-		int8_t nextY = attacker->y;
+		num_t nextX = attacker->x;
+		num_t nextY = attacker->y;
 		const int32_t maxSteps = attacker->GetActions()[ actionNum ].maxSteps;
 
 		for ( int32_t step = 1; step <= maxSteps; ++step )
@@ -350,8 +350,8 @@ bool ChessState::IsStalemate( const teamCode_t teamCode ) const
 
 		for ( int32_t actionNum = 0; actionNum < actionCount; ++actionNum )
 		{
-			int8_t nextX = piece->x;
-			int8_t nextY = piece->y;
+			num_t nextX = piece->x;
+			num_t nextY = piece->y;
 			const int32_t maxSteps = piece->GetActions()[ actionNum ].maxSteps;
 
 			for ( int32_t step = 1; step <= maxSteps; ++step )
@@ -385,14 +385,14 @@ bool ChessState::IsStalemate( const teamCode_t teamCode ) const
 }
 
 
-pieceHandle_t ChessState::GetEnpassant( const int8_t targetX, const int8_t targetY ) const
+pieceHandle_t ChessState::GetEnpassant( const num_t targetX, const num_t targetY ) const
 {
 	const Piece* piece = GetPiece( enpassantPawn );
 	if ( piece != nullptr )
 	{
 		const Pawn* pawn = reinterpret_cast<const Pawn*>( piece );
-		const int8_t x = pawn->x;
-		const int8_t y = ( pawn->y - pawn->GetTeamDirection() );
+		const num_t x = pawn->x;
+		const num_t y = ( pawn->y - pawn->GetTeamDirection() );
 
 		const bool wasEnpassant = ( x == targetX ) && ( y == targetY );
 

@@ -298,7 +298,7 @@ static TestResult RunSingleTest( const TestCase& tc )
 			// Piece should be captured
 			if ( hdl != NoPiece )
 			{
-				int8_t ax, ay;
+				num_t ax, ay;
 				if ( engine.GetLocation( hdl, ax, ay ) && ax >= 0 && ay >= 0 )
 				{
 					result.passed = false;
@@ -329,7 +329,7 @@ static TestResult RunSingleTest( const TestCase& tc )
 			}
 			else
 			{
-				int8_t ax, ay;
+				num_t ax, ay;
 				engine.GetLocation( hdl, ax, ay );
 				if ( ax != pe.expectedX || ay != pe.expectedY )
 				{
