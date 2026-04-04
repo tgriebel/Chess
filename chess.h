@@ -726,12 +726,12 @@ public:
 private:
 	void				CountTeamPieces();
 private:
-	callback_t				callback;
-	pieceHandle_t			enpassantPawn;
-	Piece*					pieces[ PieceCount ];
-	team_t					teams[ TeamCount ];
-	mutable pieceHandle_t	grid[ BoardSize ][ BoardSize ]; // (0,0) is top left, mutable for quick tests (const-functions should always reverse)
-	ChessEngine*			game;
+	callback_t			callback;
+	pieceHandle_t		enpassantPawn;
+	Piece*				pieces[ PieceCount ];
+	team_t				teams[ TeamCount ];
+	pieceHandle_t		grid[ BoardSize ][ BoardSize ]; // (0,0) is top left, mutable for quick tests (const-functions should always reverse)
+	ChessEngine*		game;
 
 	friend class ChessEngine;
 };

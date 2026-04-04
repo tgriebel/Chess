@@ -3,6 +3,43 @@
 #include <set>
 #include <tuple>
 
+// This class must *always* honor const-correctness upon destruction
+class ScopedTempMove
+{
+public:
+
+	ScopedTempMove( const ChessState* state, const Piece* piece, const num_t targetX, const num_t targetY ) : m_state( state )
+	{
+		Move( piece, targetX, targetY );
+	}
+
+	~ScopedTempMove()
+	{
+		const_cast<Piece*>( m_piece )->ReturnPlacement();
+		if ( m_occupiedPiece != nullptr ) {
+			const_cast<Piece*>( m_occupiedPiece )->ReturnPlacement();
+		}
+	}
+
+private:
+
+	void Move( const Piece* piece, const num_t targetX, const num_t targetY )
+	{
+		m_piece = piece;
+
+		m_occupiedPiece = m_state->GetPiece( targetX, targetY );
+		if ( m_occupiedPiece != nullptr ) {
+			const_cast<Piece*>( m_occupiedPiece )->TempPlacement( -1, -1 );
+		}
+
+		const_cast<Piece*>( piece )->TempPlacement( targetX, targetY );
+	}
+
+	const ChessState* m_state;
+	const Piece* m_piece = nullptr;
+	const Piece* m_occupiedPiece = nullptr;
+};
+
 void ChessState::SetHandle( const pieceHandle_t pieceHdl, const num_t x, const num_t y )
 {
 	if ( OnBoard( x, y ) == false ) {
@@ -110,25 +147,12 @@ moveType_t ChessState::IsLegalMove( const Piece* piece, const num_t targetX, con
 		const pieceHandle_t kingHdl = game->FindPiece( piece->team, pieceType_t::KING, 0 );
 		const Piece* king = GetPiece( kingHdl );
 
-		const_cast<Piece*>( piece )->TempPlacement( -1, -1 );
-
-		const Piece* targetPiece = GetPiece( targetX, targetY );
-		if( targetPiece != nullptr )
-		{
-			const_cast<Piece*>( targetPiece )->TempPlacement( -1, -1 );
-		}
+		// Temporarily mutates state, but honors function's const-contract
+		ScopedTempMove tempMove( this, piece, targetX, targetY );
 
 		if ( IsOpenToAttack( king ) ) {
-			moveType = moveType_t::NONE;
+			return moveType_t::NONE;
 		}
-
-		if ( targetPiece != nullptr )
-		{
-			const_cast<Piece*>( targetPiece )->ReturnPlacement();
-		}
-
-		// Reset position to honor this function's const-contract
-		const_cast<Piece*>( piece )->ReturnPlacement();
 	}
 
 	return moveType;
@@ -248,19 +272,9 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 			continue;
 		}
 
-		if ( pieceOccupiesTarget ) {
-			const_cast<Piece*>( piece )->TempPlacement( -1, -1 );
-		}
-		const_cast<Piece*>( king )->TempPlacement( nextX, nextY );
+		ScopedTempMove tempMove( this, king, nextX, nextY );
 
-		const bool isOpenToAttack = IsOpenToAttackAt( king, nextX, nextY );
-
-		if ( pieceOccupiesTarget ) {
-			const_cast<Piece*>( piece )->ReturnPlacement();
-		}
-		const_cast<Piece*>( king )->ReturnPlacement();
-
-		if ( isOpenToAttack == false ) {
+		if ( IsOpenToAttackAt( king, nextX, nextY ) == false ) {
 			return false;
 		}
 	}

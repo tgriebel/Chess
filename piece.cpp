@@ -61,8 +61,6 @@ void Piece::TempPlacement( const num_t targetX, const num_t targetY )
 
 void Piece::ReturnPlacement()
 {
-	assert( ( prevX != -1 ) && ( prevY != -1 ) );
-
 	PlaceAt( prevX, prevY );
 
 	prevX = -1;
