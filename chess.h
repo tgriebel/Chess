@@ -43,6 +43,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstring>
+#include <set>
 
 
 // ============================================================
@@ -57,6 +58,8 @@ typedef int8_t pieceHandle_t;
 static const pieceHandle_t NoPiece = -1;
 static const pieceHandle_t DummyPiece = INT8_MAX;
 static const pieceHandle_t OffBoard = -2;
+
+typedef std::set<std::pair<int8_t, int8_t>> MoveCache_t;
 
 class ChessEngine;
 
@@ -217,6 +220,14 @@ struct callbackEvent_t
 	callbackEventType_t	type;
 	pieceType_t			promotionType;
 };
+
+
+struct position_t
+{
+	int8_t	x;
+	int8_t	y;
+};
+
 
 struct moveAction_t
 {
@@ -404,6 +415,14 @@ static const moveAction_t QueenActions[ (int32_t)moveType_t::QUEEN_ACTIONS ] =
 };
 
 
+extern MoveCache_t PawnMoveSuperset;
+extern MoveCache_t RookMoveSuperset;
+extern MoveCache_t KnightMoveSuperset;
+extern MoveCache_t BishopMoveSuperset;
+extern MoveCache_t KingMoveSuperset;
+extern MoveCache_t QueenMoveSuperset;
+
+
 // ============================================================
 // Piece classes
 // ============================================================
@@ -419,7 +438,9 @@ protected:
 	{
 		team = teamCode_t::NONE;
 		type = pieceType_t::NONE;
-		x = -1;
+		prevX = -1;
+		prevY = -1;
+		y = -1;
 		y = -1;
 		numActions = 0;
 		teamDirection = 1;
@@ -452,6 +473,7 @@ public:
 	void			CalculateStep( const int32_t actionNum, int8_t& actionX, int8_t& actionY ) const;				// Move one square along an action path (e.g. rook, bishop, queen, paths can be a single step)
 	int8_t			GetStepCount( const int32_t actionNum, const int8_t targetX, const int8_t targetY ) const;		// How many squares are traveled for this action?
 	int8_t			GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSize ] ) const;					// Get all squares in this action's path
+	void			FillMoveCache();
 	virtual bool	InActionPath( const int32_t actionNum, const int8_t targetX, const int8_t targetY ) const;		// This action can reach this location
 	virtual void	Move( const moveType_t moveType, const int8_t targetX, const int8_t targetY );					// Performs a game move, rules run
 	void			PlaceAt( const int8_t targetX, const int8_t targetY );											// Places a piece at a location, rules not runn. Temp moves, castling, etc
@@ -490,8 +512,11 @@ public:
 	}
 
 	virtual const moveAction_t* GetActions() const = 0;
+	virtual const MoveCache_t* GetMoveCache() const = 0;
+	virtual void AddMoveCache( const std::pair<int8_t, int8_t>& move ) = 0;
 
 private:
+
 	void BindBoard( ChessState* state, const pieceHandle_t handle )
 	{
 		this->state = state;
@@ -530,6 +555,8 @@ public:
 		this->numActions = static_cast<int32_t>( moveType_t::PAWN_ACTIONS );
 
 		teamDirection = ( team == teamCode_t::WHITE ) ? -1 : 1;
+
+		FillMoveCache();
 	}
 
 	bool InActionPath( const int32_t actionNum, const int8_t targetX, const int8_t targetY ) const override;
@@ -538,6 +565,16 @@ public:
 
 	const moveAction_t* GetActions() const {
 		return PawnActions;
+	}
+
+	const MoveCache_t* GetMoveCache() const
+	{
+		return &PawnMoveSuperset;
+	}
+
+	void AddMoveCache( const std::pair<int8_t, int8_t>& move )
+	{
+		PawnMoveSuperset.insert( move );
 	}
 
 private:
@@ -555,30 +592,52 @@ public:
 		this->type = pieceType_t::ROOK;
 		this->team = team;
 		this->numActions = static_cast<int32_t>( moveType_t::ROOK_ACTIONS );
+
+		FillMoveCache();
 	}
 
 	const moveAction_t* GetActions() const
 	{
 		return RookActions;
 	}
+
+	const MoveCache_t* GetMoveCache() const
+	{
+		return &RookMoveSuperset;
+	}
+
+	void AddMoveCache( const std::pair<int8_t, int8_t>& move )
+	{
+		RookMoveSuperset.insert( move );
+	}
 };
 
 
 class Knight : public Piece
 {
-private:
-
 public:
 	Knight( const teamCode_t team ) : Piece()
 	{
 		this->type = pieceType_t::KNIGHT;
 		this->team = team;
 		this->numActions = static_cast<int32_t>( moveType_t::KNIGHT_ACTIONS );
+
+		FillMoveCache();
 	}
 
 	const moveAction_t* GetActions() const
 	{
 		return KnightActions;
+	}
+
+	const MoveCache_t* GetMoveCache() const
+	{
+		return &KnightMoveSuperset;
+	}
+
+	void AddMoveCache( const std::pair<int8_t, int8_t>& move )
+	{
+		KnightMoveSuperset.insert( move );
 	}
 };
 
@@ -591,11 +650,23 @@ public:
 		this->type = pieceType_t::BISHOP;
 		this->team = team;
 		this->numActions = static_cast<int32_t>( moveType_t::BISHOP_ACTIONS );
+
+		FillMoveCache();
 	}
 
 	const moveAction_t* GetActions() const
 	{
 		return BishopActions;
+	}
+
+	const MoveCache_t* GetMoveCache() const
+	{
+		return &BishopMoveSuperset;
+	}
+
+	void AddMoveCache( const std::pair<int8_t, int8_t>& move )
+	{
+		BishopMoveSuperset.insert( move );
 	}
 };
 
@@ -608,11 +679,23 @@ public:
 		this->type = pieceType_t::KING;
 		this->team = team;
 		this->numActions = static_cast<int32_t>( moveType_t::KING_ACTIONS );
+
+		FillMoveCache();
 	}
 
 	const moveAction_t* GetActions() const
 	{
 		return KingActions;
+	}
+
+	const MoveCache_t* GetMoveCache() const
+	{
+		return &KingMoveSuperset;
+	}
+
+	void AddMoveCache( const std::pair<int8_t, int8_t>& move )
+	{
+		KingMoveSuperset.insert( move );
 	}
 
 	bool InActionPath( const int32_t actionNum, const int8_t actionX, const int8_t actionY ) const override;
@@ -628,11 +711,23 @@ public:
 		this->type = pieceType_t::QUEEN;
 		this->team = team;
 		this->numActions = static_cast<int32_t>( moveType_t::QUEEN_ACTIONS );
+
+		FillMoveCache();
 	}
 
 	const moveAction_t* GetActions() const
 	{
 		return QueenActions;
+	}
+
+	const MoveCache_t* GetMoveCache() const
+	{
+		return &QueenMoveSuperset;
+	}
+
+	void AddMoveCache( const std::pair<int8_t, int8_t>& move )
+	{
+		QueenMoveSuperset.insert( move );
 	}
 };
 

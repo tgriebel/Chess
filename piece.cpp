@@ -1,5 +1,11 @@
 #include "Chess.h"
 
+MoveCache_t PawnMoveSuperset;
+MoveCache_t RookMoveSuperset;
+MoveCache_t KnightMoveSuperset;
+MoveCache_t BishopMoveSuperset;
+MoveCache_t KingMoveSuperset;
+MoveCache_t QueenMoveSuperset;
 
 bool Piece::IsValidAction( const int32_t actionNum ) const
 {
@@ -149,6 +155,34 @@ int8_t Piece::GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSi
 		}
 	}
 	return validSquares;
+}
+
+
+void Piece::FillMoveCache()
+{
+	if ( GetMoveCache() == nullptr ) {
+		return;
+	}
+
+	if( GetMoveCache()->size() > 0 ) {
+		return;
+	}
+
+	const int32_t actionCount = GetActionCount();
+
+	for ( int32_t action = 0; action < actionCount; ++action )
+	{
+		int8_t nextX = 0;
+		int8_t nextY = 0;
+
+		const int32_t maxSteps = GetActions()[ action ].maxSteps;
+
+		for ( int32_t step = 1; step <= maxSteps; ++step )
+		{
+			CalculateStep( action, nextX, nextY );
+			AddMoveCache( std::pair<int8_t, int8_t>( nextX, nextY ) );
+		}
+	}
 }
 
 

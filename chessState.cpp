@@ -77,6 +77,7 @@ moveType_t ChessState::IsLegalMove( const Piece* piece, const int8_t targetX, co
 	}
 	
 	// 2. Check if the piece's actions can reach this location
+	const MoveCache_t* moveCache = piece->GetMoveCache();
 	{
 		const int32_t actionCount = piece->GetActionCount();
 
@@ -85,6 +86,8 @@ moveType_t ChessState::IsLegalMove( const Piece* piece, const int8_t targetX, co
 			if ( piece->InActionPath( action, targetX, targetY ) )
 			{
 				moveType = piece->GetActions()[ action ].type;
+
+				assert( moveCache->find( std::pair<int8_t, int8_t>( targetX - piece->x, ( targetY - piece->y ) * piece->GetTeamDirection() ) ) != moveCache->end() );
 				break;
 			}
 		}
