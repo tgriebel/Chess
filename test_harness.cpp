@@ -298,7 +298,7 @@ static TestResult RunSingleTest( const TestCase& tc )
 			// Piece should be captured
 			if ( hdl != NoPiece )
 			{
-				int32_t ax, ay;
+				int8_t ax, ay;
 				if ( engine.GetLocation( hdl, ax, ay ) && ax >= 0 && ay >= 0 )
 				{
 					result.passed = false;
@@ -329,7 +329,7 @@ static TestResult RunSingleTest( const TestCase& tc )
 			}
 			else
 			{
-				int32_t ax, ay;
+				int8_t ax, ay;
 				engine.GetLocation( hdl, ax, ay );
 				if ( ax != pe.expectedX || ay != pe.expectedY )
 				{
@@ -561,7 +561,7 @@ static TestCase TestInvalidCommand =
 	"Garbage input should be rejected",
 	nullptr,
 	nullptr,
-	{ "zzzz", "p0e4" },
+	{ "zzzz", "p4e4" },
 	ExpectedOutcome::GAME_IN_PROGRESS,
 	{
 		{ 0, RESULT_INPUT_INVALID_PIECE },			// 'z' is not a valid piece
@@ -616,7 +616,7 @@ int main()
 	std::vector<TestCase>& tests = GetTestRegistry();
 #else
 	std::vector<TestCase> tests;
-	tests.push_back( TestStalemate );
+	tests.push_back( TestInvalidCommand );
 #endif
 
 	// Header

@@ -49,13 +49,13 @@
 // Constants
 // ============================================================
 
-static const int32_t BoardSize		= 8;
-static const int32_t TeamCount		= 2;
-static const int32_t TeamPieceCount	= 16;
-static const int32_t PieceCount		= 32;
-typedef int32_t pieceHandle_t;
+static const int8_t BoardSize		= 8;
+static const int8_t TeamCount		= 2;
+static const int8_t TeamPieceCount	= 16;
+static const int8_t PieceCount		= 32;
+typedef int8_t pieceHandle_t;
 static const pieceHandle_t NoPiece = -1;
-static const pieceHandle_t DummyPiece = INT32_MAX;
+static const pieceHandle_t DummyPiece = INT8_MAX;
 static const pieceHandle_t OffBoard = -2;
 
 class ChessEngine;
@@ -67,41 +67,58 @@ class ChessEngine;
 
 enum resultCode_t
 {
-	ERROR_RANGE_START				= -101,
-	RESULT_INPUT_INVALID_COMMAND	= ERROR_RANGE_START,
-	RESULT_INPUT_INVALID_PIECE,
-	RESULT_INPUT_INVALID_FILE,
-	RESULT_INPUT_INVALID_RANK,
-	RESULT_INPUT_INVALID_MOVE,
-	RESULT_GAME_INVALID_PIECE,
-	RESULT_GAME_INVALID_MOVE,
-	RESULT_GAME_COMPLETE,
-	ERROR_COUNT						= ( RESULT_GAME_COMPLETE - RESULT_INPUT_INVALID_COMMAND ) + 1,
-	RESULT_SUCCESS					= 0,
+	RESULT_SUCCESS = 0,
+
+	RESULT_INPUT_INVALID_COMMAND	= ( 1 << 0 ),
+	RESULT_INPUT_INVALID_PIECE		= ( 1 << 1 ),
+	RESULT_INPUT_INVALID_FILE		= ( 1 << 2 ),
+	RESULT_INPUT_INVALID_RANK		= ( 1 << 3 ),
+	RESULT_INPUT_INVALID_MOVE		= ( 1 << 4 ),
+	RESULT_GAME_INVALID_PIECE		= ( 1 << 5 ),
+	RESULT_GAME_INVALID_MOVE		= ( 1 << 6 ),
+	RESULT_GAME_ERROR_MASK			= ( RESULT_INPUT_INVALID_COMMAND | RESULT_INPUT_INVALID_PIECE | \
+										RESULT_INPUT_INVALID_FILE | RESULT_INPUT_INVALID_RANK | \
+										RESULT_GAME_INVALID_PIECE | RESULT_GAME_INVALID_MOVE ),
+
+	RESULT_GAME_COMPLETE_WHITE_WINS	= ( 1 << 7 ),
+	RESULT_GAME_COMPLETE_BLACK_WINS	= ( 1 << 8 ),
+	RESULT_GAME_COMPLETE_STALEMATE	= ( 1 << 9 ),
+	RESULT_GAME_COMPLETE			= ( RESULT_GAME_COMPLETE_WHITE_WINS | RESULT_GAME_COMPLETE_BLACK_WINS | RESULT_GAME_COMPLETE_STALEMATE ),
 };
 
 
-static const char* ErrorMsgs[ ERROR_COUNT ] =
+struct resultMessage_t
 {
-	"Invalid command",			// RESULT_INPUT_INVALID_COMMAND
-	"Invalid piece",			// RESULT_INPUT_INVALID_PIECE
-	"File out of range",		// RESULT_INPUT_INVALID_FILE
-	"Rank out of range",		// RESULT_INPUT_INVALID_RANK
-	"Invalid move command",		// RESULT_INPUT_INVALID_MOVE
-	"Invalid piece selected",	// RESULT_GAME_INVALID_PIECE
-	"Invalid move action",		// RESULT_GAME_INVALID_MOVE
-	"Game Complete",			// RESULT_GAME_COMPLETE
+	resultCode_t	code;
+	const char*		msg;
+};
+
+
+constexpr static uint32_t ResultMessageCount = 10;
+static resultMessage_t ResultMsgs[ ResultMessageCount ] =
+{
+	{ RESULT_INPUT_INVALID_COMMAND,		"Invalid command"			},
+	{ RESULT_INPUT_INVALID_PIECE,		"Invalid piece"				},
+	{ RESULT_INPUT_INVALID_FILE,		"File out of range"			},
+	{ RESULT_INPUT_INVALID_RANK,		"Rank out of range"			},
+	{ RESULT_INPUT_INVALID_MOVE,		"Invalid move command",		},
+	{ RESULT_GAME_INVALID_PIECE,		"Invalid piece selected",	},
+	{ RESULT_GAME_INVALID_MOVE,			"Invalid move action",		},
+	{ RESULT_GAME_COMPLETE_WHITE_WINS,	"White Wins",				},
+	{ RESULT_GAME_COMPLETE_BLACK_WINS,	"Black Wins",				},
+	{ RESULT_GAME_COMPLETE_STALEMATE,	"Stalemate",				},
 };
 
 
 inline const char* GetErrorMsg( const resultCode_t code )
 {
-	const int32_t index = code - ERROR_RANGE_START;
-	if( ( index < 0 ) || ( index >= ERROR_COUNT ) ) {
-		return "Unknown Error";
+	for ( int32_t i = 0; i < ResultMessageCount; ++i )
+	{
+		if( ResultMsgs[ i ].code == code ) {
+			return ResultMsgs[ i ].msg;
+		}
 	}
-
-	return ErrorMsgs[ index ];
+	return "Unknown Error";
 }
 
 
@@ -214,9 +231,9 @@ struct moveAction_t
 	moveAction_t( const int32_t x, int32_t const y, const moveType_t type, const int32_t maxSteps ) :
 		x( x ), y( y ), type( type ), maxSteps( maxSteps ) {}
 
-	int32_t			x;
-	int32_t			y;
-	int32_t			maxSteps;	// How many times can this action be repeated?
+	int8_t			x;
+	int8_t			y;
+	int8_t			maxSteps;	// How many times can this action be repeated?
 	moveType_t		type;		// For specialized logic and debugging
 };
 
@@ -251,10 +268,10 @@ struct team_t
 
 	pieceHandle_t	pieces[ TeamPieceCount ];
 	pieceHandle_t	captured[ TeamPieceCount ];
-	int32_t			livingCount;
-	int32_t			capturedCount;
-	int32_t			typeCounts[ (int32_t)pieceType_t::COUNT ];
-	int32_t			captureTypeCounts[ (int32_t)pieceType_t::COUNT ];
+	int8_t			livingCount;
+	int8_t			capturedCount;
+	int8_t			typeCounts[ (int32_t)pieceType_t::COUNT ];
+	int8_t			captureTypeCounts[ (int32_t)pieceType_t::COUNT ];
 };
 
 struct pieceInfo_t
@@ -432,14 +449,14 @@ public:
 		return *this;
 	}
 
-	void			CalculateStep( const int32_t actionNum, int32_t& actionX, int32_t& actionY ) const;				// Move one square along an action path (e.g. rook, bishop, queen, paths can be a single step)
-	int32_t			GetStepCount( const int32_t actionNum, const int32_t targetX, const int32_t targetY ) const;	// How many squares are traveled for this action?
-	int32_t			GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSize ] ) const;					// Get all squares in this action's path
-	virtual bool	InActionPath( const int32_t actionNum, const int32_t targetX, const int32_t targetY ) const;	// This action can reach this location
-	virtual void	Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY );				// Performs a game move, rules run
-	void			PlaceAt( const int32_t targetX, const int32_t targetY );										// Places a piece at a location, rules not runn. Temp moves, castling, etc
+	void			CalculateStep( const int32_t actionNum, int8_t& actionX, int8_t& actionY ) const;				// Move one square along an action path (e.g. rook, bishop, queen, paths can be a single step)
+	int8_t			GetStepCount( const int32_t actionNum, const int8_t targetX, const int8_t targetY ) const;		// How many squares are traveled for this action?
+	int8_t			GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSize ] ) const;					// Get all squares in this action's path
+	virtual bool	InActionPath( const int32_t actionNum, const int8_t targetX, const int8_t targetY ) const;		// This action can reach this location
+	virtual void	Move( const moveType_t moveType, const int8_t targetX, const int8_t targetY );					// Performs a game move, rules run
+	void			PlaceAt( const int8_t targetX, const int8_t targetY );											// Places a piece at a location, rules not runn. Temp moves, castling, etc
 
-	void			TempPlacement( const int32_t targetX, const int32_t targetY );									// Place the piece offboard, outside rules engine. Assists other rule checks
+	void			TempPlacement( const int8_t targetX, const int8_t targetY );									// Place the piece offboard, outside rules engine. Assists other rule checks
 	void			ReturnPlacement();																				// Return the piece offboard, outside rules engine. Assists other rule checks
 
 	bool			HasMoved() const { return ( moveCount > 0 ); }													// Has this piece been moved in this game? (for castling, book-keeping)
@@ -484,16 +501,16 @@ private:
 public:
 	teamCode_t			team;
 	pieceType_t			type;
-	int32_t				instance;
+	int8_t				instance;
 
 protected:
-	int32_t				prevX;
-	int32_t				prevY;
-	int32_t				x;
-	int32_t				y;
-	int32_t				moveCount;
-	int32_t				numActions;
-	int32_t				teamDirection;
+	int8_t				prevX;
+	int8_t				prevY;
+	int8_t				x;
+	int8_t				y;
+	int8_t				moveCount;
+	int8_t				numActions;
+	int8_t				teamDirection;
 	pieceHandle_t		handle;
 
 	ChessState*			state;
@@ -515,8 +532,8 @@ public:
 		teamDirection = ( team == teamCode_t::WHITE ) ? -1 : 1;
 	}
 
-	bool InActionPath( const int32_t actionNum, const int32_t targetX, const int32_t targetY ) const override;
-	void Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY ) override;
+	bool InActionPath( const int32_t actionNum, const int8_t targetX, const int8_t targetY ) const override;
+	void Move( const moveType_t moveType, const int8_t targetX, const int8_t targetY ) override;
 	bool CanPromote() const;
 
 	const moveAction_t* GetActions() const {
@@ -549,6 +566,8 @@ public:
 
 class Knight : public Piece
 {
+private:
+
 public:
 	Knight( const teamCode_t team ) : Piece()
 	{
@@ -596,8 +615,8 @@ public:
 		return KingActions;
 	}
 
-	bool InActionPath( const int32_t actionNum, const int32_t actionX, const int32_t actionY ) const override;
-	void Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY ) override;
+	bool InActionPath( const int32_t actionNum, const int8_t actionX, const int8_t actionY ) const override;
+	void Move( const moveType_t moveType, const int8_t targetX, const int8_t targetY ) override;
 };
 
 
@@ -628,15 +647,15 @@ public:
 	ChessState() {}
 	~ChessState() {}
 
-	moveType_t			IsLegalMove( const Piece* piece, const int32_t targetX, const int32_t targetY ) const;
-	inline bool			OnBoard( const int32_t x, const int32_t y ) const;
+	moveType_t			IsLegalMove( const Piece* piece, const int8_t targetX, const int8_t targetY ) const;
+	inline bool			OnBoard( const int8_t x, const int8_t y ) const;
 	inline const Piece* GetPiece( const pieceHandle_t handle ) const;
 	inline Piece*		GetPiece( const pieceHandle_t handle );
-	const Piece*		GetPiece( const int32_t x, const int32_t y ) const;
-	Piece*				GetPiece( const int32_t x, const int32_t y );
-	void				SetHandle( const pieceHandle_t pieceHdl, const int32_t x, const int32_t y );
-	pieceHandle_t		GetHandle( const int32_t x, const int32_t y ) const;
-	pieceInfo_t			GetInfo( const int32_t x, const int32_t y ) const;
+	const Piece*		GetPiece( const int8_t x, const int8_t y ) const;
+	Piece*				GetPiece( const int8_t x, const int8_t y );
+	void				SetHandle( const pieceHandle_t pieceHdl, const int8_t x, const int8_t y );
+	pieceHandle_t		GetHandle( const int8_t x, const int8_t y ) const;
+	pieceInfo_t			GetInfo( const int8_t x, const int8_t y ) const;
 
 	void				CapturePiece( const teamCode_t attacker, Piece* targetPiece );
 	bool				IsKingCaptured( const teamCode_t checkedTeamCode ) const;
@@ -644,8 +663,8 @@ public:
 	bool				IsCheckMate( const Piece* attacker, const teamCode_t checkedTeamCode ) const;
 	bool				IsStalemate( const teamCode_t teamCode ) const;
 	bool				IsOpenToAttack( const Piece* targetPiece ) const;
-	bool				IsOpenToAttackAt( const Piece* targetPiece, const int32_t targetX, const int32_t targetY ) const;
-	pieceHandle_t		GetEnpassant( const int32_t targetX, const int32_t targetY ) const;
+	bool				IsOpenToAttackAt( const Piece* targetPiece, const int8_t targetX, const int8_t targetY ) const;
+	pieceHandle_t		GetEnpassant( const int8_t targetX, const int8_t targetY ) const;
 	inline void			SetEnpassant( const pieceHandle_t handle ) { enpassantPawn = handle; }
 	void				PromotePawn( const pieceHandle_t pieceHdl );
 
@@ -767,30 +786,30 @@ public:
 		}
 	}
 
-	inline const pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int32_t instance ) const
+	inline const pieceHandle_t FindPiece( const teamCode_t team, const pieceType_t type, const int8_t instance ) const
 	{
 		return const_cast<ChessEngine*>( this )->FindPiece( team, type, instance );
 	}
 
-	pieceHandle_t		FindPiece( const teamCode_t team, const pieceType_t type, const int32_t instance );
+	pieceHandle_t		FindPiece( const teamCode_t team, const pieceType_t type, const int8_t instance );
 	pieceInfo_t			GetInfo( const pieceHandle_t pieceType ) const;
-	pieceInfo_t			GetInfo( const int32_t x, const int32_t y ) const;
-	bool				GetLocation( const pieceHandle_t pieceType, int32_t& x, int32_t& y ) const;
+	pieceInfo_t			GetInfo( const int8_t x, const int8_t y ) const;
+	bool				GetLocation( const pieceHandle_t pieceType, int8_t& x, int8_t& y ) const;
 	void				SetEventCallback( callback_t callback ) { this->s.callback = callback; }
 	inline bool			IsStalemate() const { return stalemate; }
 	inline teamCode_t	GetWinner() const { return winner; }
 	inline teamCode_t	GetCheckedTeam() const { return checkedTeam; }
-	inline int32_t		GetPieceCount() const { return pieceNum; }
+	inline int8_t		GetPieceCount() const { return pieceNum; }
 	bool				IsValidHandle( const pieceHandle_t handle ) const;
 
 private:
 	void				SetBoard( const gameConfig_t& cfg );
-	void				EnterPieceInGame( Piece* piece, const int32_t x, const int32_t y );
-	bool				PerformMoveAction( const pieceHandle_t pieceHdl, const int32_t targetX, const int32_t targetY );
+	void				EnterPieceInGame( Piece* piece, const int8_t x, const int8_t y );
+	bool				PerformMoveAction( const pieceHandle_t pieceHdl, const int8_t targetX, const int8_t targetY );
 	void				CalculateGameState( const pieceHandle_t movedPieceHdl );
 private:
 	ChessState			s;
-	int32_t				pieceNum;
+	int8_t				pieceNum;
 	teamCode_t			winner;
 	teamCode_t			checkedTeam;
 	bool				stalemate;

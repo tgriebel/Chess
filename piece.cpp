@@ -7,7 +7,7 @@ bool Piece::IsValidAction( const int32_t actionNum ) const
 }
 
 
-void Piece::Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY )
+void Piece::Move( const moveType_t moveType, const int8_t targetX, const int8_t targetY )
 {
 	state->SetEnpassant( NoPiece );
 
@@ -27,7 +27,7 @@ void Piece::Move( const moveType_t moveType, const int32_t targetX, const int32_
 }
 
 
-void Piece::PlaceAt( const int32_t targetX, const int32_t targetY )
+void Piece::PlaceAt( const int8_t targetX, const int8_t targetY )
 {
 	if ( state->OnBoard( x, y ) ) {
 		state->SetHandle( NoPiece, x, y );
@@ -42,7 +42,7 @@ void Piece::PlaceAt( const int32_t targetX, const int32_t targetY )
 }
 
 
-void Piece::TempPlacement( const int32_t targetX, const int32_t targetY )
+void Piece::TempPlacement( const int8_t targetX, const int8_t targetY )
 {
 	assert( ( x != -1 ) && ( y != -1 ) );
 
@@ -64,7 +64,7 @@ void Piece::ReturnPlacement()
 }
 
 
-void Piece::CalculateStep( const int32_t actionNum, int32_t& actionX, int32_t& actionY ) const
+void Piece::CalculateStep( const int32_t actionNum, int8_t& actionX, int8_t& actionY ) const
 {
 	assert( IsValidAction( actionNum ) );
 
@@ -74,7 +74,7 @@ void Piece::CalculateStep( const int32_t actionNum, int32_t& actionX, int32_t& a
 }
 
 
-int32_t Piece::GetStepCount( const int32_t actionNum, const int32_t targetX, const int32_t targetY ) const
+int8_t Piece::GetStepCount( const int32_t actionNum, const int8_t targetX, const int8_t targetY ) const
 {
 	if ( IsValidAction( actionNum ) == false ) {
 		return BoardSize;
@@ -88,10 +88,10 @@ int32_t Piece::GetStepCount( const int32_t actionNum, const int32_t targetX, con
 		return BoardSize;
 	}
 
-	int32_t nextX = x;
-	int32_t nextY = y;
-	int32_t prevDist = INT_MAX;
-	int32_t dist = INT_MAX;
+	int8_t nextX = x;
+	int8_t nextY = y;
+	int8_t prevDist = INT8_MAX;
+	int8_t dist = INT8_MAX;
 
 	const int32_t maxSteps = GetActions()[ actionNum ].maxSteps;
 
@@ -118,7 +118,7 @@ int32_t Piece::GetStepCount( const int32_t actionNum, const int32_t targetX, con
 }
 
 
-bool Piece::InActionPath( const int32_t actionNum, const int32_t targetX, const int32_t targetY ) const
+bool Piece::InActionPath( const int32_t actionNum, const int8_t targetX, const int8_t targetY ) const
 {
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
@@ -128,16 +128,16 @@ bool Piece::InActionPath( const int32_t actionNum, const int32_t targetX, const 
 }
 
 
-int32_t Piece::GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSize ] ) const
+int8_t Piece::GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSize ] ) const
 {
 	if ( IsValidAction( actionNum ) == false ) {
 		return 0;
 	}
 
-	int32_t validSquares = 0;
+	int8_t validSquares = 0;
 	const int32_t actionCount = GetActionCount();
-	int32_t nextX = x;
-	int32_t nextY = y;
+	int8_t nextX = x;
+	int8_t nextY = y;
 	const int32_t maxSteps = GetActions()[ actionNum ].maxSteps;
 
 	for ( int32_t step = 1; step <= maxSteps; ++step )
@@ -152,7 +152,7 @@ int32_t Piece::GetActionPath( const int32_t actionNum, moveAction_t path[ BoardS
 }
 
 
-bool Pawn::InActionPath( const int32_t actionNum, const int32_t targetX, const int32_t targetY ) const
+bool Pawn::InActionPath( const int32_t actionNum, const int8_t targetX, const int8_t targetY ) const
 {
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
@@ -161,8 +161,8 @@ bool Pawn::InActionPath( const int32_t actionNum, const int32_t targetX, const i
 	const teamCode_t occupiedTeam = state->GetInfo( targetX, targetY ).team;
 	const bool isOccupied = ( occupiedTeam != teamCode_t::NONE );
 
-	const int32_t maxSteps = GetAction( actionNum ).maxSteps;
-	const int32_t steps = GetStepCount( actionNum, targetX, targetY );
+	const int8_t maxSteps = GetAction( actionNum ).maxSteps;
+	const int8_t steps = GetStepCount( actionNum, targetX, targetY );
 
 	const moveType_t type = GetAction( actionNum ).type;
 
@@ -186,15 +186,15 @@ bool Pawn::InActionPath( const int32_t actionNum, const int32_t targetX, const i
 
 bool Pawn::CanPromote() const
 {
-	int32_t nextX = x;
-	int32_t nextY = y;
+	int8_t nextX = x;
+	int8_t nextY = y;
 	CalculateStep( GetActionNum( moveType_t::PAWN_T ), nextX, nextY );
 
 	return ( state->OnBoard( nextX, nextY ) == false );
 }
 
 
-void Pawn::Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY )
+void Pawn::Move( const moveType_t moveType, const int8_t targetX, const int8_t targetY )
 {
 	const bool doubleMove = ( abs( targetY - y ) == 2 );
 	const pieceHandle_t pieceHdl = state->GetEnpassant( targetX, targetY );
@@ -219,13 +219,13 @@ void Pawn::Move( const moveType_t moveType, const int32_t targetX, const int32_t
 }
 
 
-bool King::InActionPath( const int32_t actionNum, const int32_t targetX, const int32_t targetY ) const
+bool King::InActionPath( const int32_t actionNum, const int8_t targetX, const int8_t targetY ) const
 {
 	if ( IsValidAction( actionNum ) == false ) {
 		return false;
 	}
 
-	const int32_t stepCount = GetStepCount( actionNum, targetX, targetY );
+	const int8_t stepCount = GetStepCount( actionNum, targetX, targetY );
 	if ( stepCount != 1 ) {
 		return false;
 	}
@@ -250,10 +250,10 @@ bool King::InActionPath( const int32_t actionNum, const int32_t targetX, const i
 	}
 
 	const bool rightCastle = ( type == moveType_t::KING_CASTLE_R );
-	const int32_t flankOffset = rightCastle ? -1 : 1;
+	const int8_t flankOffset = rightCastle ? -1 : 1;
 	const moveType_t moveTest = rightCastle ? moveType_t::ROOK_L : moveType_t::ROOK_R;
 
-	const int32_t rookTargetX = targetX + flankOffset;
+	const int8_t rookTargetX = targetX + flankOffset;
 	const bool rookMove = castlePiece->InActionPath( castlePiece->GetActionNum( moveTest ), rookTargetX, y );
 
 	if ( rookMove == false ) {
@@ -275,7 +275,7 @@ bool King::InActionPath( const int32_t actionNum, const int32_t targetX, const i
 }
 
 
-void King::Move( const moveType_t moveType, const int32_t targetX, const int32_t targetY )
+void King::Move( const moveType_t moveType, const int8_t targetX, const int8_t targetY )
 {
 	const bool isCastleAction = ( moveType == moveType_t::KING_CASTLE_L ) || ( moveType == moveType_t::KING_CASTLE_R );
 
