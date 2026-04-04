@@ -113,9 +113,9 @@ moveType_t ChessState::IsLegalMove( const Piece* piece, const num_t targetX, con
 		return moveType_t::NONE;
 	}
 	
-	// 2. Check if the piece's actions can reach this location
+	// 2. Quick test against possible moves using a hypothetical superset
 #if USE_MOVE_CACHE_TEST
-	const MoveCache& superset = piece->GetMoveSupersetBB();
+	const MoveCache& superset = piece->GetMoveCache();
 
 	const num_t localX = ( targetX - piece->x );
 	const num_t localY = ( targetY - piece->y ) * piece->GetTeamDirection();
@@ -125,6 +125,7 @@ moveType_t ChessState::IsLegalMove( const Piece* piece, const num_t targetX, con
 	}
 #endif
 
+	// 3. Check if the piece's actions can reach this location
 	{
 		const int32_t actionCount = piece->GetActionCount();
 
@@ -142,7 +143,7 @@ moveType_t ChessState::IsLegalMove( const Piece* piece, const num_t targetX, con
 		}
 	}
 
-	// 3. It's illegal for any move to leave that team's king checked
+	// 4. It's illegal for any move to leave that team's king checked
 	{
 		const pieceHandle_t kingHdl = game->FindPiece( piece->team, pieceType_t::KING, 0 );
 		const Piece* king = GetPiece( kingHdl );
@@ -294,6 +295,9 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 		num_t nextX = attacker->x;
 		num_t nextY = attacker->y;
 		const int32_t maxSteps = attacker->GetActions()[ actionNum ].maxSteps;
+
+		// Represents kill action
+		attackSquares.insert( move_t( nextX, nextY ) );
 
 		for ( int32_t step = 1; step <= maxSteps; ++step )
 		{

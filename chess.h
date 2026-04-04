@@ -537,7 +537,7 @@ public:
 	}
 
 	const moveAction_t* GetActions() const { return actions; }
-	const MoveCache& GetMoveSupersetBB() const { return *moveSuperset; }
+	const MoveCache& GetMoveCache() const { return *moveSuperset; }
 
 private:
 
