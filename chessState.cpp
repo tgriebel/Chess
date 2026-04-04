@@ -77,7 +77,17 @@ moveType_t ChessState::IsLegalMove( const Piece* piece, const num_t targetX, con
 	}
 	
 	// 2. Check if the piece's actions can reach this location
-	const MoveCache_t* moveCache = piece->GetMoveCache();
+#if USE_MOVE_CACHE_TEST
+	const MoveCache& superset = piece->GetMoveSupersetBB();
+
+	const num_t localX = ( targetX - piece->x );
+	const num_t localY = ( targetY - piece->y ) * piece->GetTeamDirection();
+
+	if ( !superset.Test( localX, localY) ) {
+		return moveType_t::NONE;
+	}
+#endif
+
 	{
 		const int32_t actionCount = piece->GetActionCount();
 
@@ -86,8 +96,6 @@ moveType_t ChessState::IsLegalMove( const Piece* piece, const num_t targetX, con
 			if ( piece->InActionPath( action, targetX, targetY ) )
 			{
 				moveType = piece->GetActions()[ action ].type;
-
-				assert( moveCache->find( std::pair<num_t, num_t>( targetX - piece->x, ( targetY - piece->y ) * piece->GetTeamDirection() ) ) != moveCache->end() );
 				break;
 			}
 		}
@@ -142,45 +150,6 @@ void ChessState::CapturePiece( const teamCode_t attacker, Piece* targetPiece )
 		}
 	}
 	return;
-}
-
-
-void ChessState::PromotePawn( const pieceHandle_t pieceHdl )
-{
-	const Piece* piece = GetPiece( pieceHdl );
-	if ( ( piece == nullptr ) || ( piece->type != pieceType_t::PAWN ) ) {
-		return;
-	}
-
-	callbackEvent_t event;
-	event.type = PAWN_PROMOTION;
-	event.promotionType = pieceType_t::NONE;
-
-	// A.I. can use a callback to run a heuristic (e.g. always pick Queen)
-	// While a user needs to make their pick of piece
-	if ( callback != nullptr ) {
-		( *callback )( event );
-	}
-
-	bool invalidChoice = true;
-	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::QUEEN );
-	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::KNIGHT );
-	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::BISHOP );
-	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::ROOK );
-
-	if ( invalidChoice ) {
-		event.promotionType = pieceType_t::QUEEN;
-	}
-
-	const teamCode_t team = piece->team;
-	const int32_t x = piece->x;
-	const int32_t y = piece->y;
-
-	pieces[ pieceHdl ]->RemoveFromPlay();
-
-	pieces[ pieceHdl ] = ChessEngine::CreatePiece( event.promotionType, team );
-	pieces[ pieceHdl ]->BindBoard( this, pieceHdl );
-	pieces[ pieceHdl ]->Move( moveType_t::PAWN_T, x, y );
 }
 
 

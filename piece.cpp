@@ -1,11 +1,11 @@
 #include "Chess.h"
 
-MoveCache_t PawnMoveSuperset;
-MoveCache_t RookMoveSuperset;
-MoveCache_t KnightMoveSuperset;
-MoveCache_t BishopMoveSuperset;
-MoveCache_t KingMoveSuperset;
-MoveCache_t QueenMoveSuperset;
+MoveCache PawnMoveSuperset;
+MoveCache RookMoveSuperset;
+MoveCache KnightMoveSuperset;
+MoveCache BishopMoveSuperset;
+MoveCache KingMoveSuperset;
+MoveCache QueenMoveSuperset;
 
 bool Piece::IsValidAction( const int32_t actionNum ) const
 {
@@ -160,11 +160,11 @@ num_t Piece::GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSiz
 
 void Piece::FillMoveCache()
 {
-	if ( GetMoveCache() == nullptr ) {
-		return;
-	}
+	MoveCache& superset = *const_cast<MoveCache*>( moveSuperset );
 
-	if( GetMoveCache()->size() > 0 ) {
+	// Only fill once per piece type (shared static)
+	if ( superset.bits[ 0 ] != 0 || superset.bits[ 1 ] != 0 ||
+		 superset.bits[ 2 ] != 0 || superset.bits[ 3 ] != 0 ) {
 		return;
 	}
 
@@ -180,7 +180,7 @@ void Piece::FillMoveCache()
 		for ( int32_t step = 1; step <= maxSteps; ++step )
 		{
 			CalculateStep( action, nextX, nextY );
-			AddMoveCache( std::pair<num_t, num_t>( nextX, nextY ) );
+			superset.Set( nextX, nextY );
 		}
 	}
 }
@@ -248,8 +248,63 @@ void Pawn::Move( const moveType_t moveType, const num_t targetX, const num_t tar
 	}
 
 	if ( CanPromote() ) {
-		state->PromotePawn( handle );
+		Promote();
 	}
+}
+
+
+void Pawn::Promote()
+{
+	callbackEvent_t event;
+	event.type = PAWN_PROMOTION;
+	event.promotionType = pieceType_t::NONE;
+
+	state->PromotionCallback( event );
+
+	bool invalidChoice = true;
+	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::QUEEN );
+	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::KNIGHT );
+	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::BISHOP );
+	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::ROOK );
+
+	if ( invalidChoice ) {
+		event.promotionType = pieceType_t::QUEEN;
+	}
+
+	type = event.promotionType;
+
+	switch( type )
+	{
+		case pieceType_t::ROOK:
+		{
+			actions = RookActions;
+			moveSuperset = &RookMoveSuperset;
+			numActions = static_cast<int32_t>( moveType_t::ROOK_ACTIONS );
+		} break;
+
+		case pieceType_t::BISHOP:
+		{
+			actions = BishopActions;
+			moveSuperset = &BishopMoveSuperset;
+			numActions = static_cast<int32_t>( moveType_t::BISHOP_ACTIONS );
+		} break;
+
+		case pieceType_t::KNIGHT:
+		{
+			actions = KnightActions;
+			moveSuperset = &KnightMoveSuperset;
+			numActions = static_cast<int32_t>( moveType_t::KNIGHT_ACTIONS );
+		} break;
+
+		case pieceType_t::QUEEN:
+		{
+			actions = QueenActions;
+			moveSuperset = &QueenMoveSuperset;
+			numActions = static_cast<int32_t>( moveType_t::QUEEN_ACTIONS );
+		} break;
+	}
+
+	promoted = true;
 }
 
 

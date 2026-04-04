@@ -57,11 +57,29 @@ static const num_t TeamCount		= 2;
 static const num_t TeamPieceCount	= 16;
 static const num_t PieceCount		= 32;
 typedef num_t pieceHandle_t;
-static const pieceHandle_t NoPiece = -1;
-static const pieceHandle_t DummyPiece = INT8_MAX;
-static const pieceHandle_t OffBoard = -2;
+static const pieceHandle_t NoPiece		= -1;
+static const pieceHandle_t DummyPiece	= INT8_MAX;
+static const pieceHandle_t OffBoard		= -2;
 
-typedef std::set<std::pair<num_t, num_t>> MoveCache_t;
+#define USE_MOVE_CACHE_TEST 1
+
+class MoveCache
+{
+public:
+	uint64_t bits[ 4 ] = {};
+
+	void Set( int32_t dx, int32_t dy )
+	{
+		const int32_t idx = ( dy + 7 ) * 15 + ( dx + 7 );
+		bits[ idx >> 6 ] |= ( 1ULL << ( idx & 63 ) );
+	}
+
+	bool Test( int32_t dx, int32_t dy ) const
+	{
+		const int32_t idx = ( dy + 7 ) * 15 + ( dx + 7 );
+		return ( bits[ idx >> 6 ] >> ( idx & 63 ) ) & 1;
+	}
+};
 
 class ChessEngine;
 
@@ -417,12 +435,12 @@ static const moveAction_t QueenActions[ (int32_t)moveType_t::QUEEN_ACTIONS ] =
 };
 
 
-extern MoveCache_t PawnMoveSuperset;
-extern MoveCache_t RookMoveSuperset;
-extern MoveCache_t KnightMoveSuperset;
-extern MoveCache_t BishopMoveSuperset;
-extern MoveCache_t KingMoveSuperset;
-extern MoveCache_t QueenMoveSuperset;
+extern MoveCache PawnMoveSuperset;
+extern MoveCache RookMoveSuperset;
+extern MoveCache KnightMoveSuperset;
+extern MoveCache BishopMoveSuperset;
+extern MoveCache KingMoveSuperset;
+extern MoveCache QueenMoveSuperset;
 
 
 // ============================================================
@@ -450,6 +468,8 @@ protected:
 		instance = 0;
 		handle = NoPiece;
 		state = nullptr;
+		actions = nullptr;
+		moveSuperset = nullptr;
 	}
 
 	bool			IsValidAction( const int32_t actionNum ) const;
@@ -466,8 +486,11 @@ public:
 			this->type = src.type;
 			this->moveCount = src.moveCount;
 			this->numActions = src.numActions;
+			this->promoted = src.promoted;
 			this->handle = src.handle;
 			this->state = src.state;
+			this->actions = src.actions;
+			this->moveSuperset = src.moveSuperset;
 		}
 		return *this;
 	}
@@ -510,12 +533,11 @@ public:
 
 	const moveAction_t& GetAction( const int32_t actionNum ) const
 	{
-		return GetActions()[ actionNum ];
+		return actions[ actionNum ];
 	}
 
-	virtual const moveAction_t* GetActions() const = 0;
-	virtual const MoveCache_t* GetMoveCache() const = 0;
-	virtual void AddMoveCache( const std::pair<num_t, num_t>& move ) = 0;
+	const moveAction_t* GetActions() const { return actions; }
+	const MoveCache& GetMoveSupersetBB() const { return *moveSuperset; }
 
 private:
 
@@ -538,8 +560,11 @@ protected:
 	num_t				moveCount;
 	num_t				numActions;
 	num_t				teamDirection;
+	bool				promoted;
 	pieceHandle_t		handle;
 
+	const moveAction_t*	actions;
+	const MoveCache*	moveSuperset;
 	ChessState*			state;
 
 	friend class ChessEngine;
@@ -555,29 +580,17 @@ public:
 		this->type = pieceType_t::PAWN;
 		this->team = team;
 		this->numActions = static_cast<int32_t>( moveType_t::PAWN_ACTIONS );
+		this->actions = PawnActions;
+		this->moveSuperset = &PawnMoveSuperset;
 
 		teamDirection = ( team == teamCode_t::WHITE ) ? -1 : 1;
 
 		FillMoveCache();
 	}
-
 	bool InActionPath( const int32_t actionNum, const num_t targetX, const num_t targetY ) const override;
 	void Move( const moveType_t moveType, const num_t targetX, const num_t targetY ) override;
 	bool CanPromote() const;
-
-	const moveAction_t* GetActions() const {
-		return PawnActions;
-	}
-
-	const MoveCache_t* GetMoveCache() const
-	{
-		return &PawnMoveSuperset;
-	}
-
-	void AddMoveCache( const std::pair<num_t, num_t>& move )
-	{
-		PawnMoveSuperset.insert( move );
-	}
+	void Promote();
 
 private:
 	inline bool IsKillAction( const moveType_t type ) const {
@@ -586,6 +599,7 @@ private:
 };
 
 
+// WARNING: Adding virtuals will break promoted pawns, stop using inheritance if needed
 class Rook : public Piece
 {
 public:
@@ -594,27 +608,15 @@ public:
 		this->type = pieceType_t::ROOK;
 		this->team = team;
 		this->numActions = static_cast<int32_t>( moveType_t::ROOK_ACTIONS );
+		this->actions = RookActions;
+		this->moveSuperset = &RookMoveSuperset;
 
 		FillMoveCache();
-	}
-
-	const moveAction_t* GetActions() const
-	{
-		return RookActions;
-	}
-
-	const MoveCache_t* GetMoveCache() const
-	{
-		return &RookMoveSuperset;
-	}
-
-	void AddMoveCache( const std::pair<num_t, num_t>& move )
-	{
-		RookMoveSuperset.insert( move );
 	}
 };
 
 
+// WARNING: Adding virtuals will break promoted pawns, stop using inheritance if needed
 class Knight : public Piece
 {
 public:
@@ -623,27 +625,15 @@ public:
 		this->type = pieceType_t::KNIGHT;
 		this->team = team;
 		this->numActions = static_cast<int32_t>( moveType_t::KNIGHT_ACTIONS );
+		this->actions = KnightActions;
+		this->moveSuperset = &KnightMoveSuperset;
 
 		FillMoveCache();
-	}
-
-	const moveAction_t* GetActions() const
-	{
-		return KnightActions;
-	}
-
-	const MoveCache_t* GetMoveCache() const
-	{
-		return &KnightMoveSuperset;
-	}
-
-	void AddMoveCache( const std::pair<num_t, num_t>& move )
-	{
-		KnightMoveSuperset.insert( move );
 	}
 };
 
 
+// WARNING: Adding virtuals will break promoted pawns, stop using inheritance if needed
 class Bishop : public Piece
 {
 public:
@@ -652,23 +642,10 @@ public:
 		this->type = pieceType_t::BISHOP;
 		this->team = team;
 		this->numActions = static_cast<int32_t>( moveType_t::BISHOP_ACTIONS );
+		this->actions = BishopActions;
+		this->moveSuperset = &BishopMoveSuperset;
 
 		FillMoveCache();
-	}
-
-	const moveAction_t* GetActions() const
-	{
-		return BishopActions;
-	}
-
-	const MoveCache_t* GetMoveCache() const
-	{
-		return &BishopMoveSuperset;
-	}
-
-	void AddMoveCache( const std::pair<num_t, num_t>& move )
-	{
-		BishopMoveSuperset.insert( move );
 	}
 };
 
@@ -681,23 +658,10 @@ public:
 		this->type = pieceType_t::KING;
 		this->team = team;
 		this->numActions = static_cast<int32_t>( moveType_t::KING_ACTIONS );
+		this->actions = KingActions;
+		this->moveSuperset = &KingMoveSuperset;
 
 		FillMoveCache();
-	}
-
-	const moveAction_t* GetActions() const
-	{
-		return KingActions;
-	}
-
-	const MoveCache_t* GetMoveCache() const
-	{
-		return &KingMoveSuperset;
-	}
-
-	void AddMoveCache( const std::pair<num_t, num_t>& move )
-	{
-		KingMoveSuperset.insert( move );
 	}
 
 	bool InActionPath( const int32_t actionNum, const num_t actionX, const num_t actionY ) const override;
@@ -705,6 +669,7 @@ public:
 };
 
 
+// WARNING: Adding virtuals will break promoted pawns, stop using inheritance if needed
 class Queen : public Piece
 {
 public:
@@ -713,23 +678,10 @@ public:
 		this->type = pieceType_t::QUEEN;
 		this->team = team;
 		this->numActions = static_cast<int32_t>( moveType_t::QUEEN_ACTIONS );
+		this->actions = QueenActions;
+		this->moveSuperset = &QueenMoveSuperset;
 
 		FillMoveCache();
-	}
-
-	const moveAction_t* GetActions() const
-	{
-		return QueenActions;
-	}
-
-	const MoveCache_t* GetMoveCache() const
-	{
-		return &QueenMoveSuperset;
-	}
-
-	void AddMoveCache( const std::pair<num_t, num_t>& move )
-	{
-		QueenMoveSuperset.insert( move );
 	}
 };
 
@@ -763,7 +715,13 @@ public:
 	bool				IsOpenToAttackAt( const Piece* targetPiece, const num_t targetX, const num_t targetY ) const;
 	pieceHandle_t		GetEnpassant( const num_t targetX, const num_t targetY ) const;
 	inline void			SetEnpassant( const pieceHandle_t handle ) { enpassantPawn = handle; }
-	void				PromotePawn( const pieceHandle_t pieceHdl );
+
+	inline void			PromotionCallback( callbackEvent_t& event )														// User needs to make their pick of piece, A.I. can run a heuristic
+	{
+		if ( callback != nullptr ) {
+			( *callback )( event );
+		};
+	}
 
 private:
 	void				CountTeamPieces();
