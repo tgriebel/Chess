@@ -13,6 +13,9 @@
 
 #include "timer.h"
 
+#define RUN_FULL_REGISTRY 1
+#define PRINT_BOARD_EACH_STEP 0
+
 
 // ============================================================
 // Expected outcomes
@@ -232,7 +235,12 @@ static TestResult RunSingleTest( const TestCase& tc )
 		else
 		{
 			Timer timer( "Execution time", timerPrecision_t::MICROSECOND );
+
 			moveResult = engine.Execute( cmd );
+
+#if PRINT_BOARD_EACH_STEP
+			std::cout << BoardToString( engine, true ) << std::endl;
+#endif
 
 			result.averageMoveTimer += timer.GetCurrentElapsed();
 		}
@@ -610,13 +618,11 @@ int main()
 {
 	TestLogger logger( "test_results.log" );
 
-#define RUN_FULL_REGISTRY 1
-
 #if RUN_FULL_REGISTRY
 	std::vector<TestCase>& tests = GetTestRegistry();
 #else
 	std::vector<TestCase> tests;
-	tests.push_back( TestInvalidCommand );
+	tests.push_back( TestScholarsMate );
 #endif
 
 	// Header

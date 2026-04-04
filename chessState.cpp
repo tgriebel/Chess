@@ -112,8 +112,19 @@ moveType_t ChessState::IsLegalMove( const Piece* piece, const num_t targetX, con
 
 		const_cast<Piece*>( piece )->TempPlacement( -1, -1 );
 
+		const Piece* targetPiece = GetPiece( targetX, targetY );
+		if( targetPiece != nullptr )
+		{
+			const_cast<Piece*>( targetPiece )->TempPlacement( -1, -1 );
+		}
+
 		if ( IsOpenToAttack( king ) ) {
 			moveType = moveType_t::NONE;
+		}
+
+		if ( targetPiece != nullptr )
+		{
+			const_cast<Piece*>( targetPiece )->ReturnPlacement();
 		}
 
 		// Reset position to honor this function's const-contract

@@ -90,7 +90,7 @@ void ChessEngine::SetBoard( const gameConfig_t& cfg )
 		{
 			s.grid[ i ][ j ] = NoPiece;
 
-			const pieceType_t pieceType = cfg.board[ i ][ j ].piece;
+			const pieceType_t pieceType = cfg.board[ i ][ j ].pieceType;
 			const teamCode_t teamCode = cfg.board[ i ][ j ].team;
 
 			Piece* piece = ChessEngine::CreatePiece( pieceType, teamCode );
@@ -137,14 +137,14 @@ pieceInfo_t ChessEngine::GetInfo( const pieceHandle_t pieceType ) const
 
 	if ( piece != nullptr )
 	{
-		info.piece = piece->type;
+		info.pieceType = piece->type;
 		info.team = piece->team;
 		info.instance = piece->instance;
 		info.onBoard = true;
 	}
 	else
 	{
-		info.piece = pieceType_t::NONE;
+		info.pieceType = pieceType_t::NONE;
 		info.team = teamCode_t::NONE;
 		info.instance = 0;
 		info.onBoard = false;
@@ -160,14 +160,14 @@ pieceInfo_t ChessEngine::GetInfo( const num_t x, const num_t y ) const
 
 	if ( piece != nullptr )
 	{
-		info.piece = piece->type;
+		info.pieceType = piece->type;
 		info.team = piece->team;
 		info.instance = piece->instance;
 		info.onBoard = true;
 	}
 	else
 	{
-		info.piece = pieceType_t::NONE;
+		info.pieceType = pieceType_t::NONE;
 		info.team = teamCode_t::NONE;
 		info.instance = 0;
 		info.onBoard = false;

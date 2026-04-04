@@ -307,10 +307,10 @@ struct team_t
 
 struct pieceInfo_t
 {
-	teamCode_t	team;		// White, Black, etc
-	pieceType_t	piece;		// Pawn, Knight, etc
-	int32_t		instance;	// Pawn0, Pawn1, etc
-	bool		onBoard;	// If false: Off-board location (-1,-1), captured piece, preparing to play (e.g. promotion)
+	teamCode_t		team;		// White, Black, etc
+	pieceType_t		pieceType;	// Pawn, Knight, etc
+	int32_t			instance;	// Pawn0, Pawn1, etc
+	bool			onBoard;	// If false: Off-board location (-1,-1), captured piece, preparing to play (e.g. promotion)
 };
 
 struct gameConfig_t
@@ -355,9 +355,9 @@ typedef void ( *callback_t )( callbackEvent_t& );
 // ============================================================
 
 void GetDefaultConfig( gameConfig_t& defaultCfg );
-std::string SquareToString( const ChessEngine& board, const int32_t x, const int32_t y );
-std::string TeamCaptureString( const ChessEngine& board, const teamCode_t team );
-std::string BoardToString( const ChessEngine& board, const bool printCaptures );
+std::string SquareToString( const ChessEngine& chessEngine, const int32_t x, const int32_t y );
+std::string TeamCaptureString( const ChessEngine& chessEngine, const teamCode_t team );
+std::string BoardToString( const ChessEngine& chessEngine, const bool printCaptures );
 void LoadConfig( const std::string& fileName, gameConfig_t& config );
 void LoadHistory( const std::string& fileName, std::vector< std::string >& commands );
 

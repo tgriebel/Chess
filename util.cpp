@@ -38,15 +38,15 @@ void GetDefaultConfig( gameConfig_t& defaultCfg )
 	}
 }
 
-std::string SquareToString( const ChessEngine& board, const int32_t x, const int32_t y )
+std::string SquareToString( const ChessEngine& chessEngine, const int32_t x, const int32_t y )
 {
 	std::string squareFormat;
-	const pieceInfo_t info = board.GetInfo( x, y );
+	const pieceInfo_t info = chessEngine.GetInfo( x, y );
 	const bool isBlack = ( x % 2 ) == ( y % 2 );
 
 	if ( info.onBoard == true )
 	{
-		const pieceType_t type = info.piece;
+		const pieceType_t type = info.pieceType;
 		const teamCode_t team = info.team;
 		const int32_t instance = info.instance;
 		squareFormat += " ";
@@ -62,11 +62,11 @@ std::string SquareToString( const ChessEngine& board, const int32_t x, const int
 }
 
 
-std::string TeamCaptureString( const ChessEngine& board, const teamCode_t team )
+std::string TeamCaptureString( const ChessEngine& chessEngine, const teamCode_t team )
 {
 	int32_t captureCount = 0;
 	pieceInfo_t captures[ TeamPieceCount ];
-	board.GetTeamCaptures( team, captures, captureCount );
+	chessEngine.GetTeamCaptures( team, captures, captureCount );
 
 	std::string captureFormat;
 	captureFormat = "    Captures: ";
@@ -76,7 +76,7 @@ std::string TeamCaptureString( const ChessEngine& board, const teamCode_t team )
 		if ( captures == nullptr ) {
 			break;
 		}
-		captureFormat += GetPieceCode( captures[ i ].piece );
+		captureFormat += GetPieceCode( captures[ i ].pieceType );
 		captureFormat += captures[ i ].instance + '0';
 		captureFormat += ( team == teamCode_t::BLACK ) ? "" : "\'";
 		captureFormat += ", ";
@@ -85,7 +85,7 @@ std::string TeamCaptureString( const ChessEngine& board, const teamCode_t team )
 }
 
 
-std::string BoardToString( const ChessEngine& board, const bool printCaptures )
+std::string BoardToString( const ChessEngine& chessEngine, const bool printCaptures )
 {
 	std::string boardFormat;
 	boardFormat = "   ";
@@ -106,16 +106,16 @@ std::string BoardToString( const ChessEngine& board, const bool printCaptures )
 
 		for ( int32_t i = 0; i < BoardSize; ++i )
 		{
-			boardFormat += SquareToString( board, i, j );
+			boardFormat += SquareToString( chessEngine, i, j );
 			boardFormat += "|";
 		}
 
 		if ( printCaptures )
 		{
 			if ( j == 0 ) {
-				boardFormat += TeamCaptureString( board, teamCode_t::BLACK );
+				boardFormat += TeamCaptureString( chessEngine, teamCode_t::BLACK );
 			} else if ( j == 7 ) {
-				boardFormat += TeamCaptureString( board, teamCode_t::WHITE );
+				boardFormat += TeamCaptureString( chessEngine, teamCode_t::WHITE );
 			}
 		}
 		boardFormat += "\n   ";
@@ -139,8 +139,8 @@ static pieceInfo_t GetSquareConfig( const string& token )
         case 'W': cfg.team = teamCode_t::WHITE; break;
     }
 
-    cfg.piece = GetPieceType( token[ 1 ] );
-	cfg.onBoard = ( cfg.piece != pieceType_t::NONE );
+    cfg.pieceType = GetPieceType( token[ 1 ] );
+	cfg.onBoard = ( cfg.pieceType != pieceType_t::NONE );
 	cfg.instance = 0;
 
     return cfg;
