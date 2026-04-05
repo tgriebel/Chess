@@ -17,11 +17,7 @@ void Piece::Move( const moveType_t moveType, const num_t targetX, const num_t ta
 {
 	state->SetEnpassant( NoPiece );
 
-	const pieceInfo_t& targetInfo = state->GetInfo( targetX, targetY );
-
-	// Is this square occupied by an an opponent piece?
-	// Blank squares have a NONE assignment
-	if ( targetInfo.onBoard && ( targetInfo.team != team ) )
+	if ( state->IsBlocked( team, targetX, targetY ) == false )
 	{
 		Piece* opponentPiece = state->GetPiece( targetX, targetY );
 
@@ -88,7 +84,7 @@ num_t Piece::GetStepCount( const int32_t actionNum, const num_t targetX, const n
 		return BoardSize;
 	}
 
-	if ( state->GetInfo( targetX, targetY ).team == team ) {
+	if ( state->IsBlocked( team, targetX, targetY ) ) {
 		return BoardSize;
 	}
 
@@ -190,8 +186,8 @@ bool Pawn::InActionPath( const int32_t actionNum, const num_t targetX, const num
 		return false;
 	}
 
-	const teamCode_t occupiedTeam = state->GetInfo( targetX, targetY ).team;
-	const bool isOccupied = ( occupiedTeam != teamCode_t::NONE );
+	const bool isOccupied = state->GetHandle( targetX, targetY ) != NoPiece;
+	const bool isBlocked = state->IsBlocked( team, targetX, targetY );
 
 	const num_t maxSteps = GetAction( actionNum ).maxSteps;
 	const num_t steps = GetStepCount( actionNum, targetX, targetY );
@@ -204,10 +200,9 @@ bool Pawn::InActionPath( const int32_t actionNum, const num_t targetX, const num
 
 	if ( ( type == moveType_t::PAWN_KILL_L ) || ( type == moveType_t::PAWN_KILL_R ) )
 	{
-		const pieceHandle_t enpassantPieceHdl = state->GetEnpassant( targetX, targetY );
-		const Piece* enpassantPiece = state->GetPiece( enpassantPieceHdl );
-		const bool isEnpassantEnemy = ( enpassantPieceHdl != NoPiece ) && ( enpassantPiece->team != team );
-		const bool isEnemy = ( isOccupied || isEnpassantEnemy ) && ( occupiedTeam != team );
+		const Piece* enpassantPiece = state->GetEnpassant( targetX, targetY );
+		const bool isEnpassantEnemy = ( enpassantPiece != nullptr ) && ( enpassantPiece->team != team );
+		const bool isEnemy = ( isOccupied || isEnpassantEnemy ) && ( isBlocked == false );
 
 		return isEnemy && ( steps <= maxSteps );
 	}
@@ -229,9 +224,7 @@ bool Pawn::CanPromote() const
 void Pawn::Move( const moveType_t moveType, const num_t targetX, const num_t targetY )
 {
 	const bool doubleMove = ( abs( targetY - y ) == 2 );
-	const pieceHandle_t pieceHdl = state->GetEnpassant( targetX, targetY );
-
-	Piece* targetPiece = state->GetPiece( pieceHdl );
+	Piece* targetPiece = state->GetEnpassant( targetX, targetY );
 
 	if ( ( targetPiece != nullptr ) && ( targetPiece->team != team ) ) {
 		state->CapturePiece( team, targetPiece );
@@ -257,7 +250,7 @@ void Pawn::Promote()
 	event.type = PAWN_PROMOTION;
 	event.promotionType = pieceType_t::NONE;
 
-	state->PromotionCallback( event );
+	state->PromotionCallback( team, event );
 
 	bool invalidChoice = true;
 	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::QUEEN );

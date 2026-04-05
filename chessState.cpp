@@ -95,12 +95,6 @@ Piece* ChessState::GetPiece( const num_t x, const num_t y )
 }
 
 
-pieceInfo_t ChessState::GetInfo( const num_t x, const num_t y ) const
-{
-	return game->GetInfo( x, y );
-}
-
-
 moveType_t ChessState::IsLegalMove( const Piece* piece, const num_t targetX, const num_t targetY ) const
 {
 	moveType_t moveType = moveType_t::NONE;
@@ -228,6 +222,18 @@ bool ChessState::IsOpenToAttackAt( const Piece* targetPiece, const num_t x, cons
 		}
 	}
 	return false;
+}
+
+
+bool ChessState::IsBlocked( const teamCode_t team, const num_t x, const num_t y ) const
+{
+	assert( OnBoard( x, y ) );
+
+	const pieceHandle_t handle = grid[ y ][ x ];
+	if ( handle == NoPiece ) {
+		return false;
+	}
+	return ( pieces[ handle ]->team == team );
 }
 
 
@@ -395,9 +401,9 @@ bool ChessState::IsStalemate( const teamCode_t teamCode ) const
 }
 
 
-pieceHandle_t ChessState::GetEnpassant( const num_t targetX, const num_t targetY ) const
+Piece* ChessState::GetEnpassant( const num_t targetX, const num_t targetY )
 {
-	const Piece* piece = GetPiece( enpassantPawn );
+	Piece* piece = GetPiece( enpassantPawn );
 	if ( piece != nullptr )
 	{
 		const Pawn* pawn = reinterpret_cast<const Pawn*>( piece );
@@ -407,10 +413,10 @@ pieceHandle_t ChessState::GetEnpassant( const num_t targetX, const num_t targetY
 		const bool wasEnpassant = ( x == targetX ) && ( y == targetY );
 
 		if ( wasEnpassant ) {
-			return piece->handle;
+			return piece;
 		}
 	}
-	return NoPiece;
+	return nullptr;
 }
 
 

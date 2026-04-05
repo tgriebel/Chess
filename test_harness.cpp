@@ -134,16 +134,6 @@ private:
 
 
 // ============================================================
-// Promotion callback (auto-queen for tests)
-// ============================================================
-
-static void AutoPromoteQueen( callbackEvent_t& event )
-{
-	event.promotionType = pieceType_t::QUEEN;
-}
-
-
-// ============================================================
 // Test runner
 // ============================================================
 
@@ -182,7 +172,8 @@ static TestResult RunSingleTest( const TestCase& tc )
 
 	// Create engine
 	ChessEngine engine( cfg );
-	engine.SetEventCallback( &AutoPromoteQueen );
+	engine.SetPromotionCallback( teamCode_t::WHITE, &AutoPromoteQueen );
+	engine.SetPromotionCallback( teamCode_t::BLACK, &AutoPromoteQueen );
 
 	// Execute commands
 	resultCode_t lastResult = RESULT_SUCCESS;

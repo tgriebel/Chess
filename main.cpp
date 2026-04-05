@@ -125,8 +125,10 @@ reset_game:
 	int32_t turnNum = 0;
 	teamCode_t turnTeam = teamCode_t::WHITE;
 	teamCode_t winner = teamCode_t::NONE;
+
 	Chess board( cfg );
-	board.SetEventCallback( &ProcessEvent );
+	board.SetPromotionCallback( teamCode_t::WHITE, &ProcessEvent );
+	board.SetPromotionCallback( teamCode_t::BLACK, &ProcessEvent );
 
 	std::vector< moveAction_t > actions;
 

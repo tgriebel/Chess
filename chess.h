@@ -58,7 +58,7 @@ static const num_t TeamPieceCount	= 16;
 static const num_t PieceCount		= 32;
 typedef num_t pieceHandle_t;
 static const pieceHandle_t NoPiece		= -1;
-static const pieceHandle_t DummyPiece	= INT8_MAX;
+static const pieceHandle_t DummyPiece	= INT16_MAX;
 static const pieceHandle_t OffBoard		= -2;
 
 #define USE_MOVE_CACHE_TEST 1
@@ -317,6 +317,7 @@ struct pieceInfo_t
 	pieceType_t		pieceType;	// Pawn, Knight, etc
 	int32_t			instance;	// Pawn0, Pawn1, etc
 	bool			onBoard;	// If false: Off-board location (-1,-1), captured piece, preparing to play (e.g. promotion)
+	bool			isPiece;	// Quick check for a player piece
 };
 
 struct gameConfig_t
@@ -366,6 +367,11 @@ std::string TeamCaptureString( const ChessEngine& chessEngine, const teamCode_t 
 std::string BoardToString( const ChessEngine& chessEngine, const bool printCaptures );
 void LoadConfig( const std::string& fileName, gameConfig_t& config );
 void LoadHistory( const std::string& fileName, std::vector< std::string >& commands );
+
+inline static void AutoPromoteQueen( callbackEvent_t& event )
+{
+	event.promotionType = pieceType_t::QUEEN;
+}
 
 
 // ============================================================
@@ -702,37 +708,37 @@ public:
 	ChessState() {}
 	~ChessState() {}
 
-	moveType_t			IsLegalMove( const Piece* piece, const num_t targetX, const num_t targetY ) const;
-	inline bool			OnBoard( const num_t x, const num_t y ) const;
+	moveType_t			IsLegalMove( const Piece* piece, const num_t targetX, const num_t targetY ) const;				// Core function, runs all rule evaluation
+	inline bool			OnBoard( const num_t x, const num_t y ) const;													// Bounds check for path checking
 	inline const Piece* GetPiece( const pieceHandle_t handle ) const;
 	inline Piece*		GetPiece( const pieceHandle_t handle );
 	const Piece*		GetPiece( const num_t x, const num_t y ) const;
 	Piece*				GetPiece( const num_t x, const num_t y );
 	void				SetHandle( const pieceHandle_t pieceHdl, const num_t x, const num_t y );
 	pieceHandle_t		GetHandle( const num_t x, const num_t y ) const;
-	pieceInfo_t			GetInfo( const num_t x, const num_t y ) const;
 
 	void				CapturePiece( const teamCode_t attacker, Piece* targetPiece );
+	bool				IsBlocked( const teamCode_t team, const num_t x, const num_t y ) const;
 	bool				IsKingCaptured( const teamCode_t checkedTeamCode ) const;
 	bool				IsChecked( const teamCode_t checkedTeamCode ) const;
 	bool				IsCheckMate( const Piece* attacker, const teamCode_t checkedTeamCode ) const;
 	bool				IsStalemate( const teamCode_t teamCode ) const;
 	bool				IsOpenToAttack( const Piece* targetPiece ) const;
 	bool				IsOpenToAttackAt( const Piece* targetPiece, const num_t targetX, const num_t targetY ) const;
-	pieceHandle_t		GetEnpassant( const num_t targetX, const num_t targetY ) const;
-	inline void			SetEnpassant( const pieceHandle_t handle ) { enpassantPawn = handle; }
+	Piece*				GetEnpassant( const num_t targetX, const num_t targetY );
+	inline void			SetEnpassant( const pieceHandle_t handle ) { enpassantPawn = handle; }							// Saves enpassant pawn for next turn checks
 
-	inline void			PromotionCallback( callbackEvent_t& event )														// User needs to make their pick of piece, A.I. can run a heuristic
+	inline void			PromotionCallback( const teamCode_t teamCode, callbackEvent_t& event )							// User needs to make their pick of piece, A.I. can run a heuristic
 	{
-		if ( callback != nullptr ) {
-			( *callback )( event );
+		if ( promotionCallback[ (int32_t)teamCode ] != nullptr ) {
+			( *promotionCallback[ (int32_t)teamCode ] )( event );
 		};
 	}
 
 private:
 	void				CountTeamPieces();
 private:
-	callback_t			callback;
+	callback_t			promotionCallback[ TeamCount ];
 	pieceHandle_t		enpassantPawn;
 	Piece*				pieces[ PieceCount ];
 	team_t				teams[ TeamCount ];
@@ -772,6 +778,9 @@ public:
 		SetBoard( config );
 		s.game = this;
 		s.CountTeamPieces();
+
+		SetPromotionCallback( teamCode_t::WHITE, &AutoPromoteQueen );
+		SetPromotionCallback( teamCode_t::BLACK, &AutoPromoteQueen );
 
 		const bool whiteChecked = s.IsChecked( teamCode_t::WHITE );
 		const bool blackChecked = s.IsChecked( teamCode_t::BLACK );
@@ -873,7 +882,7 @@ public:
 	pieceInfo_t			GetInfo( const pieceHandle_t pieceType ) const;
 	pieceInfo_t			GetInfo( const num_t x, const num_t y ) const;
 	bool				GetLocation( const pieceHandle_t pieceType, num_t& x, num_t& y ) const;
-	void				SetEventCallback( callback_t callback ) { this->s.callback = callback; }
+	void				SetPromotionCallback( const teamCode_t team, callback_t callback ) { this->s.promotionCallback[ (int32_t)team ] = callback; }
 	inline bool			IsStalemate() const { return stalemate; }
 	inline teamCode_t	GetCurrentPlayer() { return currentTurn; } 
 	inline teamCode_t	GetWinner() const { return winner; }

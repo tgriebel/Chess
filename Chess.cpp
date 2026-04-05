@@ -171,6 +171,7 @@ pieceInfo_t ChessEngine::GetInfo( const num_t x, const num_t y ) const
 		info.pieceType = piece->type;
 		info.team = piece->team;
 		info.instance = piece->instance;
+		info.isPiece = true;
 		info.onBoard = true;
 	}
 	else
@@ -178,7 +179,8 @@ pieceInfo_t ChessEngine::GetInfo( const num_t x, const num_t y ) const
 		info.pieceType = pieceType_t::NONE;
 		info.team = teamCode_t::NONE;
 		info.instance = 0;
-		info.onBoard = false;
+		info.isPiece = false;
+		info.onBoard = s.OnBoard( x, y );
 	}
 	return info;
 }
