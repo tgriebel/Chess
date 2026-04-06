@@ -545,6 +545,26 @@ public:
 	const moveAction_t* GetActions() const { return m_actions; }
 	const MoveCache& GetMoveCache() const { return *m_moveSuperset; }
 
+	bool operator==( const Piece& other ) const
+	{
+		return	( team				== other.team )
+			&&	( type				== other.type )
+			&&	( m_x				== other.m_x )
+			&&	( m_y				== other.m_y )
+			&&	( m_prevX			== other.m_prevX )
+			&&	( m_prevY			== other.m_prevY )
+			&&	( m_instance		== other.m_instance )
+			&&	( m_moveCount		== other.m_moveCount )
+			&&	( m_numActions		== other.m_numActions )
+			&&	( m_teamDirection	== other.m_teamDirection )
+			&&	( m_promoted		== other.m_promoted )
+			&&	( m_handle			== other.m_handle )
+			&&	( m_actions			== other.m_actions )
+			&&	( m_moveSuperset	== other.m_moveSuperset );
+	}
+
+	bool operator!=( const Piece& other ) const { return !( *this == other ); }
+
 private:
 
 	inline void SetInstanceNumber( const num_t instance )
@@ -613,18 +633,19 @@ public:
 	Piece*				GetEnpassant( const num_t targetX, const num_t targetY );
 	inline void			SetEnpassant( const pieceHandle_t handle ) { m_enpassantPawn = handle; }						// Saves enpassant pawn for next turn checks
 
-	inline void			PromotionCallback( const teamCode_t teamCode, callbackEvent_t& event )							// User needs to make their pick of piece, A.I. can run a heuristic
+	inline void			PromotionCallback( const teamCode_t teamCode, callbackEvent_t& event )
 	{
-		if ( m_promotionCallback[ (int32_t)teamCode ] != nullptr ) {
-			( *m_promotionCallback[ (int32_t)teamCode ] )( event );
-		};
+		PromotionCallback( teamCode, event );
 	}
 
 	// Unwind speculative search actions
 	void				ReverseCapturePiece( const teamCode_t attacker, Piece* targetPiece );
 
+	// Deep copy for validation
+	void				CopyFrom( const ChessState& src );
+	bool				Compare( const ChessState& other ) const;
+
 private:
-	callback_t			m_promotionCallback[ TeamCount ];
 	pieceHandle_t		m_enpassantPawn;
 	Piece*				m_pieces[ PieceCount ];
 	team_t				m_teams[ TeamCount ];
@@ -767,7 +788,7 @@ public:
 	pieceInfo_t			GetInfo( const pieceHandle_t pieceType ) const;
 	pieceInfo_t			GetInfo( const num_t x, const num_t y ) const;
 	bool				GetLocation( const pieceHandle_t pieceType, num_t& x, num_t& y ) const;
-	void				SetPromotionCallback( const teamCode_t team, callback_t callback ) { this->m_state.m_promotionCallback[ (int32_t)team ] = callback; }
+	void				SetPromotionCallback( const teamCode_t team, callback_t callback ) { m_promotionCallback[ (int32_t)team ] = callback; }
 	inline bool			IsStalemate() const { return m_stalemate; }
 	inline teamCode_t	GetCurrentPlayer() { return m_currentTurn; } 
 	inline teamCode_t	GetWinner() const { return m_winner; }
@@ -780,8 +801,17 @@ private:
 	void				EnterPieceInGame( Piece* piece, const num_t x, const num_t y );
 	bool				PerformMoveAction( const pieceHandle_t pieceHdl, const num_t targetX, const num_t targetY );
 	void				CalculateGameState( const pieceHandle_t movedPieceHdl );
+
+	inline void			PromotionCallback( const teamCode_t teamCode, callbackEvent_t& event )							// User needs to make their pick of piece, A.I. can run a heuristic
+	{
+		if ( m_promotionCallback[ (int32_t)teamCode ] != nullptr ) {
+			( *m_promotionCallback[ (int32_t)teamCode ] )( event );
+		};
+	}
+
 private:
 	ChessState			m_state;
+	callback_t			m_promotionCallback[ TeamCount ];
 	num_t				m_pieceNum;
 	int32_t				m_turnCount;
 	teamCode_t			m_currentTurn;

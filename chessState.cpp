@@ -544,3 +544,102 @@ Piece* ChessState::GetEnpassant( const num_t targetX, const num_t targetY )
 	}
 	return nullptr;
 }
+
+
+void ChessState::CopyFrom( const ChessState& src )
+{
+	// Copy grid
+	memcpy( m_grid, src.m_grid, sizeof( m_grid ) );
+
+	// Copy teams (handles + counts, no pointers)
+	memcpy( m_teams, src.m_teams, sizeof( m_teams ) );
+
+	// Copy en passant handle
+	m_enpassantPawn = src.m_enpassantPawn;
+
+	// Keep the game pointer — caller is responsible for setting this
+	m_game = src.m_game;
+
+	// Deep-copy every piece
+	for ( int32_t i = 0; i < PieceCount; ++i )
+	{
+		if ( src.m_pieces[ i ] != nullptr )
+		{
+			m_pieces[ i ] = new Piece( *src.m_pieces[ i ] );
+			m_pieces[ i ]->m_state = this;	// Rebind to this state
+			m_pieces[ i ]->m_handle = i;
+		}
+		else
+		{
+			m_pieces[ i ] = nullptr;
+		}
+	}
+}
+
+
+bool ChessState::Compare( const ChessState& other ) const
+{
+	// Compare grid
+	if ( memcmp( m_grid, other.m_grid, sizeof( m_grid ) ) != 0 )
+	{
+		return false;
+	}
+
+	// Compare en passant
+	if ( m_enpassantPawn != other.m_enpassantPawn )
+	{
+		return false;
+	}
+
+	// Compare teams
+	for ( int32_t t = 0; t < TeamCount; ++t )
+	{
+		const team_t& a = m_teams[ t ];
+		const team_t& b = other.m_teams[ t ];
+
+		if ( a.livingCount != b.livingCount || a.capturedCount != b.capturedCount )
+		{
+			return false;
+		}
+
+		for ( int32_t i = 0; i < a.livingCount; ++i )
+		{
+			if ( a.pieces[ i ] != b.pieces[ i ] ) { return false; }
+		}
+
+		for ( int32_t i = 0; i < a.capturedCount; ++i )
+		{
+			if ( a.captured[ i ] != b.captured[ i ] ) { return false; }
+		}
+
+		for ( int32_t i = 0; i < (int32_t)pieceType_t::COUNT; ++i )
+		{
+			if ( a.typeCounts[ i ] != b.typeCounts[ i ] ) { return false; }
+			if ( a.captureTypeCounts[ i ] != b.captureTypeCounts[ i ] ) { return false; }
+		}
+	}
+
+	// Compare pieces
+	for ( int32_t i = 0; i < PieceCount; ++i )
+	{
+		const bool aNull = ( m_pieces[ i ] == nullptr );
+		const bool bNull = ( other.m_pieces[ i ] == nullptr );
+
+		if ( aNull != bNull )
+		{
+			return false;
+		}
+
+		if ( aNull )
+		{
+			continue;
+		}
+
+		if ( *m_pieces[ i ] != *other.m_pieces[ i ] )
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
