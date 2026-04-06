@@ -611,7 +611,7 @@ public:
 	bool				IsOpenToAttack( const Piece* targetPiece ) const;
 	bool				IsOpenToAttackAt( const Piece* targetPiece, const num_t targetX, const num_t targetY ) const;
 	Piece*				GetEnpassant( const num_t targetX, const num_t targetY );
-	inline void			SetEnpassant( const pieceHandle_t handle ) { m_enpassantPawn = handle; }							// Saves enpassant pawn for next turn checks
+	inline void			SetEnpassant( const pieceHandle_t handle ) { m_enpassantPawn = handle; }						// Saves enpassant pawn for next turn checks
 
 	inline void			PromotionCallback( const teamCode_t teamCode, callbackEvent_t& event )							// User needs to make their pick of piece, A.I. can run a heuristic
 	{
@@ -619,6 +619,9 @@ public:
 			( *m_promotionCallback[ (int32_t)teamCode ] )( event );
 		};
 	}
+
+	// Unwind speculative search actions
+	void				ReverseCapturePiece( const teamCode_t attacker, Piece* targetPiece );
 
 private:
 	callback_t			m_promotionCallback[ TeamCount ];

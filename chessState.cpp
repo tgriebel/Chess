@@ -47,7 +47,12 @@ public:
 
 	ScopedSearch( const ChessState* state, const Piece* piece, const num_t targetX, const num_t targetY ) : m_state( state )
 	{
+		m_prevX = piece->X();
+		m_prevY = piece->Y();
 
+		m_piece = piece;
+
+		m_occupiedPiece = m_state->GetPiece( targetX, targetY );
 	}
 
 	~ScopedSearch()
@@ -57,8 +62,50 @@ public:
 
 private:
 
-	num_t m_x = 0;
-	num_t m_y = 0;
+	num_t m_prevX = 0;
+	num_t m_prevY = 0;
+
+	enum actionType_t
+	{
+		STANDARD,
+		CAPTURE,
+		PAWN,
+		CASTLE,
+	};
+
+	struct captureAction_t
+	{
+		const Piece* piece;
+		num_t prevX;
+		num_t prevY;
+		num_t pieceIndex;
+	};
+
+
+	struct pawnAction_t
+	{
+		const Piece* empassant;
+	};
+
+
+	struct castleAction_t
+	{
+		const Piece* rook;
+		num_t rookPrevX;
+		num_t rookPrevY;
+	};
+
+	union action_t
+	{
+		captureAction_t captureAction;
+		pawnAction_t pawnAction;
+		castleAction_t castleAction;
+	};
+
+	action_t action;
+	actionType_t actionType;
+
+	num_t moveCounter;
 
 	const ChessState* m_state;
 	const Piece* m_piece = nullptr;
@@ -225,6 +272,57 @@ void ChessState::CapturePiece( const teamCode_t attacker, Piece* targetPiece )
 
 	return;
 }
+
+
+void ChessState::ReverseCapturePiece( const teamCode_t attacker, Piece* targetPiece )
+{
+	if ( targetPiece == nullptr ) {
+		return;
+	}
+
+	const int32_t index = static_cast<int32_t>( targetPiece->team );
+	const int32_t pieceTypeIndex = (int32_t)targetPiece->type;
+	const int32_t attackerIndex = static_cast<int32_t>( attacker );
+
+	// Update attacker team stats
+	{
+		num_t* captured = m_teams[ attackerIndex ].captured;
+		num_t* capturedTypeCount = m_teams[ attackerIndex ].captureTypeCounts;
+		num_t& capturedCount = m_teams[ attackerIndex ].capturedCount;
+
+		--capturedCount;
+		captured[ capturedCount ] = NoPiece;
+
+		--capturedTypeCount[ pieceTypeIndex ];	
+	}
+
+	// Update current team stats
+	{
+		num_t* teamPieces = m_teams[ index ].pieces;
+		num_t* typeCounts = m_teams[ index ].typeCounts;
+		num_t& livingCount = m_teams[ index ].livingCount;
+
+		++livingCount;
+
+		//for ( int32_t i = 0; i < livingCount; ++i )
+		//{
+
+
+		//	if ( teamPieces[ i ] == targetPiece->m_handle )
+		//	{
+		//		teamPieces[ i ] = teamPieces[ livingCount - 1 ];
+		//		teamPieces[ livingCount - 1 ] = NoPiece;
+		//		--livingCount;
+		//		break;
+		//	}
+		//}
+	}
+
+	targetPiece->RemoveFromPlay();
+
+	return;
+}
+
 
 
 bool ChessState::IsOpenToAttack( const Piece* targetPiece ) const
