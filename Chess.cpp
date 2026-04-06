@@ -4,12 +4,12 @@
 
 bool ChessEngine::PerformMoveAction( const pieceHandle_t pieceHdl, const num_t targetX, const num_t targetY )
 {
-	Piece* piece = s.GetPiece( pieceHdl );
+	Piece* piece = m_state.GetPiece( pieceHdl );
 	if ( piece == nullptr ) {
 		return false;
 	}
 
-	const moveType_t legalMove = s.IsLegalMove( piece, targetX, targetY );
+	const moveType_t legalMove = m_state.IsLegalMove( piece, targetX, targetY );
 	if ( legalMove == moveType_t::NONE ) {
 		return false;
 	}
@@ -21,7 +21,7 @@ bool ChessEngine::PerformMoveAction( const pieceHandle_t pieceHdl, const num_t t
 
 void ChessEngine::CalculateGameState( const pieceHandle_t movedPieceHdl )
 {
-	Piece* piece = s.GetPiece( movedPieceHdl );
+	Piece* piece = m_state.GetPiece( movedPieceHdl );
 	if ( piece == nullptr ) {
 		return;
 	}
@@ -31,37 +31,37 @@ void ChessEngine::CalculateGameState( const pieceHandle_t movedPieceHdl )
 		const teamCode_t opposingTeam = GetOpposingTeam( piece->team );
 
 		const pieceHandle_t kingHdl = FindPiece( opposingTeam, pieceType_t::KING, 0 );
-		const Piece* king = s.GetPiece( kingHdl );
+		const Piece* king = m_state.GetPiece( kingHdl );
 
-		checkedTeam = teamCode_t::NONE;
+		m_checkedTeam = teamCode_t::NONE;
 		if ( king == nullptr )
 		{
-			winner = piece->team;
+			m_winner = piece->team;
 		}
 
 		const bool notCapturedAfterMove = ( king != nullptr );
 
-		if ( notCapturedAfterMove && s.IsOpenToAttack( king ) )
+		if ( notCapturedAfterMove && m_state.IsOpenToAttack( king ) )
 		{
-			checkedTeam = opposingTeam;
+			m_checkedTeam = opposingTeam;
 
-			if ( s.IsCheckMate( piece, opposingTeam ) )
+			if ( m_state.IsCheckMate( piece, opposingTeam ) )
 			{
-				winner = piece->team;
+				m_winner = piece->team;
 			}
 		}
 		else
 		{
-			if ( s.IsStalemate( opposingTeam ) )
+			if ( m_state.IsStalemate( opposingTeam ) )
 			{
-				stalemate = true;
+				m_stalemate = true;
 			}
 		}
 	}
 
-	currentTurn = ( currentTurn == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
+	m_currentTurn = ( m_currentTurn == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 
-	++turnCount;
+	++m_turnCount;
 }
 
 
@@ -73,9 +73,9 @@ pieceHandle_t ChessEngine::FindPiece( const teamCode_t team, const pieceType_t t
 
 	for ( int32_t i = 0; i < GetPieceCount(); ++i )
 	{
-		const bool teamsMatch = ( s.pieces[ i ]->team == team );
-		const bool piecesMatch = ( s.pieces[ i ]->type == type );
-		const bool instanceMatch = ( s.pieces[ i ]->instance == instance );
+		const bool teamsMatch = ( m_state.m_pieces[ i ]->team == team );
+		const bool piecesMatch = ( m_state.m_pieces[ i ]->type == type );
+		const bool instanceMatch = ( m_state.m_pieces[ i ]->GetInstanceNumber() == instance );
 
 		if ( teamsMatch && piecesMatch && instanceMatch ) {
 			return i;
@@ -87,14 +87,14 @@ pieceHandle_t ChessEngine::FindPiece( const teamCode_t team, const pieceType_t t
 
 void ChessEngine::SetBoard( const gameConfig_t& cfg )
 {
-	turnCount = 0;
-	currentTurn = teamCode_t::WHITE;
+	m_turnCount = 0;
+	m_currentTurn = teamCode_t::WHITE;
 
 	for ( int32_t i = 0; i < BoardSize; ++i )
 	{
 		for ( int32_t j = 0; j < BoardSize; ++j )
 		{
-			s.grid[ i ][ j ] = NoPiece;
+			m_state.m_grid[ i ][ j ] = NoPiece;
 
 			const pieceType_t pieceType = cfg.board[ i ][ j ].pieceType;
 			const teamCode_t teamCode = cfg.board[ i ][ j ].team;
@@ -111,22 +111,22 @@ void ChessEngine::SetBoard( const gameConfig_t& cfg )
 
 void ChessEngine::EnterPieceInGame( Piece* piece, const num_t x, const num_t y )
 {
-	s.pieces[ pieceNum ] = piece;
-	s.pieces[ pieceNum ]->BindBoard( &s, pieceNum );
-	s.pieces[ pieceNum ]->PlaceAt( x, y );
+	m_state.m_pieces[ m_pieceNum ] = piece;
+	m_state.m_pieces[ m_pieceNum ]->BindBoard( &m_state, m_pieceNum );
+	m_state.m_pieces[ m_pieceNum ]->PlaceAt( x, y );
 
 	const num_t teamIndex = static_cast<num_t>( piece->team );
 
-	team_t& team = s.teams[ teamIndex ];
+	team_t& team = m_state.m_teams[ teamIndex ];
 
 	const num_t pieceIndex = team.livingCount;
 	const num_t pieceTypeIndex = static_cast<num_t>( piece->type );
 
-	team.pieces[ pieceIndex ] = pieceNum;
+	team.pieces[ pieceIndex ] = m_pieceNum;
 	++team.livingCount;
-	++pieceNum;
+	++m_pieceNum;
 
-	piece->instance = team.typeCounts[ pieceTypeIndex ];
+	piece->SetInstanceNumber( team.typeCounts[ pieceTypeIndex ] );
 
 	++team.typeCounts[ pieceTypeIndex ];
 }
@@ -148,36 +148,13 @@ bool ChessEngine::IsValidHandle( const pieceHandle_t handle ) const
 pieceInfo_t ChessEngine::GetInfo( const pieceHandle_t pieceType ) const
 {
 	pieceInfo_t info;
-	const Piece* piece = s.GetPiece( pieceType );
+	const Piece* piece = m_state.GetPiece( pieceType );
 
 	if ( piece != nullptr )
 	{
 		info.pieceType = piece->type;
 		info.team = piece->team;
-		info.instance = piece->instance;
-		info.onBoard = true;
-	}
-	else
-	{
-		info.pieceType = pieceType_t::NONE;
-		info.team = teamCode_t::NONE;
-		info.instance = 0;
-		info.onBoard = false;
-	}
-	return info;
-}
-
-
-pieceInfo_t ChessEngine::GetInfo( const num_t x, const num_t y ) const
-{
-	pieceInfo_t info;
-	const Piece* piece = s.GetPiece( x, y );
-
-	if ( piece != nullptr )
-	{
-		info.pieceType = piece->type;
-		info.team = piece->team;
-		info.instance = piece->instance;
+		info.instance = piece->GetInstanceNumber();
 		info.isPiece = true;
 		info.onBoard = true;
 	}
@@ -187,7 +164,32 @@ pieceInfo_t ChessEngine::GetInfo( const num_t x, const num_t y ) const
 		info.team = teamCode_t::NONE;
 		info.instance = 0;
 		info.isPiece = false;
-		info.onBoard = s.OnBoard( x, y );
+		info.onBoard = m_state.OnBoard( piece->m_x, piece->m_y );
+	}
+	return info;
+}
+
+
+pieceInfo_t ChessEngine::GetInfo( const num_t x, const num_t y ) const
+{
+	pieceInfo_t info;
+	const Piece* piece = m_state.GetPiece( x, y );
+
+	if ( piece != nullptr )
+	{
+		info.pieceType = piece->type;
+		info.team = piece->team;
+		info.instance = piece->GetInstanceNumber();
+		info.isPiece = true;
+		info.onBoard = true;
+	}
+	else
+	{
+		info.pieceType = pieceType_t::NONE;
+		info.team = teamCode_t::NONE;
+		info.instance = 0;
+		info.isPiece = false;
+		info.onBoard = m_state.OnBoard( x, y );
 	}
 	return info;
 }
@@ -195,12 +197,12 @@ pieceInfo_t ChessEngine::GetInfo( const num_t x, const num_t y ) const
 
 bool ChessEngine::GetLocation( const pieceHandle_t pieceType, num_t& x, num_t& y ) const
 {
-	const Piece* piece = s.GetPiece( pieceType );
+	const Piece* piece = m_state.GetPiece( pieceType );
 
 	if ( piece != nullptr )
 	{
-		x = piece->x;
-		y = piece->y;
+		x = piece->X();
+		y = piece->Y();
 		return true;
 	}
 	else
@@ -224,11 +226,11 @@ Piece* ChessEngine::CreatePiece( const pieceType_t pieceType, const teamCode_t t
 
 			piece->type = pieceType_t::PAWN;
 			piece->team = teamCode;
-			piece->numActions = static_cast<int32_t>( moveType_t::PAWN_ACTIONS );
-			piece->actions = PawnActions;
-			piece->moveSuperset = &PawnMoveSuperset;
+			piece->m_numActions = static_cast<int32_t>( moveType_t::PAWN_ACTIONS );
+			piece->m_actions = PawnActions;
+			piece->m_moveSuperset = &PawnMoveSuperset;
 
-			piece->teamDirection = ( teamCode == teamCode_t::WHITE ) ? -1 : 1;
+			piece->m_teamDirection = ( teamCode == teamCode_t::WHITE ) ? -1 : 1;
 
 			piece->FillMoveCache();
 		} break;
@@ -239,9 +241,9 @@ Piece* ChessEngine::CreatePiece( const pieceType_t pieceType, const teamCode_t t
 
 			piece->type = pieceType_t::ROOK;
 			piece->team = teamCode;
-			piece->numActions = static_cast<int32_t>( moveType_t::ROOK_ACTIONS );
-			piece->actions = RookActions;
-			piece->moveSuperset = &RookMoveSuperset;
+			piece->m_numActions = static_cast<int32_t>( moveType_t::ROOK_ACTIONS );
+			piece->m_actions = RookActions;
+			piece->m_moveSuperset = &RookMoveSuperset;
 
 			piece->FillMoveCache();
 		} break;
@@ -252,9 +254,9 @@ Piece* ChessEngine::CreatePiece( const pieceType_t pieceType, const teamCode_t t
 
 			piece->type = pieceType_t::KNIGHT;
 			piece->team = teamCode;
-			piece->numActions = static_cast<int32_t>( moveType_t::KNIGHT_ACTIONS );
-			piece->actions = KnightActions;
-			piece->moveSuperset = &KnightMoveSuperset;
+			piece->m_numActions = static_cast<int32_t>( moveType_t::KNIGHT_ACTIONS );
+			piece->m_actions = KnightActions;
+			piece->m_moveSuperset = &KnightMoveSuperset;
 
 			piece->FillMoveCache();
 		} break;
@@ -265,9 +267,9 @@ Piece* ChessEngine::CreatePiece( const pieceType_t pieceType, const teamCode_t t
 
 			piece->type = pieceType_t::BISHOP;
 			piece->team = teamCode;
-			piece->numActions = static_cast<int32_t>( moveType_t::BISHOP_ACTIONS );
-			piece->actions = BishopActions;
-			piece->moveSuperset = &BishopMoveSuperset;
+			piece->m_numActions = static_cast<int32_t>( moveType_t::BISHOP_ACTIONS );
+			piece->m_actions = BishopActions;
+			piece->m_moveSuperset = &BishopMoveSuperset;
 
 			piece->FillMoveCache();
 		} break;
@@ -278,9 +280,9 @@ Piece* ChessEngine::CreatePiece( const pieceType_t pieceType, const teamCode_t t
 
 			piece->type = pieceType_t::QUEEN;
 			piece->team = teamCode;
-			piece->numActions = static_cast<int32_t>( moveType_t::QUEEN_ACTIONS );
-			piece->actions = QueenActions;
-			piece->moveSuperset = &QueenMoveSuperset;
+			piece->m_numActions = static_cast<int32_t>( moveType_t::QUEEN_ACTIONS );
+			piece->m_actions = QueenActions;
+			piece->m_moveSuperset = &QueenMoveSuperset;
 
 			piece->FillMoveCache();
 		} break;
@@ -291,9 +293,9 @@ Piece* ChessEngine::CreatePiece( const pieceType_t pieceType, const teamCode_t t
 
 			piece->type = pieceType_t::KING;
 			piece->team = teamCode;
-			piece->numActions = static_cast<int32_t>( moveType_t::KING_ACTIONS );
-			piece->actions = KingActions;
-			piece->moveSuperset = &KingMoveSuperset;
+			piece->m_numActions = static_cast<int32_t>( moveType_t::KING_ACTIONS );
+			piece->m_actions = KingActions;
+			piece->m_moveSuperset = &KingMoveSuperset;
 
 			piece->FillMoveCache();
 		} break;

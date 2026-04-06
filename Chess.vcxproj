@@ -328,7 +328,6 @@
   <ItemGroup>
     <ClCompile Include="chessState.cpp" />
     <ClCompile Include="chess.cpp" />
-    <ClCompile Include="eval.cpp" />
     <ClCompile Include="timer.cpp" />
     <ClCompile Include="util.cpp" />
     <ClCompile Include="main.cpp" />

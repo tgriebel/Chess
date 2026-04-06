@@ -130,39 +130,39 @@ void Piece::Move( const moveType_t moveType, const num_t targetX, const num_t ta
 		Piece* rook = nullptr;
 		if ( moveType == moveType_t::KING_CASTLE_L )
 		{
-			rook = state->GetPiece( 0, y );
+			rook = m_state->GetPiece( 0, m_y );
 
 			assert( rook && rook->type == pieceType_t::ROOK ); // Already tested legal
 
-			rook->PlaceAt( targetX + 1, y );
+			rook->PlaceAt( targetX + 1, m_y );
 		}
 		else if ( moveType == moveType_t::KING_CASTLE_R )
 		{
-			rook = state->GetPiece( BoardSize - 1, y );
+			rook = m_state->GetPiece( BoardSize - 1, m_y );
 
 			assert( rook && rook->type == pieceType_t::ROOK ); // Already tested legal
 
-			rook->PlaceAt( targetX - 1, y );
+			rook->PlaceAt( targetX - 1, m_y );
 		}
 		PlaceAt( targetX, targetY );
 	}
 	else if( isPawnAction )
 	{
-		const bool doubleMove = ( abs( targetY - y ) == 2 );
-		Piece* targetPiece = state->GetEnpassant( targetX, targetY );
+		const bool doubleMove = ( abs( targetY - m_y ) == 2 );
+		Piece* targetPiece = m_state->GetEnpassant( targetX, targetY );
 
 		if ( targetPiece == nullptr ) {
-			targetPiece = state->GetPiece( targetX, targetY );
+			targetPiece = m_state->GetPiece( targetX, targetY );
 		}
 		
-		if ( state->IsBlocked( team, targetX, targetY ) == false ) {
-			state->CapturePiece( team, targetPiece );
+		if ( m_state->IsBlocked( team, targetX, targetY ) == false ) {
+			m_state->CapturePiece( team, targetPiece );
 		}
 
 		PlaceAt( targetX, targetY );
-		++moveCount;
+		++m_moveCount;
 
-		state->SetEnpassant( doubleMove ? handle : NoPiece );
+		m_state->SetEnpassant( doubleMove ? m_handle : NoPiece );
 
 		if ( CanPromote() ) {
 			Promote();
@@ -170,42 +170,42 @@ void Piece::Move( const moveType_t moveType, const num_t targetX, const num_t ta
 	}
 	else
 	{
-		state->SetEnpassant( NoPiece );
+		m_state->SetEnpassant( NoPiece );
 
-		if ( state->IsBlocked( team, targetX, targetY ) == false )
+		if ( m_state->IsBlocked( team, targetX, targetY ) == false )
 		{
-			Piece* opponentPiece = state->GetPiece( targetX, targetY );
+			Piece* opponentPiece = m_state->GetPiece( targetX, targetY );
 
-			state->CapturePiece( team, opponentPiece );
+			m_state->CapturePiece( team, opponentPiece );
 		}
 
 		PlaceAt( targetX, targetY );
-		++moveCount;
+		++m_moveCount;
 	}
 }
 
 
 void Piece::PlaceAt( const num_t targetX, const num_t targetY )
 {
-	if ( state->OnBoard( x, y ) ) {
-		state->SetHandle( NoPiece, x, y );
+	if ( m_state->OnBoard( m_x, m_y ) ) {
+		m_state->SetHandle( NoPiece, m_x, m_y );
 	}
 
-	if ( state->OnBoard( targetX, targetY ) ) {
-		state->SetHandle( handle, targetX, targetY );
+	if ( m_state->OnBoard( targetX, targetY ) ) {
+		m_state->SetHandle( m_handle, targetX, targetY );
 	}
 
-	x = targetX;
-	y = targetY;
+	m_x = targetX;
+	m_y = targetY;
 }
 
 
 void Piece::TempPlacement( const num_t targetX, const num_t targetY )
 {
-	assert( ( x != -1 ) && ( y != -1 ) );
+	assert( ( m_x != -1 ) && ( m_y != -1 ) );
 
-	prevX = x;
-	prevY = y;
+	m_prevX = m_x;
+	m_prevY = m_y;
 
 	PlaceAt( targetX, targetY );
 }
@@ -213,10 +213,10 @@ void Piece::TempPlacement( const num_t targetX, const num_t targetY )
 
 void Piece::ReturnPlacement()
 {
-	PlaceAt( prevX, prevY );
+	PlaceAt( m_prevX, m_prevY );
 
-	prevX = -1;
-	prevY = -1;
+	m_prevX = -1;
+	m_prevY = -1;
 }
 
 
@@ -227,11 +227,11 @@ bool Piece::CanPromote() const
 		return false;
 	}
 
-	num_t nextX = x;
-	num_t nextY = y;
+	num_t nextX = m_x;
+	num_t nextY = m_y;
 	CalculateStep( GetActionNum( moveType_t::PAWN_T ), nextX, nextY );
 
-	return ( state->OnBoard( nextX, nextY ) == false );
+	return ( m_state->OnBoard( nextX, nextY ) == false );
 }
 
 
@@ -245,7 +245,7 @@ void Piece::Promote()
 	event.type = PAWN_PROMOTION;
 	event.promotionType = pieceType_t::NONE;
 
-	state->PromotionCallback( team, event );
+	m_state->PromotionCallback( team, event );
 
 	bool invalidChoice = true;
 	invalidChoice = invalidChoice && ( event.promotionType != pieceType_t::QUEEN );
@@ -263,34 +263,34 @@ void Piece::Promote()
 	{
 	case pieceType_t::ROOK:
 	{
-		actions = RookActions;
-		moveSuperset = &RookMoveSuperset;
-		numActions = static_cast<int32_t>( moveType_t::ROOK_ACTIONS );
+		m_actions = RookActions;
+		m_moveSuperset = &RookMoveSuperset;
+		m_numActions = static_cast<int32_t>( moveType_t::ROOK_ACTIONS );
 	} break;
 
 	case pieceType_t::BISHOP:
 	{
-		actions = BishopActions;
-		moveSuperset = &BishopMoveSuperset;
-		numActions = static_cast<int32_t>( moveType_t::BISHOP_ACTIONS );
+		m_actions = BishopActions;
+		m_moveSuperset = &BishopMoveSuperset;
+		m_numActions = static_cast<int32_t>( moveType_t::BISHOP_ACTIONS );
 	} break;
 
 	case pieceType_t::KNIGHT:
 	{
-		actions = KnightActions;
-		moveSuperset = &KnightMoveSuperset;
-		numActions = static_cast<int32_t>( moveType_t::KNIGHT_ACTIONS );
+		m_actions = KnightActions;
+		m_moveSuperset = &KnightMoveSuperset;
+		m_numActions = static_cast<int32_t>( moveType_t::KNIGHT_ACTIONS );
 	} break;
 
 	case pieceType_t::QUEEN:
 	{
-		actions = QueenActions;
-		moveSuperset = &QueenMoveSuperset;
-		numActions = static_cast<int32_t>( moveType_t::QUEEN_ACTIONS );
+		m_actions = QueenActions;
+		m_moveSuperset = &QueenMoveSuperset;
+		m_numActions = static_cast<int32_t>( moveType_t::QUEEN_ACTIONS );
 	} break;
 	}
 
-	promoted = true;
+	m_promoted = true;
 }
 
 
@@ -310,16 +310,16 @@ num_t Piece::GetStepCount( const int32_t actionNum, const num_t targetX, const n
 		return BoardSize;
 	}
 
-	if ( state->OnBoard( targetX, targetY ) == false ) {
+	if ( m_state->OnBoard( targetX, targetY ) == false ) {
 		return BoardSize;
 	}
 
-	if ( state->IsBlocked( team, targetX, targetY ) ) {
+	if ( m_state->IsBlocked( team, targetX, targetY ) ) {
 		return BoardSize;
 	}
 
-	num_t nextX = x;
-	num_t nextY = y;
+	num_t nextX = m_x;
+	num_t nextY = m_y;
 	num_t prevDist = INT8_MAX;
 	num_t dist = INT8_MAX;
 
@@ -340,7 +340,7 @@ num_t Piece::GetStepCount( const int32_t actionNum, const num_t targetX, const n
 			return step;
 		}
 
-		if ( state->GetPiece( nextX, nextY ) != nullptr ) {
+		if ( m_state->GetPiece( nextX, nextY ) != nullptr ) {
 			return BoardSize;
 		}
 	}
@@ -356,8 +356,8 @@ bool Piece::InActionPath( const int32_t actionNum, const num_t targetX, const nu
 			return false;
 		}
 
-		const bool isOccupied = state->GetHandle( targetX, targetY ) != NoPiece;
-		const bool isBlocked = state->IsBlocked( team, targetX, targetY );
+		const bool isOccupied = m_state->GetHandle( targetX, targetY ) != NoPiece;
+		const bool isBlocked = m_state->IsBlocked( team, targetX, targetY );
 
 		const num_t maxSteps = GetAction( actionNum ).maxSteps;
 		const num_t steps = GetStepCount( actionNum, targetX, targetY );
@@ -370,7 +370,7 @@ bool Piece::InActionPath( const int32_t actionNum, const num_t targetX, const nu
 
 		if ( ( type == moveType_t::PAWN_KILL_L ) || ( type == moveType_t::PAWN_KILL_R ) )
 		{
-			const Piece* enpassantPiece = state->GetEnpassant( targetX, targetY );
+			const Piece* enpassantPiece = m_state->GetEnpassant( targetX, targetY );
 			const bool isEnpassantEnemy = ( enpassantPiece != nullptr ) && ( enpassantPiece->team != team );
 			const bool isEnemy = ( isOccupied || isEnpassantEnemy ) && ( isBlocked == false );
 
@@ -394,10 +394,10 @@ bool Piece::InActionPath( const int32_t actionNum, const num_t targetX, const nu
 		const moveType_t type = GetAction( actionNum ).type;
 
 		if ( type == moveType_t::KING_CASTLE_L ) {
-			castlePiece = state->GetPiece( 0, y );
+			castlePiece = m_state->GetPiece( 0, m_y );
 		}
 		else if ( type == moveType_t::KING_CASTLE_R ) {
-			castlePiece = state->GetPiece( BoardSize - 1, y );
+			castlePiece = m_state->GetPiece( BoardSize - 1, m_y );
 		}
 		else {
 			return true;
@@ -416,20 +416,20 @@ bool Piece::InActionPath( const int32_t actionNum, const num_t targetX, const nu
 		const moveType_t moveTest = rightCastle ? moveType_t::ROOK_L : moveType_t::ROOK_R;
 
 		const num_t rookTargetX = targetX + flankOffset;
-		const bool rookMove = castlePiece->InActionPath( castlePiece->GetActionNum( moveTest ), rookTargetX, y ); // Cheaks a clear path between rook and king
+		const bool rookMove = castlePiece->InActionPath( castlePiece->GetActionNum( moveTest ), rookTargetX, m_y ); // Cheaks a clear path between rook and king
 
 		if ( rookMove == false ) {
 			return false;
 		}
 
-		if ( state->GetPiece( rookTargetX, y ) != nullptr ) {
+		if ( m_state->GetPiece( rookTargetX, m_y ) != nullptr ) {
 			return false;
 		}
 
 		// Illegal: Castle while in check
 		// Illegal: Castle through any attacked square
 		// Illegal: Castle into checked square (covered by general rule)
-		if ( state->IsChecked( team ) || state->IsOpenToAttackAt( castlePiece, rightCastle ? x + 1 : x - 1, y ) ) {
+		if ( m_state->IsChecked( team ) || m_state->IsOpenToAttackAt( castlePiece, rightCastle ? m_x + 1 : m_x - 1, m_y ) ) {
 			return false;
 		}
 		return true;
@@ -453,15 +453,15 @@ num_t Piece::GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSiz
 
 	num_t validSquares = 0;
 	const int32_t actionCount = GetActionCount();
-	num_t nextX = x;
-	num_t nextY = y;
+	num_t nextX = m_x;
+	num_t nextY = m_y;
 	const int32_t maxSteps = GetActions()[ actionNum ].maxSteps;
 
 	for ( int32_t step = 1; step <= maxSteps; ++step )
 	{
 		CalculateStep( actionNum, nextX, nextY );
 
-		if ( state->IsLegalMove( this, nextX, nextY ) != moveType_t::NONE ) {
+		if ( m_state->IsLegalMove( this, nextX, nextY ) != moveType_t::NONE ) {
 			path[ validSquares++ ] = moveAction_t( nextX, nextY, GetAction( actionNum ).type, 1 );
 		}
 	}
@@ -471,7 +471,7 @@ num_t Piece::GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSiz
 
 void Piece::FillMoveCache()
 {
-	MoveCache& superset = *const_cast<MoveCache*>( moveSuperset );
+	MoveCache& superset = *const_cast<MoveCache*>( m_moveSuperset );
 
 	// Only fill once per piece type (shared static)
 	if ( superset.bits[ 0 ] != 0 || superset.bits[ 1 ] != 0 ||

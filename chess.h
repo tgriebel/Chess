@@ -472,23 +472,23 @@ protected:
 		team = teamCode_t::NONE;
 		type = pieceType_t::NONE;
 
-		prevX = -1;
-		prevY = -1;
-		x = -1;
-		y = -1;
+		m_prevX = -1;
+		m_prevY = -1;
+		m_x = -1;
+		m_y = -1;
 
-		numActions = 0;
-		teamDirection = 1;
-		moveCount = 0;
+		m_numActions = 0;
+		m_teamDirection = 1;
+		m_moveCount = 0;
 
-		instance = 0;
-		handle = NoPiece;
+		m_instance = 0;
+		m_handle = NoPiece;
 
-		state = nullptr;
-		actions = nullptr;
-		moveSuperset = nullptr;
+		m_state = nullptr;
+		m_actions = nullptr;
+		m_moveSuperset = nullptr;
 
-		promoted = false;
+		m_promoted = false;
 	}
 
 	bool			IsValidAction( const int32_t actionNum ) const;
@@ -508,15 +508,19 @@ public:
 	bool			CanPromote() const;																				// Pawn promotion
 	void			Promote();																						// Pawn promotion
 
-	bool			HasMoved() const { return ( moveCount > 0 ); }													// Has this piece been moved in this game? (for castling, book-keeping)
-	int32_t			GetActionCount() const { return numActions; }													// How many unique move actions can a piece perform?
-	bool			OnBoard() const { return ( state != nullptr ); }												// Is the piece in play? (e.g. not captured)
-	inline int32_t	GetTeamDirection() const { return teamDirection; }												// Used for pawn movement
+	inline num_t	X() const {	return m_x; }
+	inline num_t	Y() const {	return m_y; }
+	inline num_t	GetInstanceNumber() const {	return m_instance; }
+
+	bool			HasMoved() const { return ( m_moveCount > 0 ); }												// Has this piece been moved in this game? (for castling, book-keeping)
+	int32_t			GetActionCount() const { return m_numActions; }													// How many unique move actions can a piece perform?
+	bool			OnBoard() const { return ( m_state != nullptr ); }												// Is the piece in play? (e.g. not captured)
+	inline int32_t	GetTeamDirection() const { return m_teamDirection; }											// Used for pawn movement
 
 	void RemoveFromPlay()
 	{
 		PlaceAt( -1, -1 );
-		state = nullptr;
+		m_state = nullptr;
 	}
 
 	int32_t GetActionNum( const moveType_t moveType ) const
@@ -535,39 +539,44 @@ public:
 
 	const moveAction_t& GetAction( const int32_t actionNum ) const
 	{
-		return actions[ actionNum ];
+		return m_actions[ actionNum ];
 	}
 
-	const moveAction_t* GetActions() const { return actions; }
-	const MoveCache& GetMoveCache() const { return *moveSuperset; }
+	const moveAction_t* GetActions() const { return m_actions; }
+	const MoveCache& GetMoveCache() const { return *m_moveSuperset; }
 
 private:
 
+	inline void SetInstanceNumber( const num_t instance )
+	{
+		m_instance = instance;
+	}
+
 	void BindBoard( ChessState* state, const pieceHandle_t handle )
 	{
-		this->state = state;
-		this->handle = handle;
+		this->m_state = state;
+		this->m_handle = handle;
 	}
 
 public:
 	teamCode_t			team;
 	pieceType_t			type;
-	num_t				instance;
 
 protected:
-	num_t				prevX;
-	num_t				prevY;
-	num_t				x;
-	num_t				y;
-	num_t				moveCount;
-	num_t				numActions;
-	num_t				teamDirection;
-	bool				promoted;
-	pieceHandle_t		handle;
+	num_t				m_prevX;
+	num_t				m_prevY;
+	num_t				m_x;
+	num_t				m_y;
+	num_t				m_instance;
+	num_t				m_moveCount;
+	num_t				m_numActions;
+	num_t				m_teamDirection;
+	bool				m_promoted;
+	pieceHandle_t		m_handle;
 
-	const moveAction_t*	actions;
-	const MoveCache*	moveSuperset;
-	ChessState*			state;
+	const moveAction_t*	m_actions;
+	const MoveCache*	m_moveSuperset;
+	ChessState*			m_state;
 
 	friend class ChessEngine;
 	friend class ChessState;
@@ -602,22 +611,22 @@ public:
 	bool				IsOpenToAttack( const Piece* targetPiece ) const;
 	bool				IsOpenToAttackAt( const Piece* targetPiece, const num_t targetX, const num_t targetY ) const;
 	Piece*				GetEnpassant( const num_t targetX, const num_t targetY );
-	inline void			SetEnpassant( const pieceHandle_t handle ) { enpassantPawn = handle; }							// Saves enpassant pawn for next turn checks
+	inline void			SetEnpassant( const pieceHandle_t handle ) { m_enpassantPawn = handle; }							// Saves enpassant pawn for next turn checks
 
 	inline void			PromotionCallback( const teamCode_t teamCode, callbackEvent_t& event )							// User needs to make their pick of piece, A.I. can run a heuristic
 	{
-		if ( promotionCallback[ (int32_t)teamCode ] != nullptr ) {
-			( *promotionCallback[ (int32_t)teamCode ] )( event );
+		if ( m_promotionCallback[ (int32_t)teamCode ] != nullptr ) {
+			( *m_promotionCallback[ (int32_t)teamCode ] )( event );
 		};
 	}
 
 private:
-	callback_t			promotionCallback[ TeamCount ];
-	pieceHandle_t		enpassantPawn;
-	Piece*				pieces[ PieceCount ];
-	team_t				teams[ TeamCount ];
-	pieceHandle_t		grid[ BoardSize ][ BoardSize ]; // (0,0) is top left, mutable for quick tests (const-functions should always reverse)
-	ChessEngine*		game;
+	callback_t			m_promotionCallback[ TeamCount ];
+	pieceHandle_t		m_enpassantPawn;
+	Piece*				m_pieces[ PieceCount ];
+	team_t				m_teams[ TeamCount ];
+	pieceHandle_t		m_grid[ BoardSize ][ BoardSize ]; // (0,0) is top left, mutable for quick tests (const-functions should always reverse)
+	ChessEngine*		m_game;
 
 	friend class ChessEngine;
 };
@@ -635,37 +644,37 @@ public:
 
 	~ChessEngine()
 	{
-		pieceNum = 0;
+		m_pieceNum = 0;
 		for ( int32_t i = 0; i < PieceCount; ++i )
 		{
-			delete s.pieces[ i ];
+			delete m_state.m_pieces[ i ];
 		}
 	}
 
 	void Init( const gameConfig_t& cfg )
 	{
-		pieceNum = 0;
-		winner = teamCode_t::NONE;
+		m_pieceNum = 0;
+		m_winner = teamCode_t::NONE;
 		
-		memset( s.pieces, 0, sizeof( Piece* ) * PieceCount );
-		config = cfg;
-		SetBoard( config );
-		s.game = this;
+		memset( m_state.m_pieces, 0, sizeof( Piece* ) * PieceCount );
+		m_config = cfg;
+		SetBoard( m_config );
+		m_state.m_game = this;
 
 		SetPromotionCallback( teamCode_t::WHITE, &AutoPromoteQueen );
 		SetPromotionCallback( teamCode_t::BLACK, &AutoPromoteQueen );
 
-		const bool whiteChecked = s.IsChecked( teamCode_t::WHITE );
-		const bool blackChecked = s.IsChecked( teamCode_t::BLACK );
+		const bool whiteChecked = m_state.IsChecked( teamCode_t::WHITE );
+		const bool blackChecked = m_state.IsChecked( teamCode_t::BLACK );
 
 		assert( ( whiteChecked && blackChecked ) == false ); // Should be impossible, but maybe ok in test-cases?
 
 		if( whiteChecked ) {
-			checkedTeam = teamCode_t::WHITE;
+			m_checkedTeam = teamCode_t::WHITE;
 		}
 
 		if ( blackChecked ) {
-			checkedTeam = teamCode_t::BLACK;
+			m_checkedTeam = teamCode_t::BLACK;
 		}
 	}
 
@@ -699,15 +708,15 @@ public:
 
 	resultCode_t GetGameResult() const
 	{
-		if ( stalemate )
+		if ( m_stalemate )
 		{
 			return resultCode_t::RESULT_GAME_COMPLETE_STALEMATE;
 		}
-		if ( winner == teamCode_t::WHITE )
+		if ( m_winner == teamCode_t::WHITE )
 		{
 			return resultCode_t::RESULT_GAME_COMPLETE_WHITE_WINS;
 		}
-		if ( winner == teamCode_t::BLACK )
+		if ( m_winner == teamCode_t::BLACK )
 		{
 			return resultCode_t::RESULT_GAME_COMPLETE_BLACK_WINS;
 		}
@@ -720,17 +729,17 @@ public:
 		const int32_t index = static_cast<int32_t>( teamCode );
 		if ( ( index >= 0 ) && ( index < TeamCount ) )
 		{
-			captureCount = s.teams[ index ].capturedCount;
-			for ( int32_t i = 0; i < s.teams[ index ].capturedCount; ++i )
+			captureCount = m_state.m_teams[ index ].capturedCount;
+			for ( int32_t i = 0; i < m_state.m_teams[ index ].capturedCount; ++i )
 			{
-				capturedPieces[ i ] = GetInfo( s.teams[ index ].captured[ i ] );
+				capturedPieces[ i ] = GetInfo( m_state.m_teams[ index ].captured[ i ] );
 			}
 		}
 	}
 
 	void EnumerateActions( const pieceHandle_t pieceHdl, std::vector< moveAction_t >& actionList ) const
 	{
-		const Piece* piece = s.GetPiece( pieceHdl );
+		const Piece* piece = m_state.GetPiece( pieceHdl );
 		if ( piece != nullptr )
 		{
 			const int32_t actionCount = piece->GetActionCount();
@@ -755,12 +764,12 @@ public:
 	pieceInfo_t			GetInfo( const pieceHandle_t pieceType ) const;
 	pieceInfo_t			GetInfo( const num_t x, const num_t y ) const;
 	bool				GetLocation( const pieceHandle_t pieceType, num_t& x, num_t& y ) const;
-	void				SetPromotionCallback( const teamCode_t team, callback_t callback ) { this->s.promotionCallback[ (int32_t)team ] = callback; }
-	inline bool			IsStalemate() const { return stalemate; }
-	inline teamCode_t	GetCurrentPlayer() { return currentTurn; } 
-	inline teamCode_t	GetWinner() const { return winner; }
-	inline teamCode_t	GetCheckedTeam() const { return checkedTeam; }
-	inline num_t		GetPieceCount() const { return pieceNum; }
+	void				SetPromotionCallback( const teamCode_t team, callback_t callback ) { this->m_state.m_promotionCallback[ (int32_t)team ] = callback; }
+	inline bool			IsStalemate() const { return m_stalemate; }
+	inline teamCode_t	GetCurrentPlayer() { return m_currentTurn; } 
+	inline teamCode_t	GetWinner() const { return m_winner; }
+	inline teamCode_t	GetCheckedTeam() const { return m_checkedTeam; }
+	inline num_t		GetPieceCount() const { return m_pieceNum; }
 	bool				IsValidHandle( const pieceHandle_t handle ) const;
 
 private:
@@ -769,14 +778,14 @@ private:
 	bool				PerformMoveAction( const pieceHandle_t pieceHdl, const num_t targetX, const num_t targetY );
 	void				CalculateGameState( const pieceHandle_t movedPieceHdl );
 private:
-	ChessState			s;
-	num_t				pieceNum;
-	int32_t				turnCount;
-	teamCode_t			currentTurn;
-	teamCode_t			winner;
-	teamCode_t			checkedTeam;
-	bool				stalemate;
-	gameConfig_t		config;
+	ChessState			m_state;
+	num_t				m_pieceNum;
+	int32_t				m_turnCount;
+	teamCode_t			m_currentTurn;
+	teamCode_t			m_winner;
+	teamCode_t			m_checkedTeam;
+	bool				m_stalemate;
+	gameConfig_t		m_config;
 };
 
 // Backwards compatibility
