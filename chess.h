@@ -498,9 +498,13 @@ public:
 	num_t			GetStepCount( const int32_t actionNum, const num_t targetX, const num_t targetY ) const;		// How many squares are traveled for this action?
 	num_t			GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSize ] ) const;					// Get all squares in this action's path
 	void			FillMoveCache();
+	int32_t			ComputeActionPath( const int32_t actionNum, position_t path[ BoardSize ] ) const;				// Generate path for an action
 	bool			InActionPath( const int32_t actionNum, const num_t targetX, const num_t targetY ) const;		// This action can reach this location
 	void			Move( const moveType_t moveType, const num_t targetX, const num_t targetY );					// Performs a game move, rules run
 	void			PlaceAt( const num_t targetX, const num_t targetY );											// Places a piece at a location, rules not runn. Temp moves, castling, etc
+
+	bool			IsPawnMoveValid( const int32_t actionNum, const num_t targetX, const num_t targetY ) const;		// Specialized checks for pawns (double-move, capture, enpassants)
+	bool			IsKingMoveValid( const int32_t actionNum, const num_t targetX, const num_t targetY ) const;		// Specialized checks for kings (castling)
 
 	void			TempPlacement( const num_t targetX, const num_t targetY );										// Place the piece offboard, outside rules engine. Assists other rule checks
 	void			ReturnPlacement();																				// Return the piece offboard, outside rules engine. Assists other rule checks

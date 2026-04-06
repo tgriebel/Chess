@@ -283,6 +283,8 @@ void ChessState::PromotionCallback( const teamCode_t teamCode, callbackEvent_t& 
 
 void ChessState::ReverseCapturePiece( const teamCode_t attacker, Piece* targetPiece )
 {
+	assert( 0 ); // NOT FINISHED
+
 	if ( targetPiece == nullptr ) {
 		return;
 	}
@@ -432,7 +434,7 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 		}
 	}
 
-	// Path of all attackers can be blocked
+	// Path of all attacker can be blocked
 	typedef std::tuple<int32_t, int32_t> move_t;
 	std::set<move_t> attackSquares;
 
@@ -493,6 +495,9 @@ bool ChessState::IsStalemate( const teamCode_t teamCode ) const
 {
 	const team_t team = m_teams[ (int32_t)teamCode ];
 
+	const pieceHandle_t kingHdl = m_game->FindPiece( teamCode, pieceType_t::KING, 0 );
+	const Piece* king = GetPiece( kingHdl );
+
 	for ( int32_t pieceIx = 0; pieceIx < team.livingCount; ++pieceIx )
 	{
 		const Piece* piece = GetPiece( team.pieces[ pieceIx ] );
@@ -510,27 +515,14 @@ bool ChessState::IsStalemate( const teamCode_t teamCode ) const
 
 				if ( IsLegalMove( piece, nextX, nextY ) != moveType_t::NONE )
 				{
-					const pieceHandle_t kingHdl = m_game->FindPiece( teamCode, pieceType_t::KING, 0 );
-					const Piece* king = GetPiece( kingHdl );
-
 					if( IsOpenToAttackAt( king, nextX, nextY ) ) {
 						continue;
 					}
-
-					// Need to do one final check that there aren't two kings
-					//if ( GetInfo( nextX, nextY ).piece != pieceType_t::NONE )
-					//{
-					//	if( ( team.livingCount == 1 ) && teams[ (int32_t)GetInfo( nextX, nextY ).team ].livingCount == 2 ) {
-					//		return true;
-					//	}
-					//}
-
 					return false;
 				}
 			}
 		}
 	}
-
 	return true;
 }
 

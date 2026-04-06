@@ -348,100 +348,152 @@ num_t Piece::GetStepCount( const int32_t actionNum, const num_t targetX, const n
 }
 
 
+bool Piece::IsPawnMoveValid( const int32_t actionNum, const num_t targetX, const num_t targetY ) const
+{
+	// Assume these have already been checked, and we're only checking additional pawn-specific conditions
+	assert( IsValidAction( actionNum ) );
+	assert ( m_state->OnBoard( targetX, targetY ) );
+
+	const moveType_t actionType = GetAction( actionNum ).type;
+
+	const bool isOccupied = m_state->GetHandle( targetX, targetY ) != NoPiece;
+	const bool isBlocked = m_state->IsBlocked( team, targetX, targetY );
+
+	const num_t maxSteps = GetAction( actionNum ).maxSteps;
+	const num_t steps = GetStepCount( actionNum, targetX, targetY );
+
+	const moveType_t type = GetAction( actionNum ).type;
+
+	if ( actionType == moveType_t::PAWN_T2X ) {
+		return ( isOccupied == false ) && ( steps <= maxSteps ) && ( HasMoved() == false );
+	}
+
+	if ( ( actionType == moveType_t::PAWN_KILL_L ) || ( actionType == moveType_t::PAWN_KILL_R ) )
+	{
+		const Piece* enpassantPiece = m_state->GetEnpassant( targetX, targetY );
+		const bool isEnpassantEnemy = ( enpassantPiece != nullptr ) && ( enpassantPiece->team != team );
+		const bool isEnemy = ( isOccupied || isEnpassantEnemy ) && ( isBlocked == false );
+
+		return isEnemy && ( steps <= maxSteps );
+	}
+
+	return ( isOccupied == false ) && ( steps <= maxSteps );
+}
+
+
+bool Piece::IsKingMoveValid( const int32_t actionNum, const num_t targetX, const num_t targetY ) const
+{
+	Piece* castlePiece = nullptr;
+	const moveType_t actionType = GetAction( actionNum ).type;
+
+	if ( actionType == moveType_t::KING_CASTLE_L ) {
+		castlePiece = m_state->GetPiece( 0, m_y );
+	}
+	else if ( actionType == moveType_t::KING_CASTLE_R ) {
+		castlePiece = m_state->GetPiece( BoardSize - 1, m_y );
+	}
+	else {
+		return true;
+	}
+
+	if ( ( castlePiece == nullptr ) || ( castlePiece->type != pieceType_t::ROOK ) ) {
+		return false;
+	}
+
+	if ( HasMoved() || castlePiece->HasMoved() ) {
+		return false;
+	}
+
+	const bool rightCastle = ( actionType == moveType_t::KING_CASTLE_R );
+	const num_t flankOffset = rightCastle ? -1 : 1;
+	const moveType_t moveTest = rightCastle ? moveType_t::ROOK_L : moveType_t::ROOK_R;
+
+	const num_t rookTargetX = targetX + flankOffset;
+	const bool rookMove = castlePiece->InActionPath( castlePiece->GetActionNum( moveTest ), rookTargetX, m_y ); // Cheaks a clear path between rook and king
+
+	if ( rookMove == false ) {
+		return false;
+	}
+
+	if ( m_state->GetPiece( rookTargetX, m_y ) != nullptr ) {
+		return false;
+	}
+
+	// Illegal: Castle while in check
+	// Illegal: Castle through any attacked square
+	// Illegal: Castle into checked square (covered by general rule)
+	if ( m_state->IsChecked( team ) || m_state->IsOpenToAttackAt( castlePiece, rightCastle ? m_x + 1 : m_x - 1, m_y ) ) {
+		return false;
+	}
+	return true;
+}
+
+
+int32_t Piece::ComputeActionPath( const int32_t actionNum, position_t path[ BoardSize ] ) const
+{	
+	assert( 0 ); // WIP
+	
+	if ( IsValidAction( actionNum ) == false ) {
+		return 0;
+	}
+
+	const moveType_t actionType = GetAction( actionNum ).type;
+
+	num_t nextX = m_x;
+	num_t nextY = m_y;
+
+	const int32_t maxSteps = GetActions()[ actionNum ].maxSteps;
+
+	int32_t step = 0;
+
+	while ( step < maxSteps )
+	{
+		CalculateStep( actionNum, nextX, nextY );
+
+		if ( m_state->OnBoard( nextX, nextY ) == false ) {
+			return step;
+		}
+
+		if( IsPawnMoveValid( actionNum, nextX, nextY ) == false ) {
+			break;
+		}
+
+		if ( IsKingMoveValid( actionNum, nextX, nextY ) == false ) {
+			break;
+		}
+
+		path[ step ] = position_t{ nextX, nextY };
+
+		if ( m_state->GetPiece( nextX, nextY ) != nullptr ) {
+			return step;
+		}
+
+		++step;
+	}
+	return step;
+}
+
+
 bool Piece::InActionPath( const int32_t actionNum, const num_t targetX, const num_t targetY ) const
 {
+	if ( IsValidAction( actionNum ) == false ) {
+		return false;
+	}
+
+	const int32_t stepCount = GetStepCount( actionNum, targetX, targetY );
+	if( stepCount > GetActions()[ actionNum ].maxSteps ) {
+		return false;
+	}
+
 	if( type == pieceType_t::PAWN  )
 	{
-		if ( IsValidAction( actionNum ) == false ) {
-			return false;
-		}
-
-		const bool isOccupied = m_state->GetHandle( targetX, targetY ) != NoPiece;
-		const bool isBlocked = m_state->IsBlocked( team, targetX, targetY );
-
-		const num_t maxSteps = GetAction( actionNum ).maxSteps;
-		const num_t steps = GetStepCount( actionNum, targetX, targetY );
-
-		const moveType_t type = GetAction( actionNum ).type;
-
-		if ( type == moveType_t::PAWN_T2X ) {
-			return ( isOccupied == false ) && ( steps <= maxSteps ) && ( HasMoved() == false );
-		}
-
-		if ( ( type == moveType_t::PAWN_KILL_L ) || ( type == moveType_t::PAWN_KILL_R ) )
-		{
-			const Piece* enpassantPiece = m_state->GetEnpassant( targetX, targetY );
-			const bool isEnpassantEnemy = ( enpassantPiece != nullptr ) && ( enpassantPiece->team != team );
-			const bool isEnemy = ( isOccupied || isEnpassantEnemy ) && ( isBlocked == false );
-
-			return isEnemy && ( steps <= maxSteps );
-		}
-
-		return ( isOccupied == false ) && ( steps <= maxSteps );
+		return IsPawnMoveValid( actionNum, targetX, targetY );
 	}
 	else if( type == pieceType_t::KING )
 	{
-		if ( IsValidAction( actionNum ) == false ) {
-			return false;
-		}
-
-		const num_t stepCount = GetStepCount( actionNum, targetX, targetY );
-		if ( stepCount != 1 ) {
-			return false;
-		}
-
-		Piece* castlePiece = nullptr;
-		const moveType_t type = GetAction( actionNum ).type;
-
-		if ( type == moveType_t::KING_CASTLE_L ) {
-			castlePiece = m_state->GetPiece( 0, m_y );
-		}
-		else if ( type == moveType_t::KING_CASTLE_R ) {
-			castlePiece = m_state->GetPiece( BoardSize - 1, m_y );
-		}
-		else {
-			return true;
-		}
-
-		if ( ( castlePiece == nullptr ) || ( castlePiece->type != pieceType_t::ROOK ) ) {
-			return false;
-		}
-
-		if ( HasMoved() || castlePiece->HasMoved() ) {
-			return false;
-		}
-
-		const bool rightCastle = ( type == moveType_t::KING_CASTLE_R );
-		const num_t flankOffset = rightCastle ? -1 : 1;
-		const moveType_t moveTest = rightCastle ? moveType_t::ROOK_L : moveType_t::ROOK_R;
-
-		const num_t rookTargetX = targetX + flankOffset;
-		const bool rookMove = castlePiece->InActionPath( castlePiece->GetActionNum( moveTest ), rookTargetX, m_y ); // Cheaks a clear path between rook and king
-
-		if ( rookMove == false ) {
-			return false;
-		}
-
-		if ( m_state->GetPiece( rookTargetX, m_y ) != nullptr ) {
-			return false;
-		}
-
-		// Illegal: Castle while in check
-		// Illegal: Castle through any attacked square
-		// Illegal: Castle into checked square (covered by general rule)
-		if ( m_state->IsChecked( team ) || m_state->IsOpenToAttackAt( castlePiece, rightCastle ? m_x + 1 : m_x - 1, m_y ) ) {
-			return false;
-		}
-		return true;
+		return IsKingMoveValid( actionNum, targetX, targetY );
 	}
-	else
-	{
-		if ( IsValidAction( actionNum ) == false ) {
-			return false;
-		}
-		const int32_t stepCount = GetStepCount( actionNum, targetX, targetY );
-		return ( stepCount <= GetActions()[ actionNum ].maxSteps );
-	}
+	return true;
 }
 
 
