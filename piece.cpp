@@ -485,6 +485,7 @@ bool Piece::InActionPath( const int32_t actionNum, const num_t targetX, const nu
 		return false;
 	}
 
+	// Need additional checks
 	if( type == pieceType_t::PAWN  )
 	{
 		return IsPawnMoveValid( actionNum, targetX, targetY );

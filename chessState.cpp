@@ -1,8 +1,5 @@
 #include "Chess.h"
 
-#include <set>
-#include <tuple>
-
 // This class must *always* honor const-correctness upon destruction
 class ScopedTempPlacement
 {
@@ -435,8 +432,9 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 	}
 
 	// Path of all attacker can be blocked
-	typedef std::tuple<int32_t, int32_t> move_t;
-	std::set<move_t> attackSquares;
+	position_t attackSquares[ BoardSize ];
+
+	int32_t attackSquareCount = 0;
 
 	const int32_t attackerActionCount = attacker->GetActionCount();
 
@@ -451,7 +449,8 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 		const int32_t maxSteps = attacker->GetActions()[ actionNum ].maxSteps;
 
 		// Represents kill action
-		attackSquares.insert( move_t( nextX, nextY ) );
+		attackSquares[ attackSquareCount ] = position_t{ nextX, nextY };
+		++attackSquareCount;
 
 		for ( int32_t step = 1; step <= maxSteps; ++step )
 		{
@@ -461,7 +460,8 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 				break;
 			}
 
-			attackSquares.insert( move_t( nextX, nextY ) );
+			attackSquares[ attackSquareCount ] = position_t{ nextX, nextY };
+			++attackSquareCount;
 		}
 	}
 
@@ -478,9 +478,10 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 
 		for ( int32_t actionNum = 0; actionNum < actionCount; ++actionNum )
 		{
-			for ( const move_t square : attackSquares )
+			for ( int32_t squareIndex = 0; squareIndex < attackSquareCount; ++squareIndex )
 			{
-				if ( IsLegalMove( defenderPiece, std::get<0>( square ), std::get<1>( square ) ) != moveType_t::NONE )
+				position_t& square = attackSquares[ attackSquareCount ];
+				if ( IsLegalMove( defenderPiece, square.x, square.y ) != moveType_t::NONE )
 				{
 					return false;
 				}
