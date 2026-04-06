@@ -471,42 +471,28 @@ protected:
 	{
 		team = teamCode_t::NONE;
 		type = pieceType_t::NONE;
+
 		prevX = -1;
 		prevY = -1;
+		x = -1;
 		y = -1;
-		y = -1;
+
 		numActions = 0;
 		teamDirection = 1;
 		moveCount = 0;
+
 		instance = 0;
 		handle = NoPiece;
+
 		state = nullptr;
 		actions = nullptr;
 		moveSuperset = nullptr;
+
+		promoted = false;
 	}
 
 	bool			IsValidAction( const int32_t actionNum ) const;
 public:
-	Piece( const Piece& src ) { *this = src; }
-
-	Piece& operator=( const Piece& src )
-	{
-		if ( this != &src )
-		{
-			this->x = src.x;
-			this->y = src.y;
-			this->team = src.team;
-			this->type = src.type;
-			this->moveCount = src.moveCount;
-			this->numActions = src.numActions;
-			this->promoted = src.promoted;
-			this->handle = src.handle;
-			this->state = src.state;
-			this->actions = src.actions;
-			this->moveSuperset = src.moveSuperset;
-		}
-		return *this;
-	}
 
 	void			CalculateStep( const int32_t actionNum, num_t& actionX, num_t& actionY ) const;					// Move one square along an action path (e.g. rook, bishop, queen, paths can be a single step)
 	num_t			GetStepCount( const int32_t actionNum, const num_t targetX, const num_t targetY ) const;		// How many squares are traveled for this action?
