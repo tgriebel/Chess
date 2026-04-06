@@ -633,10 +633,7 @@ public:
 	Piece*				GetEnpassant( const num_t targetX, const num_t targetY );
 	inline void			SetEnpassant( const pieceHandle_t handle ) { m_enpassantPawn = handle; }						// Saves enpassant pawn for next turn checks
 
-	inline void			PromotionCallback( const teamCode_t teamCode, callbackEvent_t& event )
-	{
-		PromotionCallback( teamCode, event );
-	}
+	void				PromotionCallback( const teamCode_t teamCode, callbackEvent_t& event );
 
 	// Unwind speculative search actions
 	void				ReverseCapturePiece( const teamCode_t attacker, Piece* targetPiece );
@@ -819,6 +816,8 @@ private:
 	teamCode_t			m_checkedTeam;
 	bool				m_stalemate;
 	gameConfig_t		m_config;
+
+	friend class ChessState;
 };
 
 // Backwards compatibility

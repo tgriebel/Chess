@@ -274,6 +274,13 @@ void ChessState::CapturePiece( const teamCode_t attacker, Piece* targetPiece )
 }
 
 
+void ChessState::PromotionCallback( const teamCode_t teamCode, callbackEvent_t& event )
+{
+	assert( m_game );
+	m_game->PromotionCallback( teamCode, event );
+}
+
+
 void ChessState::ReverseCapturePiece( const teamCode_t attacker, Piece* targetPiece )
 {
 	if ( targetPiece == nullptr ) {
