@@ -172,7 +172,8 @@ enum class teamCode_t : int32_t
 	COUNT
 };
 
-
+// T - Top, L - Left, R - Right, B - Bottom
+// Pawns are the only piece where moves are relative
 enum class moveType_t : int32_t
 {
 	NONE = -1,
@@ -291,8 +292,8 @@ struct team_t
 	{
 		for ( int32_t i = 0; i < TeamPieceCount; ++i )
 		{
-			pieces[ i ] = 0;
-			captured[ i ] = 0;
+			pieces[ i ] = NoPiece;
+			captured[ i ] = NoPiece;
 		}
 		for ( int32_t i = 0; i < (int32_t)pieceType_t::COUNT; ++i )
 		{
@@ -736,7 +737,7 @@ public:
 	}
 
 private:
-	void				CountTeamPieces();
+	void				CountTeamPieces( const bool initialCount );
 private:
 	callback_t			promotionCallback[ TeamCount ];
 	pieceHandle_t		enpassantPawn;
@@ -777,7 +778,7 @@ public:
 		config = cfg;
 		SetBoard( config );
 		s.game = this;
-		s.CountTeamPieces();
+		s.CountTeamPieces( true );
 
 		SetPromotionCallback( teamCode_t::WHITE, &AutoPromoteQueen );
 		SetPromotionCallback( teamCode_t::BLACK, &AutoPromoteQueen );

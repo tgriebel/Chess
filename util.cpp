@@ -44,7 +44,7 @@ std::string SquareToString( const ChessEngine& chessEngine, const int32_t x, con
 	const pieceInfo_t info = chessEngine.GetInfo( x, y );
 	const bool isBlack = ( x % 2 ) == ( y % 2 );
 
-	if ( info.onBoard == true )
+	if ( info.onBoard && info.isPiece )
 	{
 		const pieceType_t type = info.pieceType;
 		const teamCode_t team = info.team;

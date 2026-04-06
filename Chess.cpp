@@ -58,7 +58,7 @@ void ChessEngine::CalculateGameState( const pieceHandle_t movedPieceHdl )
 			}
 		}
 	}
-	s.CountTeamPieces();
+	s.CountTeamPieces( false );
 
 	currentTurn = ( currentTurn == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 

@@ -166,16 +166,17 @@ void ChessState::CapturePiece( const teamCode_t attacker, Piece* targetPiece )
 
 	num_t& capturedCount		= teams[ attackerIndex ].capturedCount;
 	num_t& playCount			= teams[ index ].livingCount;
-	pieceHandle_t* pieces		= teams[ index ].pieces;
+	pieceHandle_t* teamPieces	= teams[ index ].pieces;
 
 	teams[ attackerIndex ].captured[ capturedCount ] = targetPiece->handle;
 	++capturedCount;
 
 	for ( int32_t i = 0; i < playCount; ++i )
 	{
-		if ( pieces[ i ] == targetPiece->handle )
+		if ( teamPieces[ i ] == targetPiece->handle )
 		{
-			pieces[ i ] = pieces[ playCount - 1 ];
+			teamPieces[ i ] = teamPieces[ playCount - 1 ];
+			teamPieces[ playCount - 1 ] = NoPiece;
 			--playCount;
 		}
 	}
@@ -278,22 +279,7 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 		num_t nextY = king->y;
 		king->CalculateStep( action, nextX, nextY );
 
-		if ( OnBoard( nextX, nextY ) == false ) {
-			continue;
-		}
-
-		const Piece* piece = GetPiece( nextX, nextY );
-
-		const bool pieceOccupiesTarget = ( piece != nullptr );
-		const bool pieceIsFriendly = pieceOccupiesTarget && ( piece->team == king->team );
-
-		if ( pieceIsFriendly ) {
-			continue;
-		}
-
-		ScopedTempMove tempMove( this, king, nextX, nextY );
-
-		if ( IsOpenToAttackAt( king, nextX, nextY ) == false ) {
+		if( IsLegalMove( king, nextX, nextY ) != moveType_t::NONE ) {
 			return false;
 		}
 	}
@@ -420,7 +406,7 @@ Piece* ChessState::GetEnpassant( const num_t targetX, const num_t targetY )
 }
 
 
-void ChessState::CountTeamPieces()
+void ChessState::CountTeamPieces( const bool initialCount )
 {
 	for ( int32_t i = 0; i < TeamCount; ++i )
 	{
@@ -434,7 +420,6 @@ void ChessState::CountTeamPieces()
 			const pieceType_t type = piece->type;
 			const int32_t index = static_cast<int32_t>( type );
 
-			piece->instance = teams[ i ].typeCounts[ index ];
 			teams[ i ].typeCounts[ index ]++;
 		}
 
@@ -443,6 +428,25 @@ void ChessState::CountTeamPieces()
 			const pieceType_t type = GetPiece( teams[ i ].captured[ j ] )->type;
 			const int32_t index = static_cast<int32_t>( type );
 			teams[ i ].captureTypeCounts[ index ]++;
+		}
+	}
+
+	if( initialCount )
+	{
+		for ( int32_t i = 0; i < TeamCount; ++i )
+		{
+			num_t typeCounts[ (int32_t)pieceType_t::COUNT ] = {};
+
+			for ( int32_t j = 0; j < teams[ i ].livingCount; ++j )
+			{
+				Piece* piece = GetPiece( teams[ i ].pieces[ j ] );
+				const pieceType_t type = piece->type;
+				const int32_t index = static_cast<int32_t>( type );
+
+				piece->instance = typeCounts[ index ];
+
+				typeCounts[ index ]++;
+			}
 		}
 	}
 }

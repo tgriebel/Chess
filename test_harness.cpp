@@ -195,6 +195,7 @@ static TestResult RunSingleTest( const TestCase& tc )
 			moveResult = engine.Execute( cmd );
 
 #if PRINT_BOARD_EACH_STEP
+			std::cout << commands[ i ] << std::endl;
 			std::cout << BoardToString( engine, true ) << std::endl;
 #endif
 
@@ -642,7 +643,7 @@ int main()
 	std::vector<TestCase>& tests = GetTestRegistry();
 #else
 	std::vector<TestCase> tests;
-	tests.push_back( TestScholarsMate );
+	tests.push_back( TestOperaGame );
 #endif
 
 	// Header
