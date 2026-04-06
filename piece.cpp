@@ -7,6 +7,113 @@ MoveCache BishopMoveSuperset;
 MoveCache KingMoveSuperset;
 MoveCache QueenMoveSuperset;
 
+
+static const int32_t PieceValue[ (int32_t)pieceType_t::COUNT ] =
+{
+	100,	// PAWN
+	500,	// ROOK
+	320,	// KNIGHT
+	330,	// BISHOP
+	20000,	// KING
+	900,	// QUEEN
+};
+
+
+// Pawn PST — encourages central advancement
+static const int32_t PawnPST[ BoardSize ][ BoardSize ] =
+{
+	{  0,  0,  0,  0,  0,  0,  0,  0 },	// rank 8 (promotion rank for white)
+	{ 50, 50, 50, 50, 50, 50, 50, 50 },	// rank 7
+	{ 10, 10, 20, 30, 30, 20, 10, 10 },	// rank 6
+	{  5,  5, 10, 25, 25, 10,  5,  5 },	// rank 5
+	{  0,  0,  0, 20, 20,  0,  0,  0 },	// rank 4
+	{  5, -5,-10,  0,  0,-10, -5,  5 },	// rank 3
+	{  5, 10, 10,-20,-20, 10, 10,  5 },	// rank 2
+	{  0,  0,  0,  0,  0,  0,  0,  0 },	// rank 1 (white pawn start)
+};
+
+
+// Knight PST — strong in the center, weak on edges
+static const int32_t KnightPST[ BoardSize ][ BoardSize ] =
+{
+	{ -50,-40,-30,-30,-30,-30,-40,-50 },
+	{ -40,-20,  0,  0,  0,  0,-20,-40 },
+	{ -30,  0, 10, 15, 15, 10,  0,-30 },
+	{ -30,  5, 15, 20, 20, 15,  5,-30 },
+	{ -30,  0, 15, 20, 20, 15,  0,-30 },
+	{ -30,  5, 10, 15, 15, 10,  5,-30 },
+	{ -40,-20,  0,  5,  5,  0,-20,-40 },
+	{ -50,-40,-30,-30,-30,-30,-40,-50 },
+};
+
+
+// Bishop PST — prefers long diagonals, avoids edges
+static const int32_t BishopPST[ BoardSize ][ BoardSize ] =
+{
+	{ -20,-10,-10,-10,-10,-10,-10,-20 },
+	{ -10,  0,  0,  0,  0,  0,  0,-10 },
+	{ -10,  0,  5, 10, 10,  5,  0,-10 },
+	{ -10,  5,  5, 10, 10,  5,  5,-10 },
+	{ -10,  0, 10, 10, 10, 10,  0,-10 },
+	{ -10, 10, 10, 10, 10, 10, 10,-10 },
+	{ -10,  5,  0,  0,  0,  0,  5,-10 },
+	{ -20,-10,-10,-10,-10,-10,-10,-20 },
+};
+
+
+// Rook PST — 7th rank is strong, open files
+static const int32_t RookPST[ BoardSize ][ BoardSize ] =
+{
+	{  0,  0,  0,  0,  0,  0,  0,  0 },
+	{  5, 10, 10, 10, 10, 10, 10,  5 },
+	{ -5,  0,  0,  0,  0,  0,  0, -5 },
+	{ -5,  0,  0,  0,  0,  0,  0, -5 },
+	{ -5,  0,  0,  0,  0,  0,  0, -5 },
+	{ -5,  0,  0,  0,  0,  0,  0, -5 },
+	{ -5,  0,  0,  0,  0,  0,  0, -5 },
+	{  0,  0,  0,  5,  5,  0,  0,  0 },
+};
+
+
+// Queen PST — light positional guidance, mostly material-driven
+static const int32_t QueenPST[ BoardSize ][ BoardSize ] =
+{
+	{ -20,-10,-10, -5, -5,-10,-10,-20 },
+	{ -10,  0,  0,  0,  0,  0,  0,-10 },
+	{ -10,  0,  5,  5,  5,  5,  0,-10 },
+	{  -5,  0,  5,  5,  5,  5,  0, -5 },
+	{   0,  0,  5,  5,  5,  5,  0, -5 },
+	{ -10,  5,  5,  5,  5,  5,  0,-10 },
+	{ -10,  0,  5,  0,  0,  0,  0,-10 },
+	{ -20,-10,-10, -5, -5,-10,-10,-20 },
+};
+
+
+// King PST (middlegame) — stay castled and sheltered
+static const int32_t KingPST[ BoardSize ][ BoardSize ] =
+{
+	{ -30,-40,-40,-50,-50,-40,-40,-30 },
+	{ -30,-40,-40,-50,-50,-40,-40,-30 },
+	{ -30,-40,-40,-50,-50,-40,-40,-30 },
+	{ -30,-40,-40,-50,-50,-40,-40,-30 },
+	{ -20,-30,-30,-40,-40,-30,-30,-20 },
+	{ -10,-20,-20,-20,-20,-20,-20,-10 },
+	{  20, 20,  0,  0,  0,  0, 20, 20 },
+	{  20, 30, 10,  0,  0, 10, 30, 20 },
+};
+
+
+static const int32_t( *PST[ (int32_t)pieceType_t::COUNT ] )[ BoardSize ] =
+{
+	PawnPST,	// PAWN   = 0
+	RookPST,	// ROOK   = 1
+	KnightPST,	// KNIGHT = 2
+	BishopPST,	// BISHOP = 3
+	KingPST,	// KING   = 4
+	QueenPST,	// QUEEN  = 5
+};
+
+
 bool Piece::IsValidAction( const int32_t actionNum ) const
 {
 	return ( actionNum >= 0 ) && ( actionNum < GetActionCount() );
