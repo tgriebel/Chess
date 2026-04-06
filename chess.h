@@ -512,12 +512,15 @@ public:
 	num_t			GetStepCount( const int32_t actionNum, const num_t targetX, const num_t targetY ) const;		// How many squares are traveled for this action?
 	num_t			GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSize ] ) const;					// Get all squares in this action's path
 	void			FillMoveCache();
-	virtual bool	InActionPath( const int32_t actionNum, const num_t targetX, const num_t targetY ) const;		// This action can reach this location
-	virtual void	Move( const moveType_t moveType, const num_t targetX, const num_t targetY );					// Performs a game move, rules run
+	bool			InActionPath( const int32_t actionNum, const num_t targetX, const num_t targetY ) const;		// This action can reach this location
+	void			Move( const moveType_t moveType, const num_t targetX, const num_t targetY );					// Performs a game move, rules run
 	void			PlaceAt( const num_t targetX, const num_t targetY );											// Places a piece at a location, rules not runn. Temp moves, castling, etc
 
 	void			TempPlacement( const num_t targetX, const num_t targetY );										// Place the piece offboard, outside rules engine. Assists other rule checks
 	void			ReturnPlacement();																				// Return the piece offboard, outside rules engine. Assists other rule checks
+
+	bool			CanPromote() const;																				// Pawn promotion
+	void			Promote();																						// Pawn promotion
 
 	bool			HasMoved() const { return ( moveCount > 0 ); }													// Has this piece been moved in this game? (for castling, book-keeping)
 	int32_t			GetActionCount() const { return numActions; }													// How many unique move actions can a piece perform?
@@ -600,15 +603,6 @@ public:
 
 		FillMoveCache();
 	}
-	bool InActionPath( const int32_t actionNum, const num_t targetX, const num_t targetY ) const override;
-	void Move( const moveType_t moveType, const num_t targetX, const num_t targetY ) override;
-	bool CanPromote() const;
-	void Promote();
-
-private:
-	inline bool IsKillAction( const moveType_t type ) const {
-		return ( type == moveType_t::PAWN_KILL_L ) || ( type == moveType_t::PAWN_KILL_R );
-	}
 };
 
 
@@ -676,9 +670,6 @@ public:
 
 		FillMoveCache();
 	}
-
-	bool InActionPath( const int32_t actionNum, const num_t actionX, const num_t actionY ) const override;
-	void Move( const moveType_t moveType, const num_t targetX, const num_t targetY ) override;
 };
 
 
