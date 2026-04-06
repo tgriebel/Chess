@@ -11,7 +11,7 @@ n1f6
 b1d3
 p4e6
 n1f3
-p3h6
+p7h6
 n0e6
 q0e7
 k0g1
@@ -22,7 +22,7 @@ b0f4
 p1b5
 p0a4
 b0b7
-r0e1
+r1e1
 n1d5
 b0g3
 k0c8
@@ -30,9 +30,9 @@ p0b5
 p2b5
 q0d3
 b0c6
-b0f5
-p1f5
-r0e7
+b1f5
+p5f5
+r1e7
 b1e7
-p1c4
+p2c4
 resign

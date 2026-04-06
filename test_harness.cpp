@@ -643,7 +643,7 @@ int main()
 	std::vector<TestCase>& tests = GetTestRegistry();
 #else
 	std::vector<TestCase> tests;
-	tests.push_back( TestOperaGame );
+	tests.push_back( TestDeepBlueVsKasparov );
 #endif
 
 	// Header
