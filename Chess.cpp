@@ -58,7 +58,6 @@ void ChessEngine::CalculateGameState( const pieceHandle_t movedPieceHdl )
 			}
 		}
 	}
-	s.CountTeamPieces( false );
 
 	currentTurn = ( currentTurn == teamCode_t::WHITE ) ? teamCode_t::BLACK : teamCode_t::WHITE;
 
@@ -116,12 +115,20 @@ void ChessEngine::EnterPieceInGame( Piece* piece, const num_t x, const num_t y )
 	s.pieces[ pieceNum ]->BindBoard( &s, pieceNum );
 	s.pieces[ pieceNum ]->PlaceAt( x, y );
 
-	const int32_t teamIndex = static_cast<int32_t>( piece->team );
-	const int32_t pieceIndex = s.teams[ teamIndex ].livingCount;
+	const num_t teamIndex = static_cast<num_t>( piece->team );
 
-	s.teams[ teamIndex ].pieces[ pieceIndex ] = pieceNum;
-	++s.teams[ teamIndex ].livingCount;
+	team_t& team = s.teams[ teamIndex ];
+
+	const num_t pieceIndex = team.livingCount;
+	const num_t pieceTypeIndex = static_cast<num_t>( piece->type );
+
+	team.pieces[ pieceIndex ] = pieceNum;
+	++team.livingCount;
 	++pieceNum;
+
+	piece->instance = team.typeCounts[ pieceTypeIndex ];
+
+	++team.typeCounts[ pieceTypeIndex ];
 }
 
 
@@ -207,16 +214,91 @@ bool ChessEngine::GetLocation( const pieceHandle_t pieceType, num_t& x, num_t& y
 
 Piece* ChessEngine::CreatePiece( const pieceType_t pieceType, const teamCode_t teamCode )
 {
+	Piece* piece = nullptr;
+
 	switch ( pieceType )
 	{
-		case pieceType_t::PAWN:		return new Pawn( teamCode );
-		case pieceType_t::ROOK:		return new Rook( teamCode );
-		case pieceType_t::KNIGHT:	return new Knight( teamCode );
-		case pieceType_t::BISHOP:	return new Bishop( teamCode );
-		case pieceType_t::QUEEN:	return new Queen( teamCode );
-		case pieceType_t::KING:		return new King( teamCode );
+		case pieceType_t::PAWN:
+		{
+			piece = new Piece();
+
+			piece->type = pieceType_t::PAWN;
+			piece->team = teamCode;
+			piece->numActions = static_cast<int32_t>( moveType_t::PAWN_ACTIONS );
+			piece->actions = PawnActions;
+			piece->moveSuperset = &PawnMoveSuperset;
+
+			piece->teamDirection = ( teamCode == teamCode_t::WHITE ) ? -1 : 1;
+
+			piece->FillMoveCache();
+		} break;
+		
+		case pieceType_t::ROOK:
+		{
+			piece = new Piece();
+
+			piece->type = pieceType_t::ROOK;
+			piece->team = teamCode;
+			piece->numActions = static_cast<int32_t>( moveType_t::ROOK_ACTIONS );
+			piece->actions = RookActions;
+			piece->moveSuperset = &RookMoveSuperset;
+
+			piece->FillMoveCache();
+		} break;
+
+		case pieceType_t::KNIGHT:
+		{
+			piece = new Piece();
+
+			piece->type = pieceType_t::KNIGHT;
+			piece->team = teamCode;
+			piece->numActions = static_cast<int32_t>( moveType_t::KNIGHT_ACTIONS );
+			piece->actions = KnightActions;
+			piece->moveSuperset = &KnightMoveSuperset;
+
+			piece->FillMoveCache();
+		} break;
+
+		case pieceType_t::BISHOP:
+		{
+			piece = new Piece();
+
+			piece->type = pieceType_t::BISHOP;
+			piece->team = teamCode;
+			piece->numActions = static_cast<int32_t>( moveType_t::BISHOP_ACTIONS );
+			piece->actions = BishopActions;
+			piece->moveSuperset = &BishopMoveSuperset;
+
+			piece->FillMoveCache();
+		} break;
+
+		case pieceType_t::QUEEN:
+		{
+			piece = new Piece();
+
+			piece->type = pieceType_t::QUEEN;
+			piece->team = teamCode;
+			piece->numActions = static_cast<int32_t>( moveType_t::QUEEN_ACTIONS );
+			piece->actions = QueenActions;
+			piece->moveSuperset = &QueenMoveSuperset;
+
+			piece->FillMoveCache();
+		} break;
+		
+		case pieceType_t::KING:
+		{
+			piece = new Piece();
+
+			piece->type = pieceType_t::KING;
+			piece->team = teamCode;
+			piece->numActions = static_cast<int32_t>( moveType_t::KING_ACTIONS );
+			piece->actions = KingActions;
+			piece->moveSuperset = &KingMoveSuperset;
+
+			piece->FillMoveCache();
+		} break;
 	}
-	return nullptr;
+	return piece;
 }
 
 

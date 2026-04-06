@@ -588,108 +588,6 @@ protected:
 };
 
 
-class Pawn : public Piece
-{
-public:
-	Pawn( const teamCode_t team ) : Piece()
-	{
-		this->type = pieceType_t::PAWN;
-		this->team = team;
-		this->numActions = static_cast<int32_t>( moveType_t::PAWN_ACTIONS );
-		this->actions = PawnActions;
-		this->moveSuperset = &PawnMoveSuperset;
-
-		teamDirection = ( team == teamCode_t::WHITE ) ? -1 : 1;
-
-		FillMoveCache();
-	}
-};
-
-
-// WARNING: Adding virtuals will break promoted pawns, stop using inheritance if needed
-class Rook : public Piece
-{
-public:
-	Rook( const teamCode_t team ) : Piece()
-	{
-		this->type = pieceType_t::ROOK;
-		this->team = team;
-		this->numActions = static_cast<int32_t>( moveType_t::ROOK_ACTIONS );
-		this->actions = RookActions;
-		this->moveSuperset = &RookMoveSuperset;
-
-		FillMoveCache();
-	}
-};
-
-
-// WARNING: Adding virtuals will break promoted pawns, stop using inheritance if needed
-class Knight : public Piece
-{
-public:
-	Knight( const teamCode_t team ) : Piece()
-	{
-		this->type = pieceType_t::KNIGHT;
-		this->team = team;
-		this->numActions = static_cast<int32_t>( moveType_t::KNIGHT_ACTIONS );
-		this->actions = KnightActions;
-		this->moveSuperset = &KnightMoveSuperset;
-
-		FillMoveCache();
-	}
-};
-
-
-// WARNING: Adding virtuals will break promoted pawns, stop using inheritance if needed
-class Bishop : public Piece
-{
-public:
-	Bishop( const teamCode_t team ) : Piece()
-	{
-		this->type = pieceType_t::BISHOP;
-		this->team = team;
-		this->numActions = static_cast<int32_t>( moveType_t::BISHOP_ACTIONS );
-		this->actions = BishopActions;
-		this->moveSuperset = &BishopMoveSuperset;
-
-		FillMoveCache();
-	}
-};
-
-
-class King : public Piece
-{
-public:
-	King( const teamCode_t team ) : Piece()
-	{
-		this->type = pieceType_t::KING;
-		this->team = team;
-		this->numActions = static_cast<int32_t>( moveType_t::KING_ACTIONS );
-		this->actions = KingActions;
-		this->moveSuperset = &KingMoveSuperset;
-
-		FillMoveCache();
-	}
-};
-
-
-// WARNING: Adding virtuals will break promoted pawns, stop using inheritance if needed
-class Queen : public Piece
-{
-public:
-	Queen( const teamCode_t team ) : Piece()
-	{
-		this->type = pieceType_t::QUEEN;
-		this->team = team;
-		this->numActions = static_cast<int32_t>( moveType_t::QUEEN_ACTIONS );
-		this->actions = QueenActions;
-		this->moveSuperset = &QueenMoveSuperset;
-
-		FillMoveCache();
-	}
-};
-
-
 // ============================================================
 // ChessState
 // ============================================================
@@ -727,8 +625,6 @@ public:
 		};
 	}
 
-private:
-	void				CountTeamPieces( const bool initialCount );
 private:
 	callback_t			promotionCallback[ TeamCount ];
 	pieceHandle_t		enpassantPawn;
@@ -769,7 +665,6 @@ public:
 		config = cfg;
 		SetBoard( config );
 		s.game = this;
-		s.CountTeamPieces( true );
 
 		SetPromotionCallback( teamCode_t::WHITE, &AutoPromoteQueen );
 		SetPromotionCallback( teamCode_t::BLACK, &AutoPromoteQueen );

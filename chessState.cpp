@@ -159,27 +159,44 @@ void ChessState::CapturePiece( const teamCode_t attacker, Piece* targetPiece )
 	if ( targetPiece == nullptr ) {
 		return;
 	}
+
+	const int32_t index				= static_cast<int32_t>( targetPiece->team );
+	const int32_t pieceTypeIndex	= (int32_t)targetPiece->type;
+	const int32_t attackerIndex		= static_cast<int32_t>( attacker );
+
+	// Update attacker team stats
+	{
+		num_t* captured = teams[ attackerIndex ].captured;
+		num_t* capturedTypeCount = teams[ attackerIndex ].captureTypeCounts;
+		num_t& capturedCount = teams[ attackerIndex ].capturedCount;
+
+		++capturedTypeCount[ pieceTypeIndex ];
+
+		captured[ capturedCount ] = targetPiece->handle;
+		++capturedCount;
+	}
+
+	// Update current team stats
+	{
+		num_t* teamPieces = teams[ index ].pieces;
+		num_t* typeCounts = teams[ index ].typeCounts;
+		num_t& livingCount = teams[ index ].livingCount;
+
+		for ( int32_t i = 0; i < livingCount; ++i )
+		{
+			if ( teamPieces[ i ] == targetPiece->handle )
+			{
+				teamPieces[ i ] = teamPieces[ livingCount - 1 ];
+				teamPieces[ livingCount - 1 ] = NoPiece;
+				--livingCount;
+				break;
+			}
+		}
+		--typeCounts[ pieceTypeIndex ];
+	}
+
 	targetPiece->RemoveFromPlay();
 
-	const int32_t index			= static_cast<int32_t>( targetPiece->team );
-	const int32_t attackerIndex	= static_cast<int32_t>( attacker );
-
-	num_t& capturedCount		= teams[ attackerIndex ].capturedCount;
-	num_t& playCount			= teams[ index ].livingCount;
-	pieceHandle_t* teamPieces	= teams[ index ].pieces;
-
-	teams[ attackerIndex ].captured[ capturedCount ] = targetPiece->handle;
-	++capturedCount;
-
-	for ( int32_t i = 0; i < playCount; ++i )
-	{
-		if ( teamPieces[ i ] == targetPiece->handle )
-		{
-			teamPieces[ i ] = teamPieces[ playCount - 1 ];
-			teamPieces[ playCount - 1 ] = NoPiece;
-			--playCount;
-		}
-	}
 	return;
 }
 
@@ -392,9 +409,8 @@ Piece* ChessState::GetEnpassant( const num_t targetX, const num_t targetY )
 	Piece* piece = GetPiece( enpassantPawn );
 	if ( piece != nullptr )
 	{
-		const Pawn* pawn = reinterpret_cast<const Pawn*>( piece );
-		const num_t x = pawn->x;
-		const num_t y = ( pawn->y - pawn->GetTeamDirection() );
+		const num_t x = piece->x;
+		const num_t y = ( piece->y - piece->GetTeamDirection() );
 
 		const bool wasEnpassant = ( x == targetX ) && ( y == targetY );
 
@@ -403,50 +419,4 @@ Piece* ChessState::GetEnpassant( const num_t targetX, const num_t targetY )
 		}
 	}
 	return nullptr;
-}
-
-
-void ChessState::CountTeamPieces( const bool initialCount )
-{
-	for ( int32_t i = 0; i < TeamCount; ++i )
-	{
-		for ( int32_t j = 0; j < static_cast<int32_t>( pieceType_t::COUNT ); ++j ) {
-			teams[ i ].typeCounts[ j ] = 0;
-		}
-
-		for ( int32_t j = 0; j < teams[ i ].livingCount; ++j )
-		{
-			Piece* piece = GetPiece( teams[ i ].pieces[ j ] );
-			const pieceType_t type = piece->type;
-			const int32_t index = static_cast<int32_t>( type );
-
-			teams[ i ].typeCounts[ index ]++;
-		}
-
-		for ( int32_t j = 0; j < teams[ i ].capturedCount; ++j )
-		{
-			const pieceType_t type = GetPiece( teams[ i ].captured[ j ] )->type;
-			const int32_t index = static_cast<int32_t>( type );
-			teams[ i ].captureTypeCounts[ index ]++;
-		}
-	}
-
-	if( initialCount )
-	{
-		for ( int32_t i = 0; i < TeamCount; ++i )
-		{
-			num_t typeCounts[ (int32_t)pieceType_t::COUNT ] = {};
-
-			for ( int32_t j = 0; j < teams[ i ].livingCount; ++j )
-			{
-				Piece* piece = GetPiece( teams[ i ].pieces[ j ] );
-				const pieceType_t type = piece->type;
-				const int32_t index = static_cast<int32_t>( type );
-
-				piece->instance = typeCounts[ index ];
-
-				typeCounts[ index ]++;
-			}
-		}
-	}
 }
