@@ -391,10 +391,10 @@ static const moveAction_t PawnActions[ (int32_t)moveType_t::PAWN_ACTIONS ] =
 
 static const moveAction_t RookActions[ (int32_t)moveType_t::ROOK_ACTIONS ] =
 {
+	moveAction_t( -1, 0, moveType_t::ROOK_L, BoardSize - 1 ),
+	moveAction_t( 1, 0, moveType_t::ROOK_R, BoardSize - 1 ),
 	moveAction_t( 0, 1, moveType_t::ROOK_T, BoardSize - 1 ),
 	moveAction_t( 0, -1, moveType_t::ROOK_B, BoardSize - 1 ),
-	moveAction_t( 1, 0, moveType_t::ROOK_R, BoardSize - 1 ),
-	moveAction_t( -1, 0, moveType_t::ROOK_L, BoardSize - 1 )
 };
 
 
@@ -530,15 +530,11 @@ public:
 	int32_t GetActionNum( const moveType_t moveType ) const
 	{
 		const moveAction_t* actions = GetActions();
-		const int32_t actionCount = GetActionCount();
-		for ( int32_t i = 0; i < actionCount; ++i )
-		{
-			if ( actions[ i ].type == moveType )
-			{
-				return i;
-			}
-		}
-		return -1;
+		const int32_t number = ( static_cast<int32_t>( moveType ) - static_cast<int32_t>( actions[ 0 ].type ) );
+
+		assert( actions[ number ].type == moveType );
+
+		return number;
 	}
 
 	const moveAction_t& GetAction( const int32_t actionNum ) const
@@ -630,7 +626,7 @@ public:
 	bool				IsBlocked( const teamCode_t team, const num_t x, const num_t y ) const;
 	bool				IsKingCaptured( const teamCode_t checkedTeamCode ) const;
 	bool				IsChecked( const teamCode_t checkedTeamCode ) const;
-	bool				IsCheckMate( const Piece* attacker, const teamCode_t checkedTeamCode ) const;
+	bool				IsCheckMate( const Piece* attacker, const moveType_t& moveType, const teamCode_t checkedTeamCode ) const;
 	bool				IsStalemate( const teamCode_t teamCode ) const;
 	bool				IsOpenToAttack( const Piece* targetPiece ) const;
 	bool				IsOpenToAttackAt( const Piece* targetPiece, const num_t targetX, const num_t targetY ) const;
@@ -726,8 +722,6 @@ public:
 			return resultCode_t::RESULT_GAME_INVALID_MOVE;
 		}
 
-		CalculateGameState( piece );
-
 		return ( GetWinner() != teamCode_t::NONE || IsStalemate() ) ? GetGameResult() : resultCode_t::RESULT_SUCCESS;
 	}
 
@@ -801,7 +795,7 @@ private:
 	void				SetBoard( const gameConfig_t& cfg );
 	void				EnterPieceInGame( Piece* piece, const num_t x, const num_t y );
 	bool				PerformMoveAction( const pieceHandle_t pieceHdl, const num_t targetX, const num_t targetY );
-	void				CalculateGameState( const pieceHandle_t movedPieceHdl );
+	void				CalculateGameState( const moveType_t& moveType, const pieceHandle_t movedPieceHdl );
 
 	inline void			PromotionCallback( const teamCode_t teamCode, callbackEvent_t& event )							// User needs to make their pick of piece, A.I. can run a heuristic
 	{

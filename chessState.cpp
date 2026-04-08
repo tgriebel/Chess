@@ -408,7 +408,7 @@ bool ChessState::IsChecked( const teamCode_t checkedTeamCode ) const
 }
 
 
-bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTeamCode ) const
+bool ChessState::IsCheckMate( const Piece* attacker, const moveType_t& moveType, const teamCode_t checkedTeamCode ) const
 {
 	const pieceHandle_t kingHdl = m_game->FindPiece( checkedTeamCode, pieceType_t::KING, 0 );
 	const Piece* king = GetPiece( kingHdl );
@@ -438,12 +438,8 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 
 	const int32_t attackerActionCount = attacker->GetActionCount();
 
-	for ( int32_t actionNum = 0; actionNum < attackerActionCount; ++actionNum )
+	const int32_t actionNum = attacker->GetActionNum( moveType );
 	{
-		if ( attacker->InActionPath( actionNum, king->X(), king->Y() ) == false ) {
-			continue;
-		}
-
 		num_t nextX = attacker->X();
 		num_t nextY = attacker->Y();
 		const int32_t maxSteps = attacker->GetActions()[ actionNum ].maxSteps;
@@ -476,11 +472,21 @@ bool ChessState::IsCheckMate( const Piece* attacker, const teamCode_t checkedTea
 			continue;
 		}
 
-		for ( int32_t actionNum = 0; actionNum < actionCount; ++actionNum )
+		for ( int32_t squareIndex = 0; squareIndex < attackSquareCount; ++squareIndex )
 		{
-			for ( int32_t squareIndex = 0; squareIndex < attackSquareCount; ++squareIndex )
-			{
-				position_t& square = attackSquares[ attackSquareCount ];
+			position_t& square = attackSquares[ attackSquareCount ];
+#if USE_MOVE_CACHE_TEST
+			const MoveCache& superset = defenderPiece->GetMoveCache();
+
+			const num_t localX = ( square.x - defenderPiece->X() );
+			const num_t localY = ( square.y - defenderPiece->Y() ) * defenderPiece->GetTeamDirection();
+
+			if ( !superset.Test( localX, localY ) ) {
+				continue;
+			}
+#endif
+			for ( int32_t actionNum = 0; actionNum < actionCount; ++actionNum )
+			{			
 				if ( IsLegalMove( defenderPiece, square.x, square.y ) != moveType_t::NONE )
 				{
 					return false;

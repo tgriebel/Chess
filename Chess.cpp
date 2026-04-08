@@ -15,11 +15,13 @@ bool ChessEngine::PerformMoveAction( const pieceHandle_t pieceHdl, const num_t t
 	}
 	piece->Move( legalMove, targetX, targetY );
 
+	CalculateGameState( legalMove, pieceHdl );
+
 	return true;
 }
 
 
-void ChessEngine::CalculateGameState( const pieceHandle_t movedPieceHdl )
+void ChessEngine::CalculateGameState( const moveType_t& moveType, const pieceHandle_t movedPieceHdl )
 {
 	Piece* piece = m_state.GetPiece( movedPieceHdl );
 	if ( piece == nullptr ) {
@@ -45,7 +47,7 @@ void ChessEngine::CalculateGameState( const pieceHandle_t movedPieceHdl )
 		{
 			m_checkedTeam = opposingTeam;
 
-			if ( m_state.IsCheckMate( piece, opposingTeam ) )
+			if ( m_state.IsCheckMate( piece, moveType, opposingTeam ) )
 			{
 				m_winner = piece->team;
 			}
