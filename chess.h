@@ -66,12 +66,19 @@ static const pieceHandle_t OffBoard		= -2;
 class MoveCache
 {
 public:
+	// Quick move superset check
+	// This is just a bitboard, used since a full bitboard conversion takes more time and is harder to debug
+	// A move can potentially go +/-7 in any direction so you need a hypothetical 15x15 board
+	// Traditional bitboards uses a 64 bit uint where each bit is a square, this requires a larger board however
+	// A quad of boards covers the 15x15 space and is stored as a flattened 2D array
+	// High bits access a quad, lower bits the squares within a quad
+
 	uint64_t bits[ 4 ] = {};
 
 	void Set( int32_t dx, int32_t dy )
 	{
 		const int32_t idx = ( dy + 7 ) * 15 + ( dx + 7 );
-		bits[ idx >> 6 ] |= ( 1ULL << ( idx & 63 ) );
+		bits[ idx >> 6 ] |= ( 1ull << ( idx & 63 ) );
 	}
 
 	bool Test( int32_t dx, int32_t dy ) const

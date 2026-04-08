@@ -430,9 +430,7 @@ bool Piece::IsKingMoveValid( const int32_t actionNum, const num_t targetX, const
 
 
 int32_t Piece::ComputeActionPath( const int32_t actionNum, position_t path[ BoardSize ] ) const
-{	
-	assert( 0 ); // WIP
-	
+{
 	if ( IsValidAction( actionNum ) == false ) {
 		return 0;
 	}
@@ -454,21 +452,32 @@ int32_t Piece::ComputeActionPath( const int32_t actionNum, position_t path[ Boar
 			return step;
 		}
 
-		if( IsPawnMoveValid( actionNum, nextX, nextY ) == false ) {
+		if ( m_state->IsBlocked( team, nextX, nextY ) ) {
 			break;
 		}
 
-		if ( IsKingMoveValid( actionNum, nextX, nextY ) == false ) {
-			break;
+		if ( type == pieceType_t::PAWN )
+		{
+			// Enpassant, double-move, kills
+			if( IsPawnMoveValid( actionNum, nextX, nextY ) == false ) {
+				break;
+			}
+		}
+		else if ( type == pieceType_t::KING )
+		{
+			// Castling
+			if ( IsKingMoveValid( actionNum, nextX, nextY ) == false ) {
+				break;
+			}
 		}
 
 		path[ step ] = position_t{ nextX, nextY };
-
-		if ( m_state->GetPiece( nextX, nextY ) != nullptr ) {
-			return step;
-		}
-
 		++step;
+
+		// Capture square
+		if ( m_state->GetPiece( nextX, nextY ) != nullptr ) {
+			break;
+		}
 	}
 	return step;
 }
@@ -480,8 +489,24 @@ bool Piece::InActionPath( const int32_t actionNum, const num_t targetX, const nu
 		return false;
 	}
 
+	// Using more generalized code, old code left for testing during transition
+#if 1
+	position_t path[ BoardSize ] = {};	
+	int32_t stepCount = ComputeActionPath( actionNum, path );
+
+	int32_t step = 0;
+
+	for ( int32_t step = 0; step < stepCount; ++step )
+	{
+		if( ( path[ step ].x == targetX ) && ( path[ step ].y == targetY ) )
+		{
+			return true;
+		}
+	}
+	return false;
+#else
 	const int32_t stepCount = GetStepCount( actionNum, targetX, targetY );
-	if( stepCount > GetActions()[ actionNum ].maxSteps ) {
+	if( stepCount > GetActions()[ actionNum ].maxSteps ){
 		return false;
 	}
 
@@ -495,6 +520,7 @@ bool Piece::InActionPath( const int32_t actionNum, const num_t targetX, const nu
 		return IsKingMoveValid( actionNum, targetX, targetY );
 	}
 	return true;
+#endif
 }
 
 
