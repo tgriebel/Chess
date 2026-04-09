@@ -143,7 +143,7 @@ const Piece* ChessState::GetPiece( const pieceHandle_t handle ) const
 Piece* ChessState::GetPiece( const pieceHandle_t handle )
 {
 	if ( m_game->IsValidHandle( handle ) ) {
-		return m_pieces[ handle ];
+		return m_game->m_pieces[ handle ];
 	}
 	return nullptr;
 }
@@ -161,7 +161,7 @@ Piece* ChessState::GetPiece( const num_t x, const num_t y )
 	if ( m_game->IsValidHandle( handle ) == false ) {
 		return nullptr;
 	}
-	return m_pieces[ handle ];
+	return m_game->m_pieces[ handle ];
 }
 
 
@@ -381,7 +381,7 @@ bool ChessState::IsBlocked( const teamCode_t team, const num_t x, const num_t y 
 	if ( handle == NoPiece ) {
 		return false;
 	}
-	return ( m_pieces[ handle ]->team == team );
+	return ( m_game->m_pieces[ handle ]->team == team );
 }
 
 
@@ -422,8 +422,8 @@ bool ChessState::IsCheckMate( const Piece* attacker, const moveType_t& moveType,
 	const int32_t actionCount = king->GetActionCount();
 	for ( int32_t action = 0; action < actionCount; ++action )
 	{
-		num_t nextX = king->m_x;
-		num_t nextY = king->m_y;
+		num_t nextX = king->X();
+		num_t nextY = king->Y();
 		king->CalculateStep( action, nextX, nextY );
 
 		if( IsLegalMove( king, nextX, nextY ) != moveType_t::NONE ) {
@@ -565,21 +565,6 @@ void ChessState::CopyFrom( const ChessState& src )
 
 	// Keep the game pointer — caller is responsible for setting this
 	m_game = src.m_game;
-
-	// Deep-copy every piece
-	for ( int32_t i = 0; i < PieceCount; ++i )
-	{
-		if ( src.m_pieces[ i ] != nullptr )
-		{
-			m_pieces[ i ] = new Piece( *src.m_pieces[ i ] );
-			m_pieces[ i ]->m_state = this;	// Rebind to this state
-			m_pieces[ i ]->m_handle = i;
-		}
-		else
-		{
-			m_pieces[ i ] = nullptr;
-		}
-	}
 }
 
 
@@ -624,28 +609,5 @@ bool ChessState::Compare( const ChessState& other ) const
 			if ( a.captureTypeCounts[ i ] != b.captureTypeCounts[ i ] ) { return false; }
 		}
 	}
-
-	// Compare pieces
-	for ( int32_t i = 0; i < PieceCount; ++i )
-	{
-		const bool aNull = ( m_pieces[ i ] == nullptr );
-		const bool bNull = ( other.m_pieces[ i ] == nullptr );
-
-		if ( aNull != bNull )
-		{
-			return false;
-		}
-
-		if ( aNull )
-		{
-			continue;
-		}
-
-		if ( *m_pieces[ i ] != *other.m_pieces[ i ] )
-		{
-			return false;
-		}
-	}
-
 	return true;
 }

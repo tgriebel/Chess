@@ -422,14 +422,28 @@ bool Piece::IsKingMoveValid( const int32_t actionNum, const num_t targetX, const
 	// Illegal: Castle while in check
 	// Illegal: Castle through any attacked square
 	// Illegal: Castle into checked square (covered by general rule)
-	if ( m_state->IsChecked( team ) || m_state->IsOpenToAttackAt( castlePiece, rightCastle ? m_x + 1 : m_x - 1, m_y ) ) {
+	if ( m_state->IsChecked( team ) || m_state->IsOpenToAttackAt( castlePiece, m_x - flankOffset, m_y ) ) {
 		return false;
 	}
 	return true;
 }
 
 
-int32_t Piece::ComputeActionPath( const int32_t actionNum, position_t path[ BoardSize ] ) const
+int32_t Piece::ComputeAllMoveActions( position_t* moves ) const
+{
+	const int32_t actionCount = GetActionCount();
+
+	int32_t moveCounter = 0;
+
+	for ( int32_t actionId = 0; actionId < actionCount; ++actionId )
+	{
+		moveCounter += ComputeActionPath( actionId, moves + moveCounter );
+	}
+	return moveCounter;
+}
+
+
+int32_t Piece::ComputeActionPath( const int32_t actionNum, position_t* path ) const
 {
 	if ( IsValidAction( actionNum ) == false ) {
 		return 0;
@@ -490,6 +504,7 @@ bool Piece::InActionPath( const int32_t actionNum, const num_t targetX, const nu
 	}
 
 	// Using more generalized code, old code left for testing during transition
+	// Old code uses a distance heuristic to early out, embedden in `GetStepCount`
 #if 1
 	position_t path[ BoardSize ] = {};	
 	int32_t stepCount = ComputeActionPath( actionNum, path );

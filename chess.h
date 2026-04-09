@@ -505,7 +505,8 @@ public:
 	num_t			GetStepCount( const int32_t actionNum, const num_t targetX, const num_t targetY ) const;		// How many squares are traveled for this action?
 	num_t			GetActionPath( const int32_t actionNum, moveAction_t path[ BoardSize ] ) const;					// Get all squares in this action's path
 	void			FillMoveCache();
-	int32_t			ComputeActionPath( const int32_t actionNum, position_t path[ BoardSize ] ) const;				// Generate path for an action
+	int32_t			ComputeAllMoveActions( position_t* moves ) const;												// Generate all moves for a piece
+	int32_t			ComputeActionPath( const int32_t actionNum, position_t* path ) const;							// Generate path for an action
 	bool			InActionPath( const int32_t actionNum, const num_t targetX, const num_t targetY ) const;		// This action can reach this location
 	void			Move( const moveType_t moveType, const num_t targetX, const num_t targetY );					// Performs a game move, rules run
 	void			PlaceAt( const num_t targetX, const num_t targetY );											// Places a piece at a location, rules not runn. Temp moves, castling, etc
@@ -552,26 +553,6 @@ public:
 	const moveAction_t* GetActions() const { return m_actions; }
 	const MoveCache& GetMoveCache() const { return *m_moveSuperset; }
 
-	bool operator==( const Piece& other ) const
-	{
-		return	( team				== other.team )
-			&&	( type				== other.type )
-			&&	( m_x				== other.m_x )
-			&&	( m_y				== other.m_y )
-			&&	( m_prevX			== other.m_prevX )
-			&&	( m_prevY			== other.m_prevY )
-			&&	( m_instance		== other.m_instance )
-			&&	( m_moveCount		== other.m_moveCount )
-			&&	( m_numActions		== other.m_numActions )
-			&&	( m_teamDirection	== other.m_teamDirection )
-			&&	( m_promoted		== other.m_promoted )
-			&&	( m_handle			== other.m_handle )
-			&&	( m_actions			== other.m_actions )
-			&&	( m_moveSuperset	== other.m_moveSuperset );
-	}
-
-	bool operator!=( const Piece& other ) const { return !( *this == other ); }
-
 private:
 
 	inline void SetInstanceNumber( const num_t instance )
@@ -590,10 +571,10 @@ public:
 	pieceType_t			type;
 
 protected:
-	num_t				m_prevX;
-	num_t				m_prevY;
-	num_t				m_x;
-	num_t				m_y;
+	num_t				m_prevX;		// State. For temp actions
+	num_t				m_prevY;		// State. "
+	num_t				m_x;			// State. For convenience, board state in ChessState is authoritative (i.e. can set this from the board)
+	num_t				m_y;			// State. "
 	num_t				m_instance;
 	num_t				m_moveCount;
 	num_t				m_numActions;
@@ -651,7 +632,6 @@ public:
 
 private:
 	pieceHandle_t		m_enpassantPawn;
-	Piece*				m_pieces[ PieceCount ];
 	team_t				m_teams[ TeamCount ];
 	pieceHandle_t		m_grid[ BoardSize ][ BoardSize ]; // (0,0) is top left, mutable for quick tests (const-functions should always reverse)
 	ChessEngine*		m_game;
@@ -675,7 +655,7 @@ public:
 		m_pieceNum = 0;
 		for ( int32_t i = 0; i < PieceCount; ++i )
 		{
-			delete m_state.m_pieces[ i ];
+			delete m_pieces[ i ];
 		}
 	}
 
@@ -684,7 +664,7 @@ public:
 		m_pieceNum = 0;
 		m_winner = teamCode_t::NONE;
 		
-		memset( m_state.m_pieces, 0, sizeof( Piece* ) * PieceCount );
+		memset( m_pieces, 0, sizeof( Piece* ) * PieceCount );
 		m_config = cfg;
 		SetBoard( m_config );
 		m_state.m_game = this;
@@ -813,6 +793,7 @@ private:
 
 private:
 	ChessState			m_state;
+	Piece*				m_pieces[ PieceCount ];
 	callback_t			m_promotionCallback[ TeamCount ];
 	num_t				m_pieceNum;
 	int32_t				m_turnCount;

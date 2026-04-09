@@ -75,9 +75,9 @@ pieceHandle_t ChessEngine::FindPiece( const teamCode_t team, const pieceType_t t
 
 	for ( int32_t i = 0; i < GetPieceCount(); ++i )
 	{
-		const bool teamsMatch = ( m_state.m_pieces[ i ]->team == team );
-		const bool piecesMatch = ( m_state.m_pieces[ i ]->type == type );
-		const bool instanceMatch = ( m_state.m_pieces[ i ]->GetInstanceNumber() == instance );
+		const bool teamsMatch = ( m_pieces[ i ]->team == team );
+		const bool piecesMatch = ( m_pieces[ i ]->type == type );
+		const bool instanceMatch = ( m_pieces[ i ]->GetInstanceNumber() == instance );
 
 		if ( teamsMatch && piecesMatch && instanceMatch ) {
 			return i;
@@ -113,9 +113,9 @@ void ChessEngine::SetBoard( const gameConfig_t& cfg )
 
 void ChessEngine::EnterPieceInGame( Piece* piece, const num_t x, const num_t y )
 {
-	m_state.m_pieces[ m_pieceNum ] = piece;
-	m_state.m_pieces[ m_pieceNum ]->BindBoard( &m_state, m_pieceNum );
-	m_state.m_pieces[ m_pieceNum ]->PlaceAt( x, y );
+	m_pieces[ m_pieceNum ] = piece;
+	m_pieces[ m_pieceNum ]->BindBoard( &m_state, m_pieceNum );
+	m_pieces[ m_pieceNum ]->PlaceAt( x, y );
 
 	const num_t teamIndex = static_cast<num_t>( piece->team );
 
