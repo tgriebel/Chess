@@ -570,14 +570,14 @@ void ChessState::CopyFrom( const ChessState& src )
 
 bool ChessState::Compare( const ChessState& other ) const
 {
-	// Compare grid
-	if ( memcmp( m_grid, other.m_grid, sizeof( m_grid ) ) != 0 )
+	// Compare en passant
+	if ( m_enpassantPawn != other.m_enpassantPawn )
 	{
 		return false;
 	}
 
-	// Compare en passant
-	if ( m_enpassantPawn != other.m_enpassantPawn )
+	// Compare grid
+	if ( memcmp( m_grid, other.m_grid, sizeof( m_grid ) ) != 0 )
 	{
 		return false;
 	}
@@ -585,29 +585,10 @@ bool ChessState::Compare( const ChessState& other ) const
 	// Compare teams
 	for ( int32_t t = 0; t < TeamCount; ++t )
 	{
-		const team_t& a = m_teams[ t ];
-		const team_t& b = other.m_teams[ t ];
-
-		if ( a.livingCount != b.livingCount || a.capturedCount != b.capturedCount )
-		{
+		if( memcmp( &m_teams[ t ], &other.m_teams[ t ], sizeof( team_t ) ) != 0 ) {
 			return false;
 		}
-
-		for ( int32_t i = 0; i < a.livingCount; ++i )
-		{
-			if ( a.pieces[ i ] != b.pieces[ i ] ) { return false; }
-		}
-
-		for ( int32_t i = 0; i < a.capturedCount; ++i )
-		{
-			if ( a.captured[ i ] != b.captured[ i ] ) { return false; }
-		}
-
-		for ( int32_t i = 0; i < (int32_t)pieceType_t::COUNT; ++i )
-		{
-			if ( a.typeCounts[ i ] != b.typeCounts[ i ] ) { return false; }
-			if ( a.captureTypeCounts[ i ] != b.captureTypeCounts[ i ] ) { return false; }
-		}
 	}
+
 	return true;
 }
