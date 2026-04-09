@@ -50,7 +50,7 @@
 // Constants
 // ============================================================
 
-typedef int16_t num_t;
+typedef int8_t num_t;
 
 static const num_t BoardSize		= 8;
 static const num_t TeamCount		= 2;
@@ -58,7 +58,7 @@ static const num_t TeamPieceCount	= 16;
 static const num_t PieceCount		= 32;
 typedef num_t pieceHandle_t;
 static const pieceHandle_t NoPiece		= -1;
-static const pieceHandle_t DummyPiece	= INT16_MAX;
+static const pieceHandle_t DummyPiece	= static_cast<num_t>( ~0 );
 static const pieceHandle_t OffBoard		= -2;
 
 #define USE_MOVE_CACHE_TEST 1
@@ -564,6 +564,8 @@ private:
 	{
 		this->m_state = state;
 		this->m_handle = handle;
+
+
 	}
 
 public:
@@ -729,6 +731,7 @@ public:
 		return resultCode_t::RESULT_SUCCESS;
 	}
 
+
 	void GetTeamCaptures( const teamCode_t teamCode, pieceInfo_t capturedPieces[ TeamPieceCount ], int32_t& captureCount ) const
 	{
 		memset( capturedPieces, 0, sizeof( capturedPieces[ 0 ] ) * TeamPieceCount );
@@ -766,23 +769,25 @@ public:
 		return const_cast<ChessEngine*>( this )->FindPiece( team, type, instance );
 	}
 
-	pieceHandle_t		FindPiece( const teamCode_t team, const pieceType_t type, const num_t instance );
-	pieceInfo_t			GetInfo( const pieceHandle_t pieceType ) const;
-	pieceInfo_t			GetInfo( const num_t x, const num_t y ) const;
-	bool				GetLocation( const pieceHandle_t pieceType, num_t& x, num_t& y ) const;
-	void				SetPromotionCallback( const teamCode_t team, callback_t callback ) { m_promotionCallback[ (int32_t)team ] = callback; }
-	inline bool			IsStalemate() const { return m_stalemate; }
-	inline teamCode_t	GetCurrentPlayer() { return m_currentTurn; } 
-	inline teamCode_t	GetWinner() const { return m_winner; }
-	inline teamCode_t	GetCheckedTeam() const { return m_checkedTeam; }
-	inline num_t		GetPieceCount() const { return m_pieceNum; }
-	bool				IsValidHandle( const pieceHandle_t handle ) const;
+	pieceHandle_t		FindPiece( const teamCode_t team, const pieceType_t type, const num_t instance );				// Find piece given identifying info (e.g. White-King)
+	pieceInfo_t			GetInfo( const pieceHandle_t pieceType ) const;													// Query info about a given piece
+	pieceInfo_t			GetInfo( const num_t x, const num_t y ) const;													// Query info for the selected square (team, piece type, etc)
+	bool				GetLocation( const pieceHandle_t pieceType, num_t& x, num_t& y ) const;							// Query the location given a piece
+	inline bool			IsStalemate() const { return m_stalemate; }														// Is stalemate
+	inline teamCode_t	GetCurrentPlayer() { return m_currentTurn; }													// Player for current turn
+	inline teamCode_t	GetWinner() const { return m_winner; }															// Winning team or none
+	inline teamCode_t	GetCheckedTeam() const { return m_checkedTeam; }												// Checked team or none
+	inline num_t		GetPieceCount() const { return m_pieceNum; }													// Piece count given this game config
+	bool				IsValidHandle( const pieceHandle_t handle ) const;												// Is this piece handle valid? (Likely, yes)
+
+	inline void			SetPromotionCallback( const teamCode_t team, callback_t callback ) { m_promotionCallback[ (int32_t)team ] = callback; }
 
 private:
-	void				SetBoard( const gameConfig_t& cfg );
-	void				EnterPieceInGame( Piece* piece, const num_t x, const num_t y );
-	bool				PerformMoveAction( const pieceHandle_t pieceHdl, const num_t targetX, const num_t targetY );
-	void				CalculateGameState( const moveType_t& moveType, const pieceHandle_t movedPieceHdl );
+	void				SetBoard( const gameConfig_t& cfg );															// Sets the board up for a given play-state (e.g. default starting set-up)
+	void				EnterPieceInGame( Piece* piece, const num_t x, const num_t y );									// Registers the piece and places it on the board
+	bool				PerformMoveAction( const pieceHandle_t pieceHdl, const num_t targetX, const num_t targetY );	// Performs a game move
+	void				CalculateGameState( const moveType_t& moveType, const pieceHandle_t movedPieceHdl );			// Checkmate, Check, Stalemate
+	int32_t				Search( int32_t depth );																		// A.I. search
 
 	inline void			PromotionCallback( const teamCode_t teamCode, callbackEvent_t& event )							// User needs to make their pick of piece, A.I. can run a heuristic
 	{

@@ -67,6 +67,61 @@ void ChessEngine::CalculateGameState( const moveType_t& moveType, const pieceHan
 }
 
 
+int32_t ChessEngine::Search( int32_t depth )
+{
+	// Perft search
+
+	int32_t nodes = 0;
+
+	if ( depth == 0 ) {
+		return 1;
+	}
+
+	position_t moveList[ 256 ] = {};
+
+	const int32_t pieceCount = GetPieceCount();
+
+	ChessState searchState;
+
+	for( int32_t pieceId = 0; pieceId < pieceCount; ++pieceId )
+	{
+		Piece* piece = m_pieces[ pieceId ];
+
+		const int32_t moveCount = piece->ComputeAllMoveActions( moveList );
+		if( moveCount == 0 ) {
+			continue;
+		}
+
+		for ( int32_t moveIx = 0; moveIx < moveCount; ++moveIx )
+		{
+			// FIXME: Legality check. Does redundant work so optimize this later
+			moveType_t move = m_state.IsLegalMove( piece, moveList[ moveIx ].x, moveList[ moveIx ].y );
+			if ( move == moveType_t::NONE )
+			{
+				continue;
+			}
+
+			// Make move
+			{
+				searchState.CopyFrom( m_state );
+				piece->BindBoard( &searchState, piece->m_handle );
+				piece->PlaceAt( piece->X(), piece->Y() );
+
+				piece->Move( move, moveList[ moveIx ].x, moveList[ moveIx ].y );
+			}
+
+			nodes += Search( depth - 1 );
+			
+			// Undo move
+			{
+				// Nothing, using a copied state currently
+			}
+		}
+	}
+	return nodes;
+}
+
+
 pieceHandle_t ChessEngine::FindPiece( const teamCode_t team, const pieceType_t type, const num_t instance )
 {
 	if ( ( team == teamCode_t::NONE ) || ( type == pieceType_t::NONE ) ) {

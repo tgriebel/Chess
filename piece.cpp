@@ -507,7 +507,7 @@ bool Piece::InActionPath( const int32_t actionNum, const num_t targetX, const nu
 	// Old code uses a distance heuristic to early out, embedden in `GetStepCount`
 #if 1
 	position_t path[ BoardSize ] = {};	
-	int32_t stepCount = ComputeActionPath( actionNum, path );
+	const int32_t stepCount = ComputeActionPath( actionNum, path );
 
 	int32_t step = 0;
 
