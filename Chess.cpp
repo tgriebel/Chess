@@ -221,7 +221,7 @@ pieceInfo_t ChessEngine::GetInfo( const pieceHandle_t pieceType ) const
 		info.team = teamCode_t::NONE;
 		info.instance = 0;
 		info.isPiece = false;
-		info.onBoard = m_state.OnBoard( piece->m_x, piece->m_y );
+		info.onBoard = false;
 	}
 	return info;
 }

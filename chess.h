@@ -650,6 +650,7 @@ class ChessEngine
 {
 public:
 	ChessEngine( const gameConfig_t& cfg ) { Init( cfg ); }
+
 	ChessEngine() {}
 
 	~ChessEngine()
